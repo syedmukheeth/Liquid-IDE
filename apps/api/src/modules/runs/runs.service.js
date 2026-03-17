@@ -18,7 +18,7 @@ async function createRun(input) {
   });
 
   try {
-    await runsQueue.add(
+    const queuePromise = runsQueue.add(
       "execute",
       { runId: run._id.toString() },
       {
@@ -26,8 +26,14 @@ async function createRun(input) {
         removeOnFail: { age: 24 * 3600, count: 1000 }
       }
     );
+
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("Redis Timeout")), 3000)
+    );
+
+    await Promise.race([queuePromise, timeoutPromise]);
   } catch (err) {
-    logger.warn({ runId: run._id, err }, "Redis Queue failed. Switching to direct execution.");
+    logger.warn({ runId: run._id, err: err.message }, "Redis Queue failed or timed out. Switching to direct execution.");
     
     // Direct Execution Fallback
     run.status = "running";

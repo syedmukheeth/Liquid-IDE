@@ -4,6 +4,7 @@ const os = require("node:os");
 const path = require("node:path");
 const crypto = require("node:crypto");
 const { env } = require("../../config/env");
+const { logger } = require("../../config/logger");
 
 const LANGUAGE_CONFIGS = {
   javascript: {
@@ -37,20 +38,44 @@ async function executeDirectly(run) {
     await materializeFiles(runDir, run.files);
     const entry = path.posix.normalize(run.entrypoint).replace(/^(\.\.(\/|\\|$))+/, "");
     
-    const dockerArgs = [
-      "run", "--rm", "--network", "none",
-      "--memory", env.RUN_MEMORY || "128m",
-      "--cpus", env.RUN_CPUS || "0.5",
-      "-v", `${runDir}:/workspace:rw`,
-      "-w", "/workspace",
-      config.image,
-      ...config.command(entry)
-    ];
+    // 1. Try Docker first
+    try {
+      const dockerArgs = [
+        "run", "--rm", "--network", "none",
+        "--memory", env.RUN_MEMORY || "128m",
+        "--cpus", env.RUN_CPUS || "0.5",
+        "-v", `${runDir}:/workspace:rw`,
+        "-w", "/workspace",
+        config.image,
+        ...config.command(entry)
+      ];
+      return await execWithTimeout("docker", dockerArgs, 10000);
+    } catch (dockerErr) {
+      if (dockerErr.code !== "ENOENT") throw dockerErr;
+      
+      // 2. Fallback to Local execution if Docker is missing
+      logger.warn(`Docker not found. Falling back to local execution for ${language}`);
+      
+      const isWin = process.platform === "win32";
+      const exeExt = isWin ? ".exe" : "";
+      const shell = isWin ? "cmd" : "sh";
+      const shellFlag = isWin ? "/c" : "-c";
 
-    return await execWithTimeout("docker", dockerArgs, 10000);
+      const localCmds = {
+        javascript: ["node", entry],
+        python: ["python", entry],
+        cpp: [shell, shellFlag, `g++ ${entry} -o main${exeExt} && .${path.sep}main${exeExt}`],
+        java: [shell, shellFlag, `javac ${entry} && java ${entry.replace(".java", "")}`],
+        go: ["go", "run", entry]
+      };
+
+      const [cmd, ...args] = localCmds[language] || localCmds.javascript;
+      return await execWithTimeout(cmd, args, 10000, { cwd: runDir });
+    }
   } catch (err) {
-    return { stdout: "", stderr: `Direct Execution Error: ${err.message}`, exitCode: 1 };
+    return { stdout: "", stderr: `Execution Error: ${err.message}`, exitCode: 1 };
   } finally {
+    // Keep files for a bit if debugging, but usually cleanup
     await fs.rm(runDir, { recursive: true, force: true });
   }
 }
@@ -63,19 +88,32 @@ async function materializeFiles(root, files) {
   }
 }
 
-function execWithTimeout(cmd, args, timeoutMs) {
-  return new Promise((resolve) => {
-    const child = spawn(cmd, args, { windowsHide: true });
-    let stdout = "";
-    let stderr = "";
-    if (child.stdout) child.stdout.on("data", (d) => (stdout += d.toString()));
-    if (child.stderr) child.stderr.on("data", (d) => (stderr += d.toString()));
+function execWithTimeout(cmd, args, timeoutMs, opts = {}) {
+  return new Promise((resolve, reject) => {
+    try {
+      const child = spawn(cmd, args, { ...opts, windowsHide: true });
+      let stdout = "";
+      let stderr = "";
+      
+      if (child.stdout) child.stdout.on("data", (d) => (stdout += d.toString()));
+      if (child.stderr) child.stderr.on("data", (d) => (stderr += d.toString()));
 
-    const timeout = setTimeout(() => { try { child.kill("SIGKILL"); } catch {} }, timeoutMs);
-    child.on("close", (code) => {
-      clearTimeout(timeout);
-      resolve({ stdout, stderr, exitCode: code });
-    });
+      const timeout = setTimeout(() => {
+        try { child.kill("SIGKILL"); } catch {}
+      }, timeoutMs);
+
+      child.on("error", (err) => {
+        clearTimeout(timeout);
+        reject(err);
+      });
+
+      child.on("close", (code) => {
+        clearTimeout(timeout);
+        resolve({ stdout, stderr, exitCode: code });
+      });
+    } catch (err) {
+      reject(err);
+    }
   });
 }
 
