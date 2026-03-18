@@ -5,7 +5,7 @@ const { createRun, getRun } = require("./runs.service");
 const runsRouter = Router();
 
 const CreateRunSchema = z.object({
-  language: z.enum(["nodejs", "javascript", "python", "cpp", "java", "go"]),
+  language: z.enum(["nodejs", "javascript", "python", "cpp", "c", "java"]),
   code: z.string().min(1)
 });
 
@@ -18,9 +18,9 @@ runsRouter.post("/", async (req, res, next) => {
     const run = await createRun({
       projectId: "playground",
       runtime: runtime,
-      entrypoint: language === "java" ? "Solution.java" : language === "python" ? "solution.py" : language === "cpp" ? "solution.cpp" : language === "go" ? "solution.go" : "solution.js",
+      entrypoint: language === "java" ? "Solution.java" : language === "python" ? "solution.py" : language === "cpp" ? "solution.cpp" : language === "c" ? "solution.c" : "solution.js",
       files: [{
-        path: language === "java" ? "Solution.java" : language === "python" ? "solution.py" : language === "cpp" ? "solution.cpp" : language === "go" ? "solution.go" : "solution.js",
+        path: language === "java" ? "Solution.java" : language === "python" ? "solution.py" : language === "cpp" ? "solution.cpp" : language === "c" ? "solution.c" : "solution.js",
         content: code
       }]
     });

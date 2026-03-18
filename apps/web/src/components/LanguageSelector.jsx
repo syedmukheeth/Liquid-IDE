@@ -2,10 +2,10 @@ import React, { useState, useRef, useEffect } from "react";
 
 const languages = [
   { id: "cpp", label: "C++", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg" },
+  { id: "c", label: "C", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/c/c-original.svg" },
   { id: "python", label: "Python", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" },
   { id: "javascript", label: "JavaScript", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" },
-  { id: "java", label: "Java", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" },
-  { id: "go", label: "Go", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg" }
+  { id: "java", label: "Java", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" }
 ];
 
 export default function LanguageSelector({ activeLanguage, onLanguageChange }) {
@@ -28,10 +28,10 @@ export default function LanguageSelector({ activeLanguage, onLanguageChange }) {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium transition-all hover:bg-white/10"
+        className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-[12px] font-black uppercase tracking-widest transition-all hover:bg-white/10 active:scale-95 group"
       >
-        <img src={selectedLang.icon} alt={selectedLang.label} className="h-4 w-4" />
-        <span>{selectedLang.label}</span>
+        <img src={selectedLang.icon} alt={selectedLang.label} className="h-4 w-4 drop-shadow-md" />
+        <span className="text-white/80 group-hover:text-white transition-colors">{selectedLang.label}</span>
         <svg
           className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
           fill="none"

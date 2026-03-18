@@ -3,17 +3,22 @@ import CodeEditor from "../components/CodeEditor";
 import LanguageSelector from "../components/LanguageSelector";
 import { pollUntilDone, submitRun } from "../services/codeExecutionApi";
 import { getSocket } from "../services/socketClient";
+import AuthModal from "../components/AuthModal";
+import SettingsModal from "../components/SettingsModal";
+import HistoryModal from "../components/HistoryModal";
+import UpgradeModal from "../components/UpgradeModal";
 
 const languageConfigs = {
   cpp: { name: "solution.cpp", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg", template: `#include <iostream>\n\nint main() {\n  // Write your code here\n  std::cout << "Hello from LiquidIDE C++" << std::endl;\n  return 0;\n}\n`, lang: "cpp" },
+  c: { name: "solution.c", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/c/c-original.svg", template: `#include <stdio.h>\n\nint main() {\n  // Write your code here\n  printf("Hello from LiquidIDE C\\n");\n  return 0;\n}\n`, lang: "c" },
   python: { name: "solution.py", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg", template: `import sys\n\ndef main():\n    # Write your code here\n    print("Hello from LiquidIDE Python")\n\nif __name__ == "__main__":\n    main()\n`, lang: "python" },
   javascript: { name: "solution.js", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg", template: `// Write your code here\nconsole.log("Hello from LiquidIDE JS");\n`, lang: "nodejs" },
-  java: { name: "Solution.java", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg", template: `import java.util.*;\n\npublic class Solution {\n  public static void main(String[] args) {\n    // Write your code here\n    System.out.println("Hello from LiquidIDE Java");\n  }\n}\n`, lang: "java" },
-  go: { name: "solution.go", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg", template: `package main\n\nimport "fmt"\n\nfunc main() {\n  // Write your code here\n  fmt.Println("Hello from LiquidIDE Go")\n}\n`, lang: "go" }
+  java: { name: "Solution.java", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg", template: `import java.util.*;\n\npublic class Solution {\n  public static void main(String[] args) {\n    // Write your code here\n    System.out.println("Hello from LiquidIDE Java");\n  }\n}\n`, lang: "java" }
 };
 
 export default function EditorPage() {
   const [activeLangId, setActiveLangId] = useState("cpp");
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const [buffers, setBuffers] = useState(
     Object.fromEntries(Object.entries(languageConfigs).map(([id, cfg]) => [id, cfg.template]))
   );
@@ -22,6 +27,33 @@ export default function EditorPage() {
   const [runStatus, setRunStatus] = useState("Ready");
   const [busy, setBusy] = useState(false);
   const [isOutputVisible, setIsOutputVisible] = useState(true);
+  const [activeModal, setActiveModal] = useState(null); // 'auth', 'settings', 'history', 'upgrade'
+  const [user, setUser] = useState(null);
+  const [settings, setSettings] = useState(() => {
+    const saved = localStorage.getItem("flux_settings");
+    return saved ? JSON.parse(saved) : { fontSize: 14, tabSize: 2 };
+  });
+  const [history, setHistory] = useState(() => {
+    const saved = localStorage.getItem("flux_history");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const saveHistory = (code, language, languageId) => {
+    const newEntry = { code, language, languageId, timestamp: Date.now() };
+    const newHistory = [newEntry, ...history].slice(0, 10);
+    setHistory(newHistory);
+    localStorage.setItem("flux_history", JSON.stringify(newHistory));
+  };
+
+  const onRestoreHistory = (code, languageId) => {
+    setActiveLangId(languageId);
+    setBuffers(prev => ({ ...prev, [languageId]: code }));
+  };
+
+  const onSettingsUpdate = (newSettings) => {
+    setSettings(newSettings);
+    localStorage.setItem("flux_settings", JSON.stringify(newSettings));
+  };
   
   const runRef = useRef({ jobId: null });
   const activeConfig = languageConfigs[activeLangId];
@@ -66,6 +98,8 @@ export default function EditorPage() {
 
       socket.off("exec:log", onLog);
       socket.emit("unsubscribe", { jobId });
+      
+      saveHistory(code, activeConfig.name, activeLangId);
     } catch (e) {
       setRunStatus("Failed");
       setStderr(e?.message || String(e));
@@ -75,41 +109,76 @@ export default function EditorPage() {
   }
 
   return (
-    <div className="flex h-screen w-full flex-col bg-[#0a0a0a] text-white">
+    <div className={`relative flex h-screen w-full flex-col transition-colors duration-700 ${isDarkMode ? "bg-[#050505] text-white" : "bg-[#f8fafc] text-slate-900"} selection:bg-blue-500/30 overflow-hidden`}>
+      {/* Background Mesh Gradients */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className={`absolute -left-[10%] -top-[10%] h-[40%] w-[40%] rounded-full blur-[120px] transition-colors duration-1000 ${isDarkMode ? "bg-blue-600/10" : "bg-blue-400/20"}`} />
+        <div className={`absolute -right-[10%] -bottom-[10%] h-[40%] w-[40%] rounded-full blur-[120px] transition-colors duration-1000 ${isDarkMode ? "bg-indigo-600/10" : "bg-indigo-400/20"}`} />
+      </div>
+
       {/* Top Navbar */}
-      <header className="flex h-14 items-center justify-between border-b border-white/5 bg-[#161616] px-6">
-        <div className="flex items-center gap-8">
-          <div className="flex items-center gap-2.5">
-            <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center font-black text-[14px] shadow-lg shadow-blue-500/20">L</div>
-            <span className="text-base font-black tracking-tight text-white/90">Liquid Compiler</span>
+      <header className={`relative z-10 flex h-16 shrink-0 items-center justify-between border-b px-8 backdrop-blur-3xl transition-colors ${isDarkMode ? "border-white/5 bg-black/20" : "border-slate-200 bg-white/40"}`}>
+        <div className="flex items-center gap-10">
+          <div className="flex items-center gap-3 group cursor-pointer">
+            <div className="relative h-9 w-9 overflow-hidden rounded-xl bg-gradient-to-br from-blue-400 to-indigo-600 p-0.5 shadow-2xl shadow-blue-500/20 transition-transform group-hover:scale-105 active:scale-95">
+              <div className={`flex h-full w-full items-center justify-center rounded-[10px] backdrop-blur-xl font-black text-white text-lg ${isDarkMode ? "bg-[#050505]/20" : "bg-white/20"}`}>L</div>
+            </div>
+            <div className="flex flex-col">
+               <span className={`text-sm font-black tracking-tight transition-opacity group-hover:opacity-80 ${isDarkMode ? "text-white" : "text-slate-800"}`}>Liquid Compiler</span>
+               <span className={`text-[10px] font-bold tracking-widest uppercase ${isDarkMode ? "text-white/30" : "text-slate-400"}`}>Flux Engine Pro</span>
+            </div>
           </div>
-          <nav className="flex items-center gap-6 text-[12px] font-bold text-white/30">
-            <button className="text-blue-500">Editor</button>
-            <button className="hover:text-white transition-colors">History</button>
-            <button className="hover:text-white transition-colors">Settings</button>
+          <nav className={`flex items-center gap-8 text-[11px] font-black uppercase tracking-widest ${isDarkMode ? "text-white/20" : "text-slate-400"}`}>
+            <button className={`${!activeModal ? "text-blue-500 border-b-2 border-blue-500" : "hover:text-blue-400"} py-5 transition-all`} onClick={() => setActiveModal(null)}>Editor</button>
+            <button className={`${activeModal === 'history' ? "text-blue-500 border-b-2 border-blue-500" : "hover:text-blue-400"} transition-colors py-5 border-b-2 border-transparent`} onClick={() => setActiveModal('history')}>History</button>
+            <button className={`${activeModal === 'settings' ? "text-blue-500 border-b-2 border-blue-500" : "hover:text-blue-400"} transition-colors py-5 border-b-2 border-transparent`} onClick={() => setActiveModal('settings')}>Settings</button>
           </nav>
         </div>
         
-        <div className="flex items-center gap-4">
-          <button className="text-[11px] font-bold text-white/40 hover:text-white transition-colors">Docs</button>
-          <div className="h-4 w-px bg-white/10" />
-          <button className="h-9 rounded-xl bg-white/5 px-5 text-[12px] font-black text-white/80 transition-all hover:bg-white/10 border border-white/5">Sign In</button>
-          <button className="h-9 rounded-xl bg-blue-600 px-5 text-[12px] font-black text-white shadow-xl shadow-blue-500/20 transition-all hover:bg-blue-500">Go Pro</button>
+        <div className="flex items-center gap-6">
+          {/* Theme Toggle */}
+          <button 
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            className={`group flex h-10 w-10 items-center justify-center rounded-2xl border transition-all active:scale-90 ${isDarkMode ? "border-white/5 bg-white/5 hover:bg-white/10" : "border-slate-200 bg-slate-100 hover:bg-slate-200"}`}
+          >
+            {isDarkMode ? (
+              <svg className="h-5 w-5 text-amber-400 transition-transform group-hover:rotate-12" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" /></svg>
+            ) : (
+              <svg className="h-5 w-5 text-indigo-600 transition-transform group-hover:-rotate-12" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" /></svg>
+            )}
+          </button>
+          
+          <div className={`h-4 w-px ${isDarkMode ? "bg-white/10" : "bg-slate-200"}`} />
+
+          {user ? (
+            <div className="flex items-center gap-4 group cursor-pointer" onClick={() => setUser(null)} title="Click to Sign Out">
+               <div className="flex flex-col items-end">
+                  <span className={`text-[11px] font-black uppercase tracking-tight ${isDarkMode ? "text-white" : "text-slate-800"}`}>{user.name}</span>
+                  <span className={`text-[9px] font-bold uppercase tracking-widest ${isDarkMode ? "text-white/20" : "text-slate-400"}`}>{user.provider}</span>
+               </div>
+               <div className="h-10 w-10 overflow-hidden rounded-xl border border-white/10 bg-white/5 p-0.5 shadow-2xl transition-transform group-hover:scale-105 active:scale-95">
+                  <img src={user.avatar} className="h-full w-full rounded-[8px] object-cover" alt="Avatar" />
+               </div>
+            </div>
+          ) : (
+            <button onClick={() => setActiveModal('auth')} className={`h-10 rounded-2xl px-6 text-[12px] font-black transition-all active:scale-95 border backdrop-blur-xl ${isDarkMode ? "bg-white/5 text-white/80 hover:bg-white/10 border-white/5" : "bg-slate-100 text-slate-600 hover:bg-slate-200 border-slate-200"}`}>Sign In</button>
+          )}
+
+          <button onClick={() => setActiveModal('upgrade')} className="h-10 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 text-[12px] font-black text-white shadow-2xl shadow-blue-500/20 transition-all hover:brightness-110 active:scale-95">Go Pro</button>
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="flex flex-1 overflow-hidden p-6 gap-6">
-        {/* Full Width Compiler Container */}
-        <section className="flex flex-1 flex-col overflow-hidden gap-4">
-          {/* Editor Area */}
-          <div className="flex flex-[2] flex-col overflow-hidden rounded-[2.5rem] border border-white/5 bg-[#151515] shadow-3xl">
+      {/* Main Split Container */}
+      <main className="relative z-10 flex flex-1 overflow-hidden p-4 gap-4">
+        {/* Editor Side (Left) */}
+        <section className="flex flex-[7] flex-col overflow-hidden gap-4">
+          <div className={`flex flex-1 flex-col overflow-hidden rounded-[2rem] border shadow-2xl backdrop-blur-3xl transition-all duration-700 ${isDarkMode ? "border-white/10 bg-white/[0.03]" : "border-slate-200 bg-white/70"}`}>
             {/* Editor Toolbar */}
-            <div className="flex h-14 items-center justify-between border-b border-white/5 bg-white/[0.02] px-8">
+            <div className={`flex h-14 shrink-0 items-center justify-between border-b px-8 transition-colors ${isDarkMode ? "border-white/5 bg-white/[0.01]" : "border-slate-100 bg-slate-50/50"}`}>
               <div className="flex items-center gap-6">
                 <LanguageSelector activeLanguage={activeLangId} onLanguageChange={setActiveLangId} />
-                <button className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-white/30 hover:text-white/60 transition-colors">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                <button className={`group flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.25em] transition-all duration-300 ${isDarkMode ? "text-white/20 hover:text-white/60" : "text-slate-400 hover:text-slate-600"}`}>
+                  <svg className="h-4 w-4 transition-transform group-hover:rotate-180 duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                   Reset
                 </button>
               </div>
@@ -118,10 +187,10 @@ export default function EditorPage() {
                 <button 
                   onClick={onRun}
                   disabled={busy}
-                  className="flex h-10 items-center gap-3 rounded-2xl bg-white/5 px-6 text-[12px] font-black uppercase tracking-widest text-white transition-all hover:bg-white/10 hover:border-white/10 border border-white/5 disabled:opacity-50"
+                  className="group relative flex h-10 items-center gap-3 overflow-hidden rounded-xl bg-emerald-500/10 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 transition-all hover:bg-emerald-500/20 active:scale-95 disabled:opacity-50 ring-1 ring-emerald-500/20"
                 >
-                  {busy ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" /> : <svg className="h-4 w-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" /></svg>}
-                  Flux Run
+                  {busy ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-emerald-500/20 border-t-emerald-500" /> : <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" /></svg>}
+                  <span>Run code</span>
                 </button>
               </div>
             </div>
@@ -132,86 +201,130 @@ export default function EditorPage() {
                 language={activeLangId === "javascript" ? "nodejs" : activeLangId}
                 value={buffers[activeLangId]}
                 onChange={onCodeChange}
+                theme={isDarkMode ? "vs-dark" : "light"}
+                options={{
+                  fontSize: settings.fontSize,
+                  tabSize: settings.tabSize
+                }}
               />
             </div>
           </div>
+        </section>
 
-          {/* Console Output area Area */}
-          <div className={`flex transition-all duration-500 ease-in-out ${isOutputVisible ? "flex-[0.7]" : "h-14"} flex-col overflow-hidden rounded-[2.5rem] border border-white/5 bg-[#151515] shadow-3xl`}>
-            <div className="flex h-14 items-center justify-between border-b border-white/5 bg-white/[0.02] px-8 shrink-0">
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                   <div className={`h-2 w-2 rounded-full ${runStatus === "Done" ? "bg-emerald-500 shadow-[0_0_10px_#10b981]" : runStatus === "Failed" ? "bg-rose-500 shadow-[0_0_10px_#f43f5e]" : "bg-white/20"}`} />
-                   <button 
-                    onClick={() => setIsOutputVisible(true)}
-                    className={`text-[11px] font-black uppercase tracking-[0.2em] transition-all ${isOutputVisible ? "text-white" : "text-white/20 hover:text-white/40"}`}
-                  >
-                    Output Console
-                  </button>
-                </div>
-              </div>
-              <button 
-                onClick={() => setIsOutputVisible(!isOutputVisible)}
-                className="text-white/20 hover:text-white/60 transition-colors"
-              >
-                <svg className={`h-5 w-5 transition-transform duration-500 ${isOutputVisible ? "" : "rotate-180"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-              </button>
+        {/* Console Side (Right) */}
+        <section className={`flex flex-[3] flex-col overflow-hidden rounded-[2rem] border shadow-2xl backdrop-blur-3xl transition-all duration-700 ${isDarkMode ? "border-white/10 bg-black/40" : "border-slate-200 bg-white/80"}`}>
+          <div className={`flex h-14 shrink-0 items-center justify-between border-b px-8 transition-colors ${isDarkMode ? "border-white/5 bg-white/[0.01]" : "border-slate-100 bg-slate-50/50"}`}>
+            <div className="flex items-center gap-3">
+               <div className={`h-2 w-2 rounded-full transition-all duration-500 ${runStatus === "Done" || runStatus === "succeeded" ? "bg-emerald-400 shadow-[0_0_12px_#34d399]" : runStatus === "Failed" || runStatus === "failed" ? "bg-rose-400 shadow-[0_0_12px_#fb7185]" : "bg-white/10"}`} />
+               <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${isDarkMode ? "text-white/60" : "text-slate-500"}`}>Console Output</span>
             </div>
-            
-            {isOutputVisible && (
-              <div className="flex-1 overflow-auto p-8 font-mono text-[13px] leading-relaxed">
-                {busy && !stdout && !stderr && (
-                  <div className="flex h-full items-center justify-center gap-4 text-blue-400/40 font-black uppercase tracking-[0.3em]">
-                    <div className="flex gap-1">
-                      <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-blue-500/40" style={{animationDelay: "-0.3s"}} />
-                      <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-blue-500/40" style={{animationDelay: "-0.15s"}} />
-                      <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-blue-500/40" />
-                    </div>
-                    <span>Processing</span>
-                  </div>
-                )}
-                
-                {stdout && (
-                  <div className="mb-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    <p className="text-white/20 uppercase text-[9px] font-black mb-3 tracking-[0.3em] flex items-center gap-3">
-                      <span className="h-px flex-1 bg-white/5"></span>
-                      Standard Out
-                      <span className="h-px flex-1 bg-white/5"></span>
-                    </p>
-                    <pre className="whitespace-pre-wrap text-emerald-400/90 drop-shadow-[0_0_15px_rgba(52,211,153,0.3)]">{stdout}</pre>
-                  </div>
-                )}
-                
-                {stderr && (
-                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    <p className="text-rose-500/30 uppercase text-[9px] font-black mb-3 tracking-[0.3em] flex items-center gap-3">
-                      <span className="h-px flex-1 bg-rose-500/10"></span>
-                      Execution Error
-                      <span className="h-px flex-1 bg-rose-500/10"></span>
-                    </p>
-                    <pre className="whitespace-pre-wrap text-rose-400/90 drop-shadow-[0_0_15px_rgba(251,113,113,0.3)]">{stderr}</pre>
-                  </div>
-                )}
-
-                {!stdout && !stderr && !busy && (
-                  <div className="flex h-full flex-col items-center justify-center opacity-10">
-                    <svg className="h-12 w-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                    <span className="text-[10px] font-black uppercase tracking-[0.5em]">Ready for Flux</span>
-                  </div>
-                )}
+            <div className={`text-[9px] font-bold px-2 py-0.5 rounded-md ${isDarkMode ? "bg-white/5 text-white/30" : "bg-slate-100 text-slate-400"}`}>{runStatus}</div>
+          </div>
+          
+          <div className="flex-1 overflow-auto p-8 font-mono text-[13px] leading-7 custom-scrollbar">
+            {busy && !stdout && !stderr && (
+              <div className="flex h-full flex-col items-center justify-center gap-6 animate-pulse">
+                <div className={`h-10 w-10 rounded-full border-4 border-t-blue-500 animate-spin ${isDarkMode ? "border-white/5" : "border-slate-100"}`} />
+                <span className={`text-[10px] font-black uppercase tracking-[0.3em] ${isDarkMode ? "text-blue-400/30" : "text-blue-500/40"}`}>Executing</span>
               </div>
             )}
             
-            <div className="flex h-10 items-center justify-between border-t border-white/5 bg-white/[0.01] px-8 shrink-0">
-               <span className="text-[9px] font-black uppercase tracking-widest text-white/20">Liquid Runtime Engine v0.1</span>
-               <div className="flex items-center gap-4 text-[9px] font-black uppercase tracking-widest text-white/10">
-                 <span>Status: {runStatus}</span>
-                 <span>Buffer: {activeLangId}</span>
-               </div>
-            </div>
+            {stdout && (
+              <div className="mb-8 animate-in fade-in slide-in-from-right-4 duration-700">
+                <p className={`uppercase text-[9px] font-black mb-4 tracking-[0.3em] flex items-center gap-4 select-none ${isDarkMode ? "text-white/10" : "text-slate-300"}`}>
+                  <span className={`h-px flex-1 ${isDarkMode ? "bg-white/5" : "bg-slate-100"}`}></span>
+                  Stdout
+                </p>
+                <pre className={`whitespace-pre-wrap p-5 rounded-xl border transition-all ${isDarkMode ? "text-emerald-50/90 bg-emerald-500/5 border-emerald-500/10" : "text-emerald-700 bg-emerald-50/50 border-emerald-200"}`}>{stdout}</pre>
+              </div>
+            )}
+            
+            {stderr && (
+              <div className="animate-in fade-in slide-in-from-right-4 duration-700">
+                <p className={`uppercase text-[9px] font-black mb-4 tracking-[0.3em] flex items-center gap-4 select-none ${isDarkMode ? "text-rose-500/20" : "text-rose-400/40"}`}>
+                  <span className={`h-px flex-1 ${isDarkMode ? "bg-rose-500/10" : "bg-rose-100"}`}></span>
+                  Stderr
+                </p>
+                <pre className={`whitespace-pre-wrap p-5 rounded-xl border transition-all ${isDarkMode ? "text-rose-300 bg-rose-500/5 border-rose-500/10" : "text-rose-700 bg-rose-50/50 border-rose-200"}`}>{stderr}</pre>
+              </div>
+            )}
+
+            {!stdout && !stderr && !busy && (
+              <div className="flex h-full flex-col items-center justify-center gap-6 opacity-[0.05] grayscale select-none">
+                <svg className="h-16 w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                <span className={`text-[11px] font-black uppercase tracking-[0.5em] transition-colors ${isDarkMode ? "text-white" : "text-slate-900"}`}>Ready</span>
+              </div>
+            )}
+          </div>
+
+          <div className={`flex h-10 shrink-0 items-center justify-between border-t px-8 transition-colors ${isDarkMode ? "border-white/5 bg-black/40" : "border-slate-100 bg-slate-50/50"}`}>
+             <span className={`text-[9px] font-black uppercase tracking-[0.2em] transition-colors ${isDarkMode ? "text-white/20" : "text-slate-400"}`}>v0.2.2 Stable</span>
+             <span className={`text-[9px] font-black uppercase tracking-[0.2em] transition-colors ${isDarkMode ? "text-white/20" : "text-slate-400"}`}>Buffer: {activeLangId}</span>
           </div>
         </section>
       </main>
+
+      {/* Footer */}
+      <footer className={`relative z-10 flex h-16 shrink-0 items-center justify-between border-t px-8 backdrop-blur-3xl transition-colors ${isDarkMode ? "border-white/5 bg-black/20" : "border-slate-200 bg-white/40"}`}>
+        <div className="flex items-center gap-6">
+           <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${isDarkMode ? "text-white/20" : "text-slate-400"}`}>
+              <span>Status</span>
+              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
+              <span className={isDarkMode ? "text-emerald-400/60" : "text-emerald-600"}>All Systems Operational</span>
+           </div>
+        </div>
+        
+        <a 
+          href="https://www.linkedin.com/in/syedmukheeth/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className={`flex items-center gap-2.5 group transition-all duration-500 hover:scale-105 active:scale-95`}
+        >
+          <span className={`text-[10px] font-bold uppercase tracking-[0.3em] transition-colors ${isDarkMode ? "text-white/20 group-hover:text-white/40" : "text-slate-400 group-hover:text-slate-600"}`}>built by</span>
+          <span className={`text-[11px] font-black uppercase tracking-[0.4em] transition-all bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent group-hover:from-blue-500 group-hover:to-indigo-600 drop-shadow-sm`}>syed mukheeth</span>
+          <svg className={`h-4 w-4 transition-all duration-500 group-hover:translate-x-1 group-hover:-translate-y-1 ${isDarkMode ? "text-white/20 group-hover:text-white/60" : "text-slate-300 group-hover:text-blue-500"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+        </a>
+
+        <div className={`flex items-center gap-6 text-[10px] font-black uppercase tracking-widest ${isDarkMode ? "text-white/10" : "text-slate-300"}`}>
+           <span className="hover:text-blue-500 transition-colors cursor-pointer">Terms</span>
+           <span className="hover:text-blue-500 transition-colors cursor-pointer">Privacy</span>
+           <span className="hover:text-blue-500 transition-colors cursor-pointer">Docs</span>
+        </div>
+      </footer>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: ${isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}; }
+      `}} />
+
+      {/* Modals */}
+      <AuthModal 
+        isOpen={activeModal === 'auth'} 
+        onClose={() => setActiveModal(null)} 
+        isDarkMode={isDarkMode} 
+        onLogin={setUser}
+      />
+      <SettingsModal 
+        isOpen={activeModal === 'settings'} 
+        onClose={() => setActiveModal(null)} 
+        isDarkMode={isDarkMode} 
+        settings={settings}
+        onSettingsChange={onSettingsUpdate}
+      />
+      <HistoryModal 
+        isOpen={activeModal === 'history'} 
+        onClose={() => setActiveModal(null)} 
+        isDarkMode={isDarkMode} 
+        history={history}
+        onRestore={onRestoreHistory}
+      />
+      <UpgradeModal 
+        isOpen={activeModal === 'upgrade'} 
+        onClose={() => setActiveModal(null)} 
+        isDarkMode={isDarkMode} 
+      />
     </div>
   );
 }

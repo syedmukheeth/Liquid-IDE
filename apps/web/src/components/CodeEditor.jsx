@@ -5,11 +5,11 @@ const LANGUAGE_TO_MONACO = {
   nodejs: "javascript",
   python: "python",
   cpp: "cpp",
-  java: "java",
-  go: "go"
+  c: "cpp",
+  java: "java"
 };
 
-export default function CodeEditor({ language, value, onChange, onCursorChange }) {
+export default function CodeEditor({ language, value, onChange, onCursorChange, theme = "vs-dark", options = {} }) {
   const editorRef = useRef(null);
 
   const monacoLanguage = useMemo(() => LANGUAGE_TO_MONACO[language] ?? "javascript", [language]);
@@ -34,15 +34,15 @@ export default function CodeEditor({ language, value, onChange, onCursorChange }
   return (
     <div className="h-full w-full bg-transparent">
       <Editor
-        theme="vs-dark"
+        theme={theme}
         language={monacoLanguage}
         value={value}
         onMount={handleMount}
         onChange={handleChange}
         options={{
           minimap: { enabled: false },
-          fontSize: 14,
-          tabSize: 2,
+          fontSize: options.fontSize || 14,
+          tabSize: options.tabSize || 2,
           lineNumbers: "on",
           smoothScrolling: true,
           cursorSmoothCaretAnimation: "on",

@@ -19,13 +19,13 @@ const LANGUAGE_CONFIGS = {
     image: "gcc:latest",
     command: (entry) => ["sh", "-c", `g++ ${entry} -o main && ./main`]
   },
+  c: {
+    image: "gcc:latest",
+    command: (entry) => ["sh", "-c", `gcc ${entry} -o main && ./main`]
+  },
   java: {
     image: "openjdk:17-slim",
     command: (entry) => ["sh", "-c", `javac ${entry} && java ${entry.replace(".java", "")}`]
-  },
-  go: {
-    image: "golang:1.21-alpine",
-    command: (entry) => ["go", "run", entry]
   }
 };
 
@@ -61,12 +61,13 @@ async function executeDirectly(run) {
       const shell = isWin ? "cmd" : "sh";
       const shellFlag = isWin ? "/c" : "-c";
 
+      const pythonCmd = await findPythonCommand();
       const localCmds = {
         javascript: ["node", entry],
-        python: ["python", entry],
+        python: [pythonCmd, entry],
         cpp: [shell, shellFlag, `g++ ${entry} -o main${exeExt} && .${path.sep}main${exeExt}`],
-        java: [shell, shellFlag, `javac ${entry} && java ${entry.replace(".java", "")}`],
-        go: ["go", "run", entry]
+        c: [shell, shellFlag, `gcc ${entry} -o main${exeExt} && .${path.sep}main${exeExt}`],
+        java: [shell, shellFlag, `javac ${entry} && java ${entry.replace(".java", "")}`]
       };
 
       const [cmd, ...args] = localCmds[language] || localCmds.javascript;
@@ -125,6 +126,23 @@ function execWithTimeout(cmd, args, timeoutMs, opts = {}) {
       reject(err);
     }
   });
+}
+
+async function findPythonCommand() {
+  const commands = ["python3", "python", "py"];
+  const { exec } = require("node:child_process");
+  const { promisify } = require("node:util");
+  const execAsync = promisify(exec);
+
+  for (const cmd of commands) {
+    try {
+      await execAsync(`${cmd} --version`);
+      return cmd;
+    } catch (err) {
+      // Continue searching
+    }
+  }
+  return "python"; // Default fallback
 }
 
 module.exports = { executeDirectly };

@@ -6,6 +6,7 @@ const { logger } = require("./config/logger");
 const { env } = require("./config/env");
 const { runsRouter } = require("./modules/runs/runs.routes");
 const { githubRouter } = require("./modules/github/github.routes");
+const { authRouter } = require("./modules/auth/auth.routes");
 
 function createApp() {
   const app = express();
@@ -23,6 +24,7 @@ function createApp() {
   app.get("/health", (_req, res) => res.json({ status: "ok", timestamp: new Date().toISOString() }));
   app.use("/runs", runsRouter);
   app.use("/github", githubRouter);
+  app.use("/auth", authRouter);
 
   // Global Error Handler
   app.use((err, req, res, next) => {
