@@ -193,104 +193,114 @@ export default function EditorPage() {
   }
 
   return (
-    <div className={`relative flex h-screen w-full flex-col transition-colors duration-700 ${isDarkMode ? "bg-[#050505] text-white" : "bg-[#f8fafc] text-slate-900"} selection:bg-blue-500/30 overflow-hidden`}>
-      {/* Background Mesh Gradients */}
+    <div className={`relative flex h-screen w-full flex-col font-sans transition-colors duration-1000 ${isDarkMode ? "bg-[#020408] text-white" : "bg-[#f8fafc] text-slate-900"} selection:bg-blue-500/30 overflow-hidden`}>
+      {/* Dynamic Background Blobs */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className={`absolute -left-[10%] -top-[10%] h-[40%] w-[40%] rounded-full blur-[120px] transition-colors duration-1000 ${isDarkMode ? "bg-blue-600/10" : "bg-blue-400/20"}`} />
-        <div className={`absolute -right-[10%] -bottom-[10%] h-[40%] w-[40%] rounded-full blur-[120px] transition-colors duration-1000 ${isDarkMode ? "bg-indigo-600/10" : "bg-indigo-400/20"}`} />
+        <div className={`absolute -left-[10%] top-[10%] h-[500px] w-[500px] rounded-full blur-[120px] animate-blob filter ${isDarkMode ? "bg-blue-600/20" : "bg-blue-400/30"}`} />
+        <div className={`absolute -right-[10%] top-[20%] h-[500px] w-[500px] rounded-full blur-[120px] animate-blob animation-delay-2000 filter ${isDarkMode ? "bg-indigo-600/20" : "bg-indigo-400/30"}`} />
+        <div className={`absolute bottom-[10%] left-[20%] h-[500px] w-[500px] rounded-full blur-[120px] animate-blob animation-delay-4000 filter ${isDarkMode ? "bg-purple-600/10" : "bg-purple-400/20"}`} />
+        <div className="noise-overlay" />
       </div>
 
       {/* Top Navbar */}
-      <header className={`relative z-10 flex h-16 shrink-0 items-center justify-between border-b px-8 backdrop-blur-3xl transition-colors ${isDarkMode ? "border-white/5 bg-black/20" : "border-slate-200 bg-white/40"}`}>
-        <div className="flex items-center gap-10">
-          <div className="flex items-center gap-3 group cursor-pointer">
-            <div className="relative h-9 w-9 overflow-hidden rounded-xl bg-gradient-to-br from-blue-400 to-indigo-600 p-0.5 shadow-2xl shadow-blue-500/20 transition-transform group-hover:scale-105 active:scale-95">
-              <div className={`flex h-full w-full items-center justify-center rounded-[10px] backdrop-blur-xl font-black text-white text-lg ${isDarkMode ? "bg-[#050505]/20" : "bg-white/20"}`}>L</div>
+      <header className={`relative z-20 flex h-20 shrink-0 items-center justify-between border-b px-10 backdrop-blur-3xl transition-all duration-500 ${isDarkMode ? "border-white/5 bg-black/40" : "border-slate-200 bg-white/60"}`}>
+        <div className="flex items-center gap-12">
+          <div className="flex items-center gap-4 group cursor-pointer">
+            <div className="relative h-11 w-11 overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 p-0.5 shadow-2xl shadow-blue-500/30 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 active:scale-95">
+              <div className={`flex h-full w-full items-center justify-center rounded-[14px] backdrop-blur-xl font-black text-white text-xl ${isDarkMode ? "bg-[#050505]/40" : "bg-white/40"}`}>L</div>
             </div>
             <div className="flex flex-col">
-               <span className={`text-sm font-black tracking-tight transition-opacity group-hover:opacity-80 ${isDarkMode ? "text-white" : "text-slate-800"}`}>Liquid Compiler</span>
-               <span className={`text-[10px] font-bold tracking-widest uppercase ${isDarkMode ? "text-white/30" : "text-slate-400"}`}>Flux Engine Pro</span>
+               <span className={`text-base font-black tracking-tight leading-none transition-all group-hover:tracking-wider ${isDarkMode ? "text-white" : "text-slate-900"}`}>Liquid Compiler</span>
+               <span className={`text-[10px] font-black tracking-[0.3em] uppercase mt-1 ${isDarkMode ? "text-blue-400/40" : "text-blue-600/50"}`}>Flux Engine Pro</span>
             </div>
           </div>
-          <nav className={`flex items-center gap-8 text-[11px] font-black uppercase tracking-widest ${isDarkMode ? "text-white/20" : "text-slate-400"}`}>
-            <button className={`${!activeModal ? "text-blue-500 border-b-2 border-blue-500" : "hover:text-blue-400"} py-5 transition-all`} onClick={() => setActiveModal(null)}>Editor</button>
-            <button className={`${activeModal === 'history' ? "text-blue-500 border-b-2 border-blue-500" : "hover:text-blue-400"} transition-colors py-5 border-b-2 border-transparent`} onClick={() => setActiveModal('history')}>History</button>
-            <button className={`${activeModal === 'settings' ? "text-blue-500 border-b-2 border-blue-500" : "hover:text-blue-400"} transition-colors py-5 border-b-2 border-transparent`} onClick={() => setActiveModal('settings')}>Settings</button>
+          <nav className={`flex items-center gap-10 text-[10px] font-black uppercase tracking-[0.2em] ${isDarkMode ? "text-white/30" : "text-slate-400"}`}>
+            {['Editor', 'History', 'Settings'].map((tab) => (
+              <button 
+                key={tab}
+                className={`relative py-7 transition-all hover:text-blue-500 ${(!activeModal && tab === 'Editor') || activeModal === tab.toLowerCase() ? "text-blue-500" : ""}`}
+                onClick={() => setActiveModal(tab === 'Editor' ? null : tab.toLowerCase())}
+              >
+                {tab}
+                {((!activeModal && tab === 'Editor') || activeModal === tab.toLowerCase()) && (
+                  <div className="absolute bottom-0 left-0 h-0.5 w-full bg-blue-600 shadow-[0_0_12px_#2563eb] animate-in fade-in zoom-in duration-500" />
+                )}
+              </button>
+            ))}
           </nav>
         </div>
         
         <div className="flex items-center gap-6">
-          {/* Theme Toggle */}
           <button 
             onClick={() => setIsDarkMode(!isDarkMode)}
-            className={`group flex h-10 w-10 items-center justify-center rounded-2xl border transition-all active:scale-90 ${isDarkMode ? "border-white/5 bg-white/5 hover:bg-white/10" : "border-slate-200 bg-slate-100 hover:bg-slate-200"}`}
+            className={`group flex h-11 w-11 items-center justify-center rounded-2xl border transition-all duration-500 active:scale-90 ${isDarkMode ? "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20" : "border-slate-200 bg-white hover:bg-slate-50 shadow-sm"}`}
           >
             {isDarkMode ? (
-              <svg className="h-5 w-5 text-amber-400 transition-transform group-hover:rotate-12" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" /></svg>
+              <svg className="h-5 w-5 text-amber-300 transition-all group-hover:rotate-45" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" /></svg>
             ) : (
-              <svg className="h-5 w-5 text-indigo-600 transition-transform group-hover:-rotate-12" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" /></svg>
+              <svg className="h-5 w-5 text-indigo-600 transition-all group-hover:-rotate-45" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" /></svg>
             )}
           </button>
           
-          <div className={`h-4 w-px ${isDarkMode ? "bg-white/10" : "bg-slate-200"}`} />
+          <div className={`h-5 w-px ${isDarkMode ? "bg-white/10" : "bg-slate-200"}`} />
 
           {user ? (
             <div className="flex items-center gap-4 group cursor-pointer" onClick={logoutUser} title="Click to Sign Out">
                <div className="flex flex-col items-end">
-                  <span className={`text-[11px] font-black uppercase tracking-tight ${isDarkMode ? "text-white" : "text-slate-800"}`}>{user.name}</span>
-                  <span className={`text-[9px] font-bold uppercase tracking-widest ${isDarkMode ? "text-white/20" : "text-slate-400"}`}>Account</span>
+                  <span className={`text-[11px] font-black uppercase tracking-tight ${isDarkMode ? "text-white" : "text-slate-900"}`}>{user.name}</span>
+                  <span className={`text-[9px] font-bold uppercase tracking-widest ${isDarkMode ? "text-blue-400/50" : "text-blue-600/50"}`}>Pro Member</span>
                </div>
-               <div className="h-10 w-10 overflow-hidden rounded-xl border border-white/10 bg-white/5 p-0.5 shadow-2xl transition-transform group-hover:scale-105 active:scale-95">
-                  <img src={user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=6366f1&color=fff`} className="h-full w-full rounded-[8px] object-cover" alt="Avatar" />
+               <div className="relative h-11 w-11 p-0.5 rounded-2xl bg-gradient-to-tr from-white/10 to-transparent transition-transform group-hover:scale-105">
+                  <img src={user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=6366f1&color=fff`} className="h-full w-full rounded-[14px] object-cover border border-white/10 shadow-xl" alt="Avatar" />
                </div>
             </div>
           ) : (
-            <button onClick={() => setActiveModal('auth')} className={`h-10 rounded-2xl px-6 text-[12px] font-black transition-all active:scale-95 border backdrop-blur-xl ${isDarkMode ? "bg-white/5 text-white/80 hover:bg-white/10 border-white/5" : "bg-white text-slate-700 hover:bg-slate-50 border-slate-200/60 shadow-sm"}`}>Sign In</button>
+            <button onClick={() => setActiveModal('auth')} className="flux-button-secondary h-11 px-8">Sign In</button>
           )}
 
-          <button onClick={() => setActiveModal('upgrade')} className="h-10 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 text-[12px] font-black text-white shadow-2xl shadow-blue-500/20 transition-all hover:brightness-110 active:scale-95">Go Pro</button>
+          <button onClick={() => setActiveModal('upgrade')} className="flux-button-primary h-11 px-8 animate-glow">Go Pro</button>
         </div>
       </header>
 
       {/* Main Split Container */}
-      <main className="relative z-10 flex flex-1 overflow-hidden p-4 gap-4">
+      <main className="relative z-10 flex flex-1 overflow-hidden p-6 gap-6">
         {/* Editor Side (Left) */}
-        <section className="flex flex-[7] flex-col overflow-hidden gap-4">
-          <div className={`flex flex-1 flex-col overflow-hidden rounded-[2rem] border shadow-2xl backdrop-blur-3xl transition-all duration-700 ${isDarkMode ? "border-white/10 bg-white/[0.03]" : "border-slate-200 bg-white/70"}`}>
+        <section className="flex flex-[7] flex-col overflow-hidden gap-6">
+          <div className="flux-card flex flex-1 flex-col overflow-hidden">
             {/* Editor Toolbar */}
-            <div className={`flex h-14 shrink-0 items-center justify-between border-b px-8 transition-colors ${isDarkMode ? "border-white/5 bg-white/[0.01]" : "border-slate-100 bg-slate-50/50"}`}>
-              <div className="flex items-center gap-6">
+            <div className={`flex h-16 shrink-0 items-center justify-between border-b px-10 transition-colors ${isDarkMode ? "border-white/5 bg-white/[0.02]" : "border-slate-100 bg-slate-50/30"}`}>
+              <div className="flex items-center gap-8">
                 <LanguageSelector activeLanguage={activeLangId} onLanguageChange={setActiveLangId} />
-                <button className={`group flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.25em] transition-all duration-300 ${isDarkMode ? "text-white/20 hover:text-white/60" : "text-slate-400 hover:text-slate-600"}`}>
-                  <svg className="h-4 w-4 transition-transform group-hover:rotate-180 duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                <button className={`group flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all ${isDarkMode ? "text-white/20 hover:text-white/60" : "text-slate-400 hover:text-slate-600"}`}>
+                  <svg className="h-4 w-4 transition-transform group-hover:rotate-180 duration-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                   Reset
                 </button>
               </div>
               
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-6">
+                {activeLangId === "python" && (
+                  <div className={`flex items-center gap-3 px-4 py-2 rounded-xl border text-[9px] font-black uppercase tracking-[0.1em] transition-all ${pyodide ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-500" : "border-amber-500/20 bg-amber-500/5 text-amber-500"}`}>
+                    <div className={`h-2 w-2 rounded-full ${pyodide ? "bg-emerald-500 shadow-[0_0_12px_#10b981]" : "bg-amber-500 animate-pulse shadow-[0_0_12px_#f59e0b]"}`} />
+                    {pyodide ? "Sandbox ready" : "Booting sandbox..."}
+                  </div>
+                )}
                 <button 
                   onClick={onRun}
                   disabled={busy || (activeLangId === "python" && isPyodideLoading)}
-                  className="group relative flex h-10 items-center gap-3 overflow-hidden rounded-xl bg-emerald-500/10 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 transition-all hover:bg-emerald-500/20 active:scale-95 disabled:opacity-50 ring-1 ring-emerald-500/20"
+                  className="flux-button-primary flex items-center gap-4 h-11 px-8 min-w-[160px] justify-center"
                 >
                   {(busy || (activeLangId === "python" && isPyodideLoading)) ? (
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-emerald-500/20 border-t-emerald-500" />
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
                   ) : (
                     <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" /></svg>
                   )}
-                  <span>{(activeLangId === "python" && isPyodideLoading) ? "Booting Engine..." : "Run code"}</span>
+                  <span>{(activeLangId === "python" && isPyodideLoading) ? "Booting..." : busy ? "Running..." : "Run Code"}</span>
                 </button>
-                {activeLangId === "python" && (
-                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[9px] font-black uppercase tracking-widest transition-all ${pyodide ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-500" : "border-amber-500/20 bg-amber-500/5 text-amber-500"}`}>
-                    <div className={`h-1.5 w-1.5 rounded-full ${pyodide ? "bg-emerald-500 shadow-[0_0_8px_#10b981]" : "bg-amber-500 animate-pulse shadow-[0_0_8px_#f59e0b]"}`} />
-                    {pyodide ? "Web Runner Active" : "Initializing Engine..."}
-                  </div>
-                )}
               </div>
             </div>
             
             {/* Monaco Editor */}
-            <div className="flex-1 overflow-hidden py-4">
+            <div className="flex-1 overflow-hidden">
                <CodeEditor
                 language={activeLangId === "javascript" ? "nodejs" : activeLangId}
                 value={buffers[activeLangId]}
@@ -306,65 +316,79 @@ export default function EditorPage() {
         </section>
 
         {/* Console Side (Right) */}
-        <section className={`flex flex-[3] flex-col overflow-hidden rounded-[2rem] border shadow-2xl backdrop-blur-3xl transition-all duration-700 ${isDarkMode ? "border-white/10 bg-black/40" : "border-slate-200 bg-white/80"}`}>
-          <div className={`flex h-14 shrink-0 items-center justify-between border-b px-8 transition-colors ${isDarkMode ? "border-white/5 bg-white/[0.01]" : "border-slate-100 bg-slate-50/50"}`}>
-            <div className="flex items-center gap-3">
-               <div className={`h-2 w-2 rounded-full transition-all duration-500 ${runStatus === "Done" || runStatus === "succeeded" ? "bg-emerald-400 shadow-[0_0_12px_#34d399]" : runStatus === "Failed" || runStatus === "failed" ? "bg-rose-400 shadow-[0_0_12px_#fb7185]" : "bg-white/10"}`} />
-               <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${isDarkMode ? "text-white/60" : "text-slate-500"}`}>Console Output</span>
+        <section className={`flux-card flex flex-[3] flex-col overflow-hidden transition-all duration-1000 ${isDarkMode ? "bg-black/60 shadow-indigo-900/10" : "bg-white/90 shadow-slate-200/50"}`}>
+          <div className={`flex h-16 shrink-0 items-center justify-between border-b px-8 transition-colors ${isDarkMode ? "border-white/5 bg-white/[0.01]" : "border-slate-100 bg-slate-50/50"}`}>
+            <div className="flex items-center gap-4">
+               <div className={`h-2.5 w-2.5 rounded-full ring-4 transition-all duration-700 ${runStatus === "Done" || runStatus === "succeeded" ? "bg-emerald-400 ring-emerald-400/10" : runStatus === "Failed" || runStatus === "failed" ? "bg-rose-400 ring-rose-400/10" : busy ? "bg-blue-400 ring-blue-400/10 animate-pulse" : "bg-white/10 ring-transparent"}`} />
+               <span className={`text-[10px] font-black uppercase tracking-[0.3em] font-mono ${isDarkMode ? "text-white/60" : "text-slate-500"}`}>Terminal Output</span>
             </div>
-            <div className={`text-[9px] font-bold px-2 py-0.5 rounded-md ${isDarkMode ? "bg-white/5 text-white/30" : "bg-slate-100 text-slate-400"}`}>{runStatus}</div>
+            <div className={`text-[10px] font-black tracking-widest px-3 py-1 rounded-full border transition-all ${isDarkMode ? "bg-white/5 border-white/5 text-white/40" : "bg-slate-100 border-slate-200 text-slate-400"}`}>{runStatus.toUpperCase()}</div>
           </div>
           
-          <div className="flex-1 overflow-auto p-8 font-mono text-[13px] leading-7 custom-scrollbar">
+          <div className="flex-1 overflow-auto p-10 font-mono text-[14px] leading-relaxed custom-scrollbar selection:bg-indigo-500/40">
             {busy && !stdout && !stderr && (
-              <div className="flex h-full flex-col items-center justify-center gap-6 animate-pulse">
-                <div className={`h-10 w-10 rounded-full border-4 border-t-blue-500 animate-spin ${isDarkMode ? "border-white/5" : "border-slate-100"}`} />
-                <span className={`text-[10px] font-black uppercase tracking-[0.3em] ${isDarkMode ? "text-blue-400/30" : "text-blue-500/40"}`}>Executing</span>
+              <div className="flex h-full flex-col items-center justify-center gap-8 group">
+                <div className="relative">
+                   <div className={`h-16 w-16 rounded-full border-2 border-t-white/80 animate-spin ${isDarkMode ? "border-blue-500/10" : "border-blue-500/20"}`} />
+                   <div className="absolute inset-2 rounded-full border border-indigo-500/20 animate-pulse" />
+                </div>
+                <span className={`text-[10px] font-black uppercase tracking-[0.5em] transition-all duration-1000 ${isDarkMode ? "text-blue-400/30 group-hover:text-blue-400/60" : "text-blue-600/40"}`}>Compiling & Executing</span>
               </div>
             )}
             
             {stdout && (
-              <div className="mb-8 animate-in fade-in slide-in-from-right-4 duration-700">
-                <p className={`uppercase text-[9px] font-black mb-4 tracking-[0.3em] flex items-center gap-4 select-none ${isDarkMode ? "text-white/10" : "text-slate-300"}`}>
-                  <span className={`h-px flex-1 ${isDarkMode ? "bg-white/5" : "bg-slate-100"}`}></span>
+              <div className="mb-10 animate-in fade-in slide-in-from-right-4 duration-700">
+                <p className={`uppercase text-[9px] font-black mb-5 tracking-[0.4em] flex items-center gap-5 select-none ${isDarkMode ? "text-white/10" : "text-slate-300"}`}>
+                  <span className={`h-[1px] flex-1 ${isDarkMode ? "bg-white/5" : "bg-slate-100"}`}></span>
                   Stdout
                 </p>
-                <pre className={`whitespace-pre-wrap p-5 rounded-xl border transition-all ${isDarkMode ? "text-emerald-50/90 bg-emerald-500/5 border-emerald-500/10" : "text-emerald-700 bg-emerald-50/50 border-emerald-200"}`}>{stdout}</pre>
+                <div className={`relative p-6 rounded-2xl border transition-all ${isDarkMode ? "bg-emerald-500/5 border-emerald-500/10" : "bg-emerald-50 border-emerald-100"}`}>
+                   <pre className={`whitespace-pre-wrap ${isDarkMode ? "text-emerald-50/90" : "text-emerald-800"}`}>{stdout}</pre>
+                   <div className={`absolute top-0 right-0 p-2 rounded-tr-2xl text-[8px] font-black uppercase tracking-widest ${isDarkMode ? "text-emerald-500/20" : "text-emerald-500/40"}`}>Output</div>
+                </div>
               </div>
             )}
             
             {stderr && (
               <div className="animate-in fade-in slide-in-from-right-4 duration-700">
-                <p className={`uppercase text-[9px] font-black mb-4 tracking-[0.3em] flex items-center gap-4 select-none ${isDarkMode ? "text-rose-500/20" : "text-rose-400/40"}`}>
-                  <span className={`h-px flex-1 ${isDarkMode ? "bg-rose-500/10" : "bg-rose-100"}`}></span>
+                <p className={`uppercase text-[9px] font-black mb-5 tracking-[0.4em] flex items-center gap-5 select-none ${isDarkMode ? "text-rose-500/10" : "text-rose-500/20"}`}>
+                  <span className={`h-[1px] flex-1 ${isDarkMode ? "bg-rose-500/5" : "bg-rose-100"}`}></span>
                   Stderr
                 </p>
-                <pre className={`whitespace-pre-wrap p-5 rounded-xl border transition-all ${isDarkMode ? "text-rose-300 bg-rose-500/5 border-rose-500/10" : "text-rose-700 bg-rose-50/50 border-rose-200"}`}>{stderr}</pre>
+                <div className={`relative p-6 rounded-2xl border transition-all ${isDarkMode ? "bg-rose-500/5 border-rose-500/10 shadow-2xl shadow-rose-900/10" : "bg-rose-50 border-rose-100"}`}>
+                   <pre className={`whitespace-pre-wrap ${isDarkMode ? "text-rose-300" : "text-rose-800"}`}>{stderr}</pre>
+                   <div className="absolute top-3 right-4 h-2 w-2 rounded-full bg-rose-500/40 animate-pulse" />
+                </div>
               </div>
             )}
 
             {!stdout && !stderr && !busy && (
-              <div className="flex h-full flex-col items-center justify-center gap-6 opacity-[0.05] grayscale select-none">
-                <svg className="h-16 w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                <span className={`text-[11px] font-black uppercase tracking-[0.5em] transition-colors ${isDarkMode ? "text-white" : "text-slate-900"}`}>Ready</span>
+              <div className="flex h-full flex-col items-center justify-center gap-8 opacity-[0.03] grayscale transition-opacity duration-1000 hover:opacity-[0.06] select-none">
+                <svg className="h-24 w-24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={0.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                <span className={`text-[12px] font-black uppercase tracking-[0.8em] transition-all ${isDarkMode ? "text-white" : "text-slate-900"}`}>Standby</span>
               </div>
             )}
           </div>
 
-          <div className={`flex h-10 shrink-0 items-center justify-between border-t px-8 transition-colors ${isDarkMode ? "border-white/5 bg-black/40" : "border-slate-100 bg-slate-50/50"}`}>
-             <span className={`text-[9px] font-black uppercase tracking-[0.2em] transition-colors ${isDarkMode ? "text-white/20" : "text-slate-400"}`}>v0.5.0 Stable (Zero-Friction)</span>
-             <span className={`text-[9px] font-black uppercase tracking-[0.2em] transition-colors ${isDarkMode ? "text-white/20" : "text-slate-400"}`}>Buffer: {activeLangId}</span>
+          <div className={`flex h-12 shrink-0 items-center justify-between border-t px-8 transition-colors ${isDarkMode ? "border-white/5 bg-black/20" : "border-slate-100 bg-slate-50/30"}`}>
+             <div className="flex items-center gap-2">
+                <span className={`text-[9px] font-black uppercase tracking-[0.3em] ${isDarkMode ? "text-white/20" : "text-slate-400"}`}>Flux OS</span>
+                <span className={`text-[9px] font-bold ${isDarkMode ? "text-blue-500/40" : "text-blue-600/40"}`}>v0.5.0-STABLE</span>
+             </div>
+             <span className={`text-[9px] font-black uppercase tracking-[0.3em] ${isDarkMode ? "text-white/20" : "text-slate-400"}`}>Buffer: <span className="text-blue-500/60 font-black">{activeLangId}</span></span>
           </div>
         </section>
       </main>
 
       {/* Footer */}
-      <footer className={`relative z-10 flex h-16 shrink-0 items-center justify-between border-t px-8 backdrop-blur-3xl transition-colors ${isDarkMode ? "border-white/5 bg-black/20" : "border-slate-200 bg-white/40"}`}>
-        <div className="flex items-center gap-6">
-           <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${isDarkMode ? "text-white/20" : "text-slate-400"}`}>
-              <span>Status</span>
-              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
-              <span className={isDarkMode ? "text-emerald-400/60" : "text-emerald-600"}>All Systems Operational</span>
+      <footer className={`relative z-20 flex h-16 shrink-0 items-center justify-between border-t px-10 border-white/5 backdrop-blur-3xl transition-colors ${isDarkMode ? "bg-black/20" : "bg-white/40 border-slate-200"}`}>
+        <div className="flex items-center gap-8">
+           <div className={`flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] ${isDarkMode ? "text-white/20" : "text-slate-400"}`}>
+              <div className="relative flex items-center justify-center h-2 w-2">
+                 <div className="absolute h-full w-full rounded-full bg-emerald-500 animate-ping opacity-75" />
+                 <div className="relative h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_12px_#10b981]" />
+              </div>
+              <span className={isDarkMode ? "text-emerald-400/60" : "text-emerald-600"}>System Ready</span>
            </div>
         </div>
         
@@ -372,19 +396,19 @@ export default function EditorPage() {
           href="https://www.linkedin.com/in/syedmukheeth/" 
           target="_blank" 
           rel="noopener noreferrer"
-          className={`flex items-center gap-2.5 group transition-all duration-500 hover:scale-105 active:scale-95`}
+          className="group flex items-center gap-3 transition-transform hover:scale-105 active:scale-95"
         >
-          <span className={`text-[10px] font-bold uppercase tracking-[0.3em] transition-colors ${isDarkMode ? "text-white/20 group-hover:text-white/40" : "text-slate-400 group-hover:text-slate-600"}`}>built by</span>
-          <span className={`text-[11px] font-black uppercase tracking-[0.4em] transition-all bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent group-hover:from-blue-500 group-hover:to-indigo-600 drop-shadow-sm`}>syed mukheeth</span>
-          <svg className={`h-4 w-4 transition-all duration-500 group-hover:translate-x-1 group-hover:-translate-y-1 ${isDarkMode ? "text-white/20 group-hover:text-white/60" : "text-slate-300 group-hover:text-blue-500"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+          <span className={`text-[9px] font-black uppercase tracking-[0.4em] ${isDarkMode ? "text-white/10 group-hover:text-white/30" : "text-slate-300 group-hover:text-slate-500"}`}>Engineered by</span>
+          <span className="text-[11px] font-black uppercase tracking-[0.5em] bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 bg-clip-text text-transparent drop-shadow-sm group-hover:brightness-125 transition-all">syed mukheeth</span>
         </a>
 
-        <div className={`flex items-center gap-6 text-[10px] font-black uppercase tracking-widest ${isDarkMode ? "text-white/10" : "text-slate-300"}`}>
-           <span className="hover:text-blue-500 transition-colors cursor-pointer">Terms</span>
-           <span className="hover:text-blue-500 transition-colors cursor-pointer">Privacy</span>
-           <span className="hover:text-blue-500 transition-colors cursor-pointer">Docs</span>
+        <div className={`flex items-center gap-8 text-[10px] font-black uppercase tracking-[0.3em] ${isDarkMode ? "text-white/20" : "text-slate-400"}`}>
+           {['Archive', 'Security', 'Telemetry'].map((link) => (
+             <span key={link} className="hover:text-blue-500 transition-all cursor-pointer hover:tracking-widest duration-500">{link}</span>
+           ))}
         </div>
       </footer>
+
 
       <style dangerouslySetInnerHTML={{ __html: `
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }

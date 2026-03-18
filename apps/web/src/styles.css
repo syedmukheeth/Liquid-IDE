@@ -41,56 +41,65 @@ body {
 
 @layer components {
   .flux-glass {
-    @apply border border-white/10 bg-white/[0.03] backdrop-blur-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.37)];
+    @apply border border-white/10 bg-white/[0.03] backdrop-blur-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.37)];
+    background-image: radial-gradient(circle at top left, rgba(255,255,255,0.05) 0%, transparent 50%);
   }
 
   .flux-card {
-    @apply flux-glass rounded-3xl transition-all duration-300;
+    @apply flux-glass rounded-[2.5rem] transition-all duration-700 hover:border-white/20;
   }
 
   .flux-button {
-    @apply relative overflow-hidden rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-300 active:scale-95;
+    @apply relative overflow-hidden rounded-2xl px-6 py-3 text-sm font-black uppercase tracking-widest transition-all duration-300 active:scale-95;
   }
 
   .flux-button-primary {
-    @apply flux-button bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:bg-blue-500 hover:shadow-[0_0_25px_rgba(37,99,235,0.6)];
+    @apply flux-button bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-2xl shadow-blue-500/20 hover:brightness-110 hover:shadow-blue-500/40;
   }
 
   .flux-button-secondary {
-    @apply flux-button border border-white/10 bg-white/5 hover:bg-white/10;
+    @apply flux-button border border-white/5 bg-white/5 backdrop-blur-xl hover:bg-white/10;
   }
 
   .flux-glass-active {
-    @apply border-blue-500/30 bg-blue-500/5 shadow-[0_0_50px_rgba(59,130,246,0.2)];
+    @apply border-blue-500/30 bg-blue-500/5 shadow-[0_0_50px_rgba(59,130,246,0.15)];
   }
+}
+
+.animate-blob {
+  animation: blob 20s infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+@keyframes blob {
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
 }
 
 .animate-glow {
   animation: glow 4s ease-in-out infinite alternate;
 }
 
-.animate-shimmer {
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.05),
-    transparent
-  );
-  background-size: 200% 100%;
-  animation: shimmer 2s infinite;
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
 @keyframes glow {
-  from {
-    box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
-  }
-  to {
-    box-shadow: 0 0 25px rgba(59, 130, 246, 0.5);
-  }
+  from { box-shadow: 0 0 10px rgba(59, 130, 246, 0.1); }
+  to { box-shadow: 0 0 30px rgba(59, 130, 246, 0.3); }
 }
+
+.noise-overlay {
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
 
