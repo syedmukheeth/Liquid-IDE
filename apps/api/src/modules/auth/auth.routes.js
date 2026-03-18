@@ -1,6 +1,17 @@
 const express = require("express");
-const { register, login } = require("./auth.service");
+const { register, login, getUserById } = require("./auth.service");
+const { authMiddleware } = require("../../middleware/auth.middleware");
 const router = express.Router();
+
+router.get("/me", authMiddleware, async (req, res) => {
+  try {
+    const user = await getUserById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
 router.post("/register", async (req, res, next) => {
   try {

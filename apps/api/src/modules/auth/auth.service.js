@@ -44,8 +44,14 @@ function generateToken(user) {
   );
 }
 
+async function getUserById(id) {
+  const user = await User.findById(id).select("-password");
+  return user;
+}
+
 module.exports = {
   register,
   login,
-  generateToken
+  generateToken,
+  getUserById
 };

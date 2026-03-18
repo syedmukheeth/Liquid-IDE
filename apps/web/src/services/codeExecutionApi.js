@@ -1,9 +1,13 @@
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
 export async function submitRun({ language, code }) {
+  const token = localStorage.getItem("flux_token");
+  const headers = { "content-type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
   const res = await fetch(`${API_URL}/runs`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers,
     body: JSON.stringify({ language, code })
   });
   if (!res.ok) throw new Error(await res.text());

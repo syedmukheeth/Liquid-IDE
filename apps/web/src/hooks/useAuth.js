@@ -1,17 +1,34 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { getMe } from "../services/authApi";
 
 export function useAuth() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem("flux_token"));
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const savedUser = localStorage.getItem("flux_user");
-    if (savedUser && token) {
-      setUser(JSON.parse(savedUser));
+  const fetchUser = useCallback(async (authToken) => {
+    try {
+      const userData = await getMe(authToken);
+      setUser(userData);
+      localStorage.setItem("flux_user", JSON.stringify(userData));
+    } catch (err) {
+      console.error("Session verification failed:", err);
+      // Optional: Clear session on invalid token
+      // logoutUser(); 
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, [token]);
+  }, []);
+
+  useEffect(() => {
+    if (token) {
+      const savedUser = localStorage.getItem("flux_user");
+      if (savedUser) setUser(JSON.parse(savedUser));
+      fetchUser(token);
+    } else {
+      setLoading(false);
+    }
+  }, [token, fetchUser]);
 
   const loginUser = (userData, accessToken) => {
     setUser(userData);

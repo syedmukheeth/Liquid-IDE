@@ -1,6 +1,7 @@
 const { Router } = require("express");
 const { z } = require("zod");
 const { createRun, getRun } = require("./runs.service");
+const { authMiddleware } = require("../../middleware/auth.middleware");
 
 const runsRouter = Router();
 
@@ -9,7 +10,7 @@ const CreateRunSchema = z.object({
   code: z.string().min(1)
 });
 
-runsRouter.post("/", async (req, res, next) => {
+runsRouter.post("/", authMiddleware, async (req, res, next) => {
   try {
     const { language, code } = CreateRunSchema.parse(req.body);
     const runtime = (language === "javascript" || language === "nodejs") ? "javascript" : language;
