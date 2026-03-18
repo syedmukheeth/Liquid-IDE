@@ -2,42 +2,81 @@ const { RunModel } = require("./runs.model");
 const { runsQueue } = require("./runs.queue");
 const { executeDirectly } = require("./directExecutor");
 const { logger } = require("../../config/logger");
+const mongoose = require("mongoose");
+
+// In-memory fallback for when MongoDB is disconnected
+const memoryRuns = new Map();
 
 async function createRun(input) {
-  const run = await RunModel.create({
-    projectId: input.projectId,
-    runtime: input.runtime,
-    status: "queued",
-    entrypoint: input.entrypoint,
-    files: input.files,
-    stdout: "",
-    stderr: "",
-    exitCode: null,
-    startedAt: null,
-    finishedAt: null
-  });
+  const isConnected = mongoose.connection.readyState === 1;
+  let run;
 
-  try {
-    const queuePromise = runsQueue.add(
-      "execute",
-      { runId: run._id.toString() },
-      {
-        removeOnComplete: { age: 3600, count: 1000 },
-        removeOnFail: { age: 24 * 3600, count: 1000 }
+  if (isConnected) {
+    try {
+      run = await RunModel.create({
+        projectId: input.projectId,
+        runtime: input.runtime,
+        status: "queued",
+        entrypoint: input.entrypoint,
+        files: input.files,
+        stdout: "",
+        stderr: "",
+        exitCode: null,
+        startedAt: null,
+        finishedAt: null
+      });
+    } catch (err) {
+      logger.error({ err }, "Failed to create run in Mongo, falling back to memory");
+    }
+  }
+
+  if (!run) {
+    // Fallback run object
+    const runId = new mongoose.Types.ObjectId().toString();
+    run = {
+      _id: runId,
+      ...input,
+      status: "running", // Direct execution starts immediately
+      stdout: "",
+      stderr: "",
+      exitCode: null,
+      startedAt: new Date(),
+      save: async function() { 
+        memoryRuns.set(this._id.toString(), { ...this });
+        return this; 
       }
-    );
+    };
+    memoryRuns.set(runId, { ...run });
+  }
 
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Redis Timeout")), 3000)
-    );
+  // If connected, try the queue; otherwise, go direct immediately
+  let useQueue = isConnected;
+  if (useQueue) {
+    try {
+      const queuePromise = runsQueue.add(
+        "execute",
+        { runId: run._id.toString() },
+        {
+          removeOnComplete: { age: 3600, count: 1000 },
+          removeOnFail: { age: 24 * 3600, count: 1000 }
+        }
+      );
 
-    await Promise.race([queuePromise, timeoutPromise]);
-  } catch (err) {
-    logger.warn({ runId: run._id, err: err.message }, "Redis Queue failed or timed out. Switching to direct execution.");
-    
-    // Direct Execution Fallback
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Redis Timeout")), 2000)
+      );
+
+      await Promise.race([queuePromise, timeoutPromise]);
+    } catch (err) {
+      logger.warn({ runId: run._id, err: err.message }, "Redis Queue failed or timed out. Switching to direct execution.");
+      useQueue = false;
+    }
+  }
+
+  if (!useQueue || !isConnected) {
+    // Direct Execution Fallback (or primary if disconnected)
     run.status = "running";
-    run.startedAt = new Date();
+    if (!run.startedAt) run.startedAt = new Date();
     await run.save();
 
     const result = await executeDirectly(run);
@@ -54,7 +93,11 @@ async function createRun(input) {
 }
 
 async function getRun(runId) {
-  return await RunModel.findById(runId).lean();
+  if (mongoose.connection.readyState === 1) {
+    const mongoRun = await RunModel.findById(runId).lean();
+    if (mongoRun) return mongoRun;
+  }
+  return memoryRuns.get(runId.toString());
 }
 
 module.exports = { createRun, getRun };
