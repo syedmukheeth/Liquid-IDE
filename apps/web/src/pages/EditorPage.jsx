@@ -365,6 +365,13 @@ export default function EditorPage() {
         </div>
 
         <div className="flex items-center gap-6">
+           <span className="text-[9px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-1.5">
+             Built by 
+             <a href="https://linkedin.com/in/syedmukheeth" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 transition-colors hover:underline underline-offset-4">
+               Syed Mukheeth
+             </a>
+           </span>
+           <div className="h-3 w-px bg-white/10" />
            <span className="text-[9px] font-bold uppercase tracking-widest text-white/20">© 2026 LiquidIDE</span>
         </div>
       </footer>
