@@ -151,7 +151,7 @@ export default function EditorPage() {
 
     setBusy(true);
     setQueueStartTime(Date.now());
-    outputRef.current?.clear();
+    setStdout("");
     setStderr("");
     setRunStatus("Running");
     setIsOutputVisible(true);
