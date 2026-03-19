@@ -41,16 +41,16 @@ body {
 
 @layer components {
   .flux-glass {
-    @apply border border-white/5 bg-white/[0.02] backdrop-blur-3xl shadow-2xl;
+    @apply border border-white/5 bg-white/[0.02] backdrop-blur-xl shadow-2xl;
     background-image: radial-gradient(circle at top left, rgba(255,255,255,0.03) 0%, transparent 40%);
   }
 
   .flux-card {
-    @apply flux-glass rounded-[2rem] transition-all duration-500 hover:border-white/10;
+    @apply flux-glass rounded-[1.5rem] transition-all duration-300 hover:border-white/10;
   }
 
   .flux-button {
-    @apply relative overflow-hidden rounded-xl px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-300 active:scale-95;
+    @apply relative overflow-hidden rounded-lg px-6 py-2 text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-300 active:scale-95;
   }
 
   .flux-button-primary {

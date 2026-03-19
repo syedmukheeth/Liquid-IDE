@@ -130,6 +130,18 @@ async function createRun(input) {
   return run;
 }
 
+async function getRun(runId) {
+  if (mongoose.connection.readyState === 1) {
+    try {
+      const run = await RunModel.findById(runId).lean();
+      if (run) return run;
+    } catch (err) {
+      logger.warn({ err, runId }, "Failed to find run in MongoDB");
+    }
+  }
+  return null;
+}
+
 async function getQueueStatus() {
   try {
     const queue = getRunsQueue();
