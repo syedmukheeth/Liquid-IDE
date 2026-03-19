@@ -213,7 +213,7 @@ export default function EditorPage() {
               </div>
             </div>
             <div className="flex flex-col">
-               <span className={`text-base font-black tracking-tight leading-none transition-all group-hover:tracking-wider ${isDarkMode ? "text-white" : "text-slate-900"}`}>Liquid Compiler</span>
+               <span className={`text-base font-black tracking-tight leading-none transition-all group-hover:tracking-wider ${isDarkMode ? "text-white" : "text-slate-900"}`}>Liquid IDE</span>
                <span className={`text-[10px] font-black tracking-[0.3em] uppercase mt-1 ${isDarkMode ? "text-blue-400/40" : "text-blue-600/50"}`}>Flux Engine Pro</span>
             </div>
           </div>
@@ -387,8 +387,8 @@ export default function EditorPage() {
       </main>
 
       {/* Footer */}
-      <footer className={`relative z-20 flex h-16 shrink-0 items-center justify-between border-t px-10 border-white/5 backdrop-blur-3xl transition-colors ${isDarkMode ? "bg-black/20" : "bg-white/40 border-slate-200"}`}>
-        <div className="flex items-center gap-8">
+      <footer className={`relative z-20 flex h-20 shrink-0 items-center justify-between border-t px-10 border-white/5 backdrop-blur-3xl transition-colors ${isDarkMode ? "bg-black/40" : "bg-white/60 border-slate-200"}`}>
+        <div className="flex flex-1 items-center gap-8">
            <div className={`flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] ${isDarkMode ? "text-white/20" : "text-slate-400"}`}>
               <div className="relative flex items-center justify-center h-2 w-2">
                  <div className="absolute h-full w-full rounded-full bg-emerald-500 animate-ping opacity-75" />
@@ -397,21 +397,29 @@ export default function EditorPage() {
               <span className={isDarkMode ? "text-emerald-400/60" : "text-emerald-600"}>System Ready</span>
            </div>
         </div>
-        
-        <a 
-          href="https://www.linkedin.com/in/syedmukheeth/" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="group flex items-center gap-3 transition-transform hover:scale-105 active:scale-95"
-        >
-          <span className={`text-[9px] font-black uppercase tracking-[0.4em] ${isDarkMode ? "text-white/10 group-hover:text-white/30" : "text-slate-300 group-hover:text-slate-500"}`}>Engineered by</span>
-          <span className="text-[11px] font-black uppercase tracking-[0.5em] bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 bg-clip-text text-transparent drop-shadow-sm group-hover:brightness-125 transition-all">syed mukheeth</span>
-        </a>
 
-        <div className={`flex items-center gap-8 text-[10px] font-black uppercase tracking-[0.3em] ${isDarkMode ? "text-white/20" : "text-slate-400"}`}>
-           {['Archive', 'Security', 'Telemetry'].map((link) => (
-             <span key={link} className="hover:text-blue-500 transition-all cursor-pointer hover:tracking-widest duration-500">{link}</span>
-           ))}
+        <div className="flex flex-1 items-center justify-center">
+          <span className="text-xl font-black uppercase tracking-[0.4em] text-shimmer select-none">
+            Liquid IDE
+          </span>
+        </div>
+        
+        <div className="flex flex-1 items-center justify-end gap-10">
+          <a 
+            href="https://www.linkedin.com/in/syedmukheeth/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="group flex flex-col items-end gap-1 transition-all"
+          >
+            <span className={`text-[8px] font-black uppercase tracking-[0.3em] ${isDarkMode ? "text-white/10 group-hover:text-white/30" : "text-slate-300 group-hover:text-slate-500"}`}>Built by</span>
+            <span className={`text-[11px] font-black uppercase tracking-[0.2em] footer-link ${isDarkMode ? "text-white/40" : "text-slate-600"}`}>syed mukheeth</span>
+          </a>
+
+          <div className={`flex items-center gap-6 text-[9px] font-black uppercase tracking-[0.2em] ${isDarkMode ? "text-white/10" : "text-slate-300"}`}>
+            {['Terms', 'Privacy'].map((link) => (
+              <span key={link} className="hover:text-blue-500 transition-all cursor-pointer duration-500">{link}</span>
+            ))}
+          </div>
         </div>
       </footer>
 
