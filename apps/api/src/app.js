@@ -16,7 +16,21 @@ function createApp() {
   app.use(helmet());
   app.use(
     cors({
-      origin: [env.WEB_ORIGIN, "http://localhost:5173", "http://localhost:5179"],
+      origin: function (origin, callback) {
+        // Allow requests with no origin (e.g., server-to-server, curl)
+        if (!origin) return callback(null, true);
+        const allowed = [
+          env.WEB_ORIGIN,
+          "http://localhost:5173",
+          "http://localhost:5179",
+          "http://localhost:3000"
+        ];
+        // Allow any vercel.app deployment URL
+        if (allowed.includes(origin) || origin.endsWith(".vercel.app")) {
+          return callback(null, true);
+        }
+        return callback(new Error(`CORS blocked: ${origin}`));
+      },
       credentials: true,
       allowedHeaders: ["Content-Type", "Authorization"]
     })
