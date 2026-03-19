@@ -4,13 +4,25 @@ const { logger } = require("../../config/logger");
 
 const RUNS_QUEUE_NAME = "liquidide-runs";
 
-const runsQueue = new Queue(RUNS_QUEUE_NAME, {
-  connection: redisConnectionFromUrl(env.REDIS_URL)
-});
+let _runsQueue = null;
 
-runsQueue.on("error", (err) => {
-  logger.error({ err }, "Redis connection error in runsQueue");
-});
+function getRunsQueue() {
+  if (!_runsQueue) {
+    try {
+      _runsQueue = new Queue(RUNS_QUEUE_NAME, {
+        connection: redisConnectionFromUrl(env.REDIS_URL)
+      });
+      _runsQueue.on("error", (err) => {
+        logger.error({ err }, "Redis connection error in runsQueue");
+        _runsQueue = null; // Reset so it can be retried
+      });
+    } catch (err) {
+      logger.error({ err }, "Failed to initialize runsQueue");
+      return null;
+    }
+  }
+  return _runsQueue;
+}
 
 function redisConnectionFromUrl(redisUrl) {
   try {
@@ -38,5 +50,5 @@ function redisConnectionFromUrl(redisUrl) {
   }
 }
 
-module.exports = { RUNS_QUEUE_NAME, runsQueue };
+module.exports = { RUNS_QUEUE_NAME, getRunsQueue };
 

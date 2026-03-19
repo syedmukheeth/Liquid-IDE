@@ -1,5 +1,5 @@
 const { RunModel } = require("./runs.model");
-const { runsQueue } = require("./runs.queue");
+const { getRunsQueue } = require("./runs.queue");
 const { executeDirectly } = require("./directExecutor");
 const { logger } = require("../../config/logger");
 const mongoose = require("mongoose");
@@ -53,7 +53,10 @@ async function createRun(input) {
   let useQueue = isConnected;
   if (useQueue) {
     try {
-      const queuePromise = runsQueue.add(
+      const queue = getRunsQueue();
+      if (!queue) throw new Error("Queue unavailable");
+
+      const queuePromise = queue.add(
         "execute",
         { runId: run._id.toString() },
         {
