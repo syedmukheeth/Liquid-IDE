@@ -1,95 +1,76 @@
 const { RunModel } = require("./runs.model");
-const { getRunsQueue } = require("./runs.queue");
 const { executeDirectly } = require("./directExecutor");
 const { logger } = require("../../config/logger");
 const mongoose = require("mongoose");
 
-// In-memory fallback for when MongoDB is disconnected
-const memoryRuns = new Map();
-
 async function createRun(input) {
   const isConnected = mongoose.connection.readyState === 1;
   let run;
+  let useMongo = false;
 
   if (isConnected) {
     try {
       run = await RunModel.create({
         projectId: input.projectId,
         runtime: input.runtime,
-        status: "queued",
+        status: "running",
         entrypoint: input.entrypoint,
         files: input.files,
         stdout: "",
         stderr: "",
         exitCode: null,
-        startedAt: null,
+        startedAt: new Date(),
         finishedAt: null
       });
+      useMongo = true;
     } catch (err) {
-      logger.error({ err }, "Failed to create run in Mongo, falling back to memory");
+      logger.error({ err }, "Failed to create run in Mongo, using in-request object");
     }
   }
 
   if (!run) {
-    // Fallback run object
     const runId = new mongoose.Types.ObjectId().toString();
     run = {
       _id: runId,
       ...input,
-      status: "running", // Direct execution starts immediately
+      status: "running",
       stdout: "",
       stderr: "",
       exitCode: null,
       startedAt: new Date(),
-      save: async function() { 
-        memoryRuns.set(this._id.toString(), { ...this });
-        return this; 
-      }
+      finishedAt: null,
     };
-    memoryRuns.set(runId, { ...run });
   }
 
-  // If connected, try the queue; otherwise, go direct immediately
-  let useQueue = isConnected;
-  if (useQueue) {
-    try {
-      const queue = getRunsQueue();
-      if (!queue) throw new Error("Queue unavailable");
-
-      const queuePromise = queue.add(
-        "execute",
-        { runId: run._id.toString() },
-        {
-          removeOnComplete: { age: 3600, count: 1000 },
-          removeOnFail: { age: 24 * 3600, count: 1000 }
-        }
-      );
-
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Redis Timeout")), 2000)
-      );
-
-      await Promise.race([queuePromise, timeoutPromise]);
-    } catch (err) {
-      logger.warn({ runId: run._id, err: err.message }, "Redis Queue failed or timed out. Switching to direct execution.");
-      useQueue = false;
-    }
-  }
-
-  if (!useQueue || !isConnected) {
-    // Direct Execution Fallback (or primary if disconnected)
-    run.status = "running";
-    if (!run.startedAt) run.startedAt = new Date();
-    await run.save();
-
+  // Always execute directly — no queue/worker on Vercel serverless
+  try {
     const result = await executeDirectly(run);
-    
     run.stdout = result.stdout;
     run.stderr = result.stderr;
     run.exitCode = result.exitCode;
     run.status = result.exitCode === 0 ? "succeeded" : "failed";
     run.finishedAt = new Date();
-    await run.save();
+  } catch (err) {
+    logger.error({ err }, "Direct execution error");
+    run.stderr = `Execution error: ${err.message}`;
+    run.exitCode = 1;
+    run.status = "failed";
+    run.finishedAt = new Date();
+  }
+
+  // Persist the result so GET /runs/:id can find it
+  if (useMongo) {
+    try {
+      await RunModel.findByIdAndUpdate(run._id, {
+        stdout: run.stdout,
+        stderr: run.stderr,
+        exitCode: run.exitCode,
+        status: run.status,
+        finishedAt: run.finishedAt
+      });
+    } catch (err) {
+      logger.warn({ err }, "Failed to update run in MongoDB after execution");
+    }
   }
 
   return run;
@@ -97,10 +78,14 @@ async function createRun(input) {
 
 async function getRun(runId) {
   if (mongoose.connection.readyState === 1) {
-    const mongoRun = await RunModel.findById(runId).lean();
-    if (mongoRun) return mongoRun;
+    try {
+      const mongoRun = await RunModel.findById(runId).lean();
+      if (mongoRun) return mongoRun;
+    } catch (err) {
+      logger.warn({ err }, "Failed to find run in MongoDB");
+    }
   }
-  return memoryRuns.get(runId.toString());
+  return null;
 }
 
 module.exports = { createRun, getRun };
