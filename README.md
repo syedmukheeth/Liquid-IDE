@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/syedmukheeth/Liquid-IDE/main/apps/web/public/favicon.svg" alt="LiquidIDE Logo" width="120" height="120">
+  <img src="https://raw.githubusercontent.com/syedmukheeth/Liquid-IDE/main/apps/web/src/assets/logo.jpg" alt="LiquidIDE Logo" width="120" height="120" style="border-radius: 20px; box-shadow: 0 4px 14px 0 rgba(0,0,0,0.39);">
   <br>
   <h1>LiquidIDE</h1>
   <p><b>The Next-Generation Cloud Code Editor</b></p>
@@ -143,5 +143,6 @@ You will deploy LiquidIDE as two separate Vercel projects (Frontend and API) fro
 ---
 
 <div align="center">
-  <i>Built with ❤️ for developers who need a safe, fluid, and powerful playground.</i>
+  <b>Built with ❤️ by Syed Mukheeth</b><br>
+  <i>For developers who need a sleek, lightning-fast cloud code playground.</i>
 </div>
