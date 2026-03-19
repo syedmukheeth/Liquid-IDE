@@ -47,6 +47,7 @@ export default function EditorPage() {
   // Poll worker status
   useEffect(() => {
     const checkStatus = async () => {
+      console.log(`[Network Debug] Online: ${navigator.onLine}, API: ${import.meta.env.VITE_API_URL}`);
       if (!navigator.onLine) {
         setIsOffline(true);
         setIsWorkerOnline(false);
