@@ -25,8 +25,10 @@ router.get("/github/callback",
   passport.authenticate("github", { failureRedirect: "/login", session: false }),
   (req, res) => {
     const token = generateToken(req.user);
-    // Redirect to frontend with token in URL (simple for now)
-    res.redirect(`${env.WEB_ORIGIN}/?token=${token}`);
+    const frontendUrl = process.env.NODE_ENV === "production" 
+      ? "https://liquid-ide-web.vercel.app" 
+      : env.WEB_ORIGIN;
+    res.redirect(`${frontendUrl}/?token=${token}`);
   }
 );
 
@@ -34,7 +36,10 @@ router.get("/google/callback",
   passport.authenticate("google", { failureRedirect: "/login", session: false }),
   (req, res) => {
     const token = generateToken(req.user);
-    res.redirect(`${env.WEB_ORIGIN}/?token=${token}`);
+    const frontendUrl = process.env.NODE_ENV === "production" 
+      ? "https://liquid-ide-web.vercel.app" 
+      : env.WEB_ORIGIN;
+    res.redirect(`${frontendUrl}/?token=${token}`);
   }
 );
 

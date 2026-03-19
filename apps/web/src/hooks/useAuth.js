@@ -36,6 +36,18 @@ export function useAuth() {
   }, [logoutUser]);
 
   useEffect(() => {
+    // Capture OAuth token from redirect URL (e.g., ?token=xyz)
+    const params = new URLSearchParams(window.location.search);
+    const oauthToken = params.get("token");
+    if (oauthToken) {
+      setToken(oauthToken);
+      localStorage.setItem("flux_token", oauthToken);
+      // Clean the URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
+  useEffect(() => {
     if (token) {
       const savedUser = localStorage.getItem("flux_user");
       if (savedUser) setUser(JSON.parse(savedUser));
