@@ -28,14 +28,14 @@ export default function LanguageSelector({ activeLanguage, onLanguageChange }) {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 rounded-xl border border-white/5 bg-white/5 px-4 py-1.5 transition-all hover:bg-white/10 hover:border-white/20 active:scale-95 group shadow-lg backdrop-blur-3xl"
+        className="flex items-center gap-2 md:gap-3 rounded-lg md:rounded-xl border border-white/5 bg-white/5 px-3 md:px-4 py-1 md:py-1.5 transition-all hover:bg-white/10 hover:border-white/20 active:scale-95 group shadow-lg backdrop-blur-3xl"
       >
-        <div className="relative h-4 w-4 transition-transform group-hover:scale-110">
+        <div className="relative h-3 w-3 md:h-4 md:w-4 transition-transform group-hover:scale-110">
           <img src={selectedLang.icon} alt={selectedLang.label} className="h-full w-full object-contain filter grayscale-[0.5] group-hover:grayscale-0 transition-all" />
         </div>
-        <span className="text-[11px] font-bold tracking-tight text-white/70 group-hover:text-white transition-colors">{selectedLang.label}</span>
+        <span className="text-[10px] md:text-[11px] font-bold tracking-tight text-white/70 group-hover:text-white transition-colors">{selectedLang.label}</span>
         <svg
-          className={`h-3 w-3 text-white/20 transition-all duration-300 ${isOpen ? "rotate-180 text-blue-500" : "group-hover:text-white/40"}`}
+          className={`h-2.5 w-2.5 md:h-3 md:w-3 text-white/20 transition-all duration-300 ${isOpen ? "rotate-180 text-blue-500" : "group-hover:text-white/40"}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"

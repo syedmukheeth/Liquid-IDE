@@ -30,6 +30,7 @@ export default function EditorPage() {
   const [activeModal, setActiveModal] = useState(null); 
   const [isWorkerOnline, setIsWorkerOnline] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [activeMobileTab, setActiveMobileTab] = useState("editor"); // "editor" or "terminal"
   
   const { user, loginUser, logoutUser } = useAuth();
 
@@ -221,19 +222,19 @@ export default function EditorPage() {
       <div className="noise-overlay" />
 
       {/* Header */}
-      <header className="relative z-20 flex h-16 shrink-0 items-center justify-between border-b border-white/5 bg-black/20 px-8 backdrop-blur-2xl">
-        <div className="flex items-center gap-10">
-          <div className="flex items-center gap-3 transition-transform hover:scale-[1.02]">
-            <div className="flex h-9 w-9 overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-blue-600 to-indigo-700 p-0.5 shadow-2xl">
-              <img src={logo} alt="Logo" className="h-full w-full rounded-[10px] object-cover" />
+      <header className="relative z-20 flex h-14 md:h-16 shrink-0 items-center justify-between border-b border-white/5 bg-black/20 px-4 md:px-8 backdrop-blur-2xl">
+        <div className="flex items-center gap-4 md:gap-10">
+          <div className="flex items-center gap-2 md:gap-3 transition-transform hover:scale-[1.02]">
+            <div className="flex h-7 w-7 md:h-9 md:w-9 overflow-hidden rounded-lg md:rounded-xl border border-white/10 bg-gradient-to-br from-blue-600 to-indigo-700 p-0.5 shadow-2xl">
+              <img src={logo} alt="Logo" className="h-full w-full rounded-[6px] md:rounded-[10px] object-cover" />
             </div>
             <div className="flex flex-col leading-tight">
-              <span className="text-[12px] font-black uppercase tracking-widest text-white/90">LiquidIDE</span>
-              <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-blue-400">Pro Cloud Edition</span>
+              <span className="text-[10px] md:text-[12px] font-black uppercase tracking-widest text-white/90">LiquidIDE</span>
+              <span className="hidden md:block text-[8px] font-bold uppercase tracking-[0.2em] text-blue-400">Pro Cloud Edition</span>
             </div>
           </div>
           
-          <nav className="flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-8">
             {['Editor', 'History', 'Settings'].map((tab) => (
               <button 
                 key={tab}
@@ -246,40 +247,74 @@ export default function EditorPage() {
           </nav>
         </div>
         
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-2 md:gap-5">
           {user ? (
-            <div className="flex items-center gap-3 rounded-full border border-white/5 bg-white/5 py-1.5 pl-4 pr-1.5">
-              <span className="text-[11px] font-bold text-white/80">{user.name}</span>
-              <div className="h-7 w-7 rounded-full border border-white/10 overflow-hidden shadow-lg">
+            <div className="flex items-center gap-2 md:gap-3 rounded-full border border-white/5 bg-white/5 py-1 md:py-1.5 pl-3 md:pl-4 pr-1 md:pr-1.5">
+              <span className="hidden sm:block text-[10px] md:text-[11px] font-bold text-white/80">{user.name}</span>
+              <div className="h-6 w-6 md:h-7 md:w-7 rounded-full border border-white/10 overflow-hidden shadow-lg">
                 <img src={user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=007AFF&color=fff`} className="h-full w-full object-cover" alt="Avatar" />
               </div>
             </div>
           ) : (
-            <button onClick={() => setActiveModal('auth')} className="flux-button-secondary py-1.5 px-6">Sign In</button>
+            <button onClick={() => setActiveModal('auth')} className="flux-button-secondary py-1 md:py-1.5 px-3 md:px-6 text-[10px] md:text-[13px]">Sign In</button>
           )}
-          <button onClick={() => setActiveModal('upgrade')} className="flux-button-primary animate-shimmer py-1.5 px-6">Upgrade</button>
+          <button onClick={() => setActiveModal('upgrade')} className="flux-button-primary animate-shimmer py-1 md:py-1.5 px-3 md:px-6 text-[10px] md:text-[13px]">Upgrade</button>
+          
+          {/* Mobile Menu Trigger (History/Settings) */}
+          <div className="flex md:hidden items-center gap-2">
+             <button onClick={() => setActiveModal('history')} className="p-2 text-white/40 hover:text-white">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+             </button>
+             <button onClick={() => setActiveModal('settings')} className="p-2 text-white/40 hover:text-white">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+             </button>
+          </div>
         </div>
       </header>
 
+      {/* Mobile Tab Switcher */}
+      <div className="flex md:hidden h-12 shrink-0 border-b border-white/5 bg-black/40 backdrop-blur-xl">
+        <button 
+          onClick={() => setActiveMobileTab('editor')}
+          className={`relative flex-1 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeMobileTab === 'editor' ? "text-blue-400 bg-white/5" : "text-white/30"}`}
+        >
+          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+          Code
+          {activeMobileTab === 'editor' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 shadow-[0_0_8px_#3b82f6]" />}
+        </button>
+        <div className="w-px h-full bg-white/5" />
+        <button 
+          onClick={() => setActiveMobileTab('terminal')}
+          className={`relative flex-1 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeMobileTab === 'terminal' ? "text-blue-400 bg-white/5" : "text-white/30"}`}
+        >
+          <div className="relative">
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            {busy && <div className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-blue-500 animate-pulse border border-black" />}
+          </div>
+          Output
+          {activeMobileTab === 'terminal' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 shadow-[0_0_8px_#3b82f6]" />}
+        </button>
+      </div>
+
       {/* Main Content */}
-      <main className="relative z-10 flex flex-1 overflow-hidden p-4 gap-4">
+      <main className="relative z-10 flex flex-1 flex-col md:flex-row overflow-hidden p-2 md:p-4 gap-2 md:gap-4">
         {/* Editor Side */}
-        <section className="flex flex-[7] flex-col overflow-hidden gap-4">
+        <section className={`flex flex-col overflow-hidden gap-4 ${activeMobileTab === 'editor' ? 'flex-1' : 'hidden'} md:flex md:flex-[7]`}>
           <div className="glass-card flex flex-1 flex-col overflow-hidden">
-            <div className="flex h-11 shrink-0 items-center justify-between border-b border-white/5 px-5 bg-white/[0.02]">
-              <div className="flex items-center gap-5">
+            <div className="flex h-11 shrink-0 items-center justify-between border-b border-white/5 px-3 md:px-5 bg-white/[0.02]">
+              <div className="flex items-center gap-2 md:gap-5">
                 <LanguageSelector activeLanguage={activeLangId} onLanguageChange={setActiveLangId} isDarkMode={true} />
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 md:gap-3">
                 <button 
                   onClick={onRun}
                   disabled={busy}
-                  className="flux-button-primary flex items-center gap-2 h-7 px-4 text-[11px]"
+                  className="flux-button-primary flex items-center gap-2 h-7 px-3 md:px-4 text-[10px] md:text-[11px]"
                 >
                   {busy ? (
                     <div className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-white" />
                   ) : (
-                    <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" /></svg>
+                    <svg className="h-2.5 w-2.5 md:h-3 md:w-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" /></svg>
                   )}
                   <span>{busy ? "Executing" : "Run Code"}</span>
                 </button>
@@ -302,76 +337,76 @@ export default function EditorPage() {
         </section>
 
         {/* Terminal Side */}
-        <section className="flex flex-[3] flex-col overflow-hidden gap-4">
+        <section className={`flex flex-col overflow-hidden gap-4 ${activeMobileTab === 'terminal' ? 'flex-1' : 'hidden'} md:flex md:flex-[3]`}>
           <div className="glass-card flex flex-1 flex-col overflow-hidden bg-black/40">
-            <div className="flex h-11 shrink-0 items-center justify-between border-b border-white/5 px-6 bg-white/[0.02]">
-              <div className="flex items-center gap-3">
-                <div className={`h-2 w-2 rounded-full shadow-[0_0_10px_currentcolor] transition-colors duration-500 ${runStatus === "Succeeded" ? "text-emerald-400 bg-emerald-400" : runStatus === "Failed" ? "text-rose-400 bg-rose-400" : busy ? "text-blue-400 bg-blue-400 animate-pulse" : "text-white/20 bg-white/20"}`} />
-                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/50 font-mono">Terminal Output</span>
+            <div className="flex h-11 shrink-0 items-center justify-between border-b border-white/5 px-4 md:px-6 bg-white/[0.02]">
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className={`h-1.5 w-1.5 md:h-2 md:w-2 rounded-full shadow-[0_0_10px_currentcolor] transition-colors duration-500 ${runStatus === "Succeeded" ? "text-emerald-400 bg-emerald-400" : runStatus === "Failed" ? "text-rose-400 bg-rose-400" : busy ? "text-blue-400 bg-blue-400 animate-pulse" : "text-white/20 bg-white/20"}`} />
+                <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.25em] text-white/50 font-mono">Terminal Output</span>
               </div>
-              <div className="text-[9px] font-bold tracking-widest text-white/30 uppercase">{runStatus}</div>
+              <div className="text-[8px] md:text-[9px] font-bold tracking-widest text-white/30 uppercase">{runStatus}</div>
             </div>
             
-            <div className="flex-1 overflow-auto p-6 font-mono text-[13px] leading-relaxed custom-scrollbar bg-black/20">
+            <div className="flex-1 overflow-auto p-4 md:p-6 font-mono text-[12px] md:text-[13px] leading-relaxed custom-scrollbar bg-black/20">
               {busy && !stdout && !stderr && (
                 <div className="flex h-full flex-col items-center justify-center gap-4 opacity-50">
-                  <div className="h-8 w-8 rounded-full border-2 border-white/10 border-t-blue-500 animate-spin" />
-                  <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-blue-400">Compiling</span>
+                  <div className="h-6 w-6 md:h-8 md:w-8 rounded-full border-2 border-white/10 border-t-blue-500 animate-spin" />
+                  <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-[0.4em] text-blue-400">Compiling</span>
                 </div>
               )}
               
               {stdout && (
-                <div className="mb-6 animate-in fade-in duration-500">
-                  <div className="text-[9px] font-black uppercase tracking-[0.3em] text-emerald-500/40 mb-3 ml-1">STDOUT</div>
-                  <div className="p-4 rounded-xl border border-emerald-500/10 bg-emerald-500/5 text-emerald-50/90 whitespace-pre-wrap shadow-inner">{stdout}</div>
+                <div className="mb-4 md:mb-6 animate-in fade-in duration-500">
+                  <div className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em] text-emerald-500/40 mb-2 md:mb-3 ml-1">STDOUT</div>
+                  <div className="p-3 md:p-4 rounded-lg md:rounded-xl border border-emerald-500/10 bg-emerald-500/5 text-emerald-50/90 whitespace-pre-wrap shadow-inner text-xs md:text-sm">{stdout}</div>
                 </div>
               )}
               
               {stderr && (
                 <div className="animate-in fade-in duration-500">
-                  <div className="text-[9px] font-black uppercase tracking-[0.3em] text-rose-500/40 mb-3 ml-1">STDERR</div>
-                  <div className="p-4 rounded-xl border border-rose-500/10 bg-rose-500/5 text-rose-200 whitespace-pre-wrap shadow-inner">{stderr}</div>
+                  <div className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em] text-rose-500/40 mb-2 md:mb-3 ml-1">STDERR</div>
+                  <div className="p-3 md:p-4 rounded-lg md:rounded-xl border border-rose-500/10 bg-rose-500/5 text-rose-200 whitespace-pre-wrap shadow-inner text-xs md:text-sm">{stderr}</div>
                 </div>
               )}
 
               {!stdout && !stderr && !busy && (
-                <div className="flex h-full flex-col items-center justify-center gap-4 opacity-[0.05] grayscale select-none">
-                  <svg className="h-16 w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.6em]">Standby</span>
+                <div className="flex h-full flex-col items-center justify-center gap-3 md:gap-4 opacity-[0.05] grayscale select-none">
+                  <svg className="h-12 w-12 md:h-16 md:w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                  <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.6em]">Standby</span>
                 </div>
               )}
             </div>
 
-            <div className="flex h-10 shrink-0 items-center justify-between border-t border-white/5 px-6 bg-black/40">
+            <div className="flex h-8 md:h-10 shrink-0 items-center justify-between border-t border-white/5 px-4 md:px-6 bg-black/40">
               <div className="flex items-center gap-2">
                 <span className="text-[9px] font-bold uppercase tracking-widest text-white/20">Flux Engine</span>
-                <span className="text-[8px] font-bold text-blue-500/30">v0.5.2-STABLE</span>
+                <span className="hidden sm:inline text-[8px] font-bold text-blue-500/30">v0.5.2-STABLE</span>
               </div>
-              <span className="text-[9px] font-bold uppercase tracking-widest text-white/20">Buffer: {activeLangId}</span>
+              <span className="text-[9px] font-bold uppercase tracking-widest text-white/20 truncate ml-2">Buffer: {activeLangId}</span>
             </div>
           </div>
         </section>
       </main>
 
       {/* Footer */}
-      <footer className="relative z-20 flex h-12 shrink-0 items-center justify-between border-t border-white/5 bg-black/60 px-8 backdrop-blur-xl">
-        <div className="flex items-center gap-6">
+      <footer className="relative z-20 flex flex-col md:flex-row h-auto md:h-12 shrink-0 items-center justify-between border-t border-white/5 bg-black/60 px-4 md:px-8 py-3 md:py-0 backdrop-blur-xl gap-3 md:gap-0">
+        <div className="flex items-center gap-4 md:gap-6">
           <div className="flex items-center gap-2">
             <div className={`h-1.5 w-1.5 rounded-full shadow-[0_0_8px_currentcolor] ${isWorkerOnline ? "text-emerald-500 bg-emerald-500" : "text-rose-500 bg-rose-500"}`} />
             <span className={`text-[10px] font-bold uppercase tracking-widest ${isWorkerOnline ? "text-emerald-500/70" : "text-rose-500/70"}`}>
-              {isWorkerOnline ? "Engine Online" : "Engine Offline"}
+              <span className="hidden md:inline">Engine </span>{isWorkerOnline ? "Online" : "Offline"}
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4 md:gap-6">
            <span className="text-[9px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-1.5">
              Built by 
              <a href="https://linkedin.com/in/syedmukheeth" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 transition-colors hover:underline underline-offset-4">
                Syed Mukheeth
              </a>
            </span>
-           <div className="h-3 w-px bg-white/10" />
+           <div className="hidden md:block h-3 w-px bg-white/10" />
            <span className="text-[9px] font-bold uppercase tracking-widest text-white/20">© 2026 LiquidIDE</span>
         </div>
       </footer>

@@ -21,23 +21,23 @@ export default function Modal({ isOpen, onClose, title, children, isDarkMode }) 
       />
       
       {/* Modal Content */}
-      <div className={`relative w-full max-w-lg overflow-hidden rounded-[2.5rem] border shadow-2xl backdrop-blur-3xl transition-all duration-500 animate-in zoom-in-95 slide-in-from-bottom-10 ${isDarkMode ? "border-white/10 bg-[#0a0a0a]/80 text-white" : "border-slate-200 bg-white/90 text-slate-900"}`}>
-        <div className={`flex items-center justify-between border-b px-8 py-6 ${isDarkMode ? "border-white/5" : "border-slate-100"}`}>
-          <div className="flex items-center gap-4">
-            <div className={`flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg border transition-all ${isDarkMode ? "border-white/10" : "border-slate-200"}`}>
+      <div className={`relative w-full max-w-[95%] md:max-w-lg overflow-hidden rounded-[1.5rem] md:rounded-[2.5rem] border shadow-2xl backdrop-blur-3xl transition-all duration-500 animate-in zoom-in-95 slide-in-from-bottom-10 ${isDarkMode ? "border-white/10 bg-[#0a0a0a]/80 text-white" : "border-slate-200 bg-white/90 text-slate-900"}`}>
+        <div className={`flex items-center justify-between border-b px-5 md:px-8 py-4 md:py-6 ${isDarkMode ? "border-white/5" : "border-slate-100"}`}>
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className={`flex h-7 w-7 md:h-8 md:w-8 items-center justify-center overflow-hidden rounded-lg border transition-all ${isDarkMode ? "border-white/10" : "border-slate-200"}`}>
                <img src={logo} alt="Logo" className="h-full w-full object-cover" />
             </div>
-            <h2 className={`text-[12px] font-black uppercase tracking-[0.3em] ${isDarkMode ? "text-white/60" : "text-slate-500"}`}>{title}</h2>
+            <h2 className={`text-[10px] md:text-[12px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] ${isDarkMode ? "text-white/60" : "text-slate-500"}`}>{title}</h2>
           </div>
           <button 
             onClick={onClose}
-            className={`rounded-xl p-2 transition-all active:scale-95 ${isDarkMode ? "hover:bg-white/5 text-white/20" : "hover:bg-slate-100 text-slate-400"}`}
+            className={`rounded-xl p-1.5 md:p-2 transition-all active:scale-95 ${isDarkMode ? "hover:bg-white/5 text-white/20" : "hover:bg-slate-100 text-slate-400"}`}
           >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+            <svg className="h-4 w-4 md:h-5 md:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
         
-        <div className="p-8 max-h-[70vh] overflow-auto custom-scrollbar">
+        <div className="p-5 md:p-8 max-h-[80vh] md:max-h-[70vh] overflow-auto custom-scrollbar">
           {children}
         </div>
       </div>
