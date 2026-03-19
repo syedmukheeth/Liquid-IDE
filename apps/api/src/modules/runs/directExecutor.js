@@ -61,6 +61,26 @@ async function executeDirectly(run) {
       const shell = isWin ? "cmd" : "sh";
       const shellFlag = isWin ? "/c" : "-c";
 
+      // Pre-check: verify compilers are available before attempting execution
+      const compilerChecks = {
+        cpp: "g++",
+        c: "gcc",
+        java: "javac"
+      };
+      if (compilerChecks[language]) {
+        const compiler = compilerChecks[language];
+        const checkCmd = isWin ? `where ${compiler}` : `command -v ${compiler}`;
+        try {
+          await execWithTimeout(shell, [shellFlag, checkCmd], 3000, { cwd: runDir });
+        } catch {
+          return {
+            stdout: "",
+            stderr: `⚠️ ${compiler} is not installed on this server.\n\nThis deployment runs on Vercel serverless, which does not have ${language.toUpperCase()} compilers.\n\nTo run ${language.toUpperCase()} code, you need to set up the LiquidIDE Worker on a server with Docker (e.g., Render.com).`,
+            exitCode: 127
+          };
+        }
+      }
+
       const pythonCmd = await findPythonCommand();
       const localCmds = {
         javascript: ["node", entry],
@@ -70,9 +90,16 @@ async function executeDirectly(run) {
         java: [shell, shellFlag, `javac ${entry} && java ${entry.replace(".java", "")}`]
       };
 
-      const cmdInfo = localCmds[language]; // Don't use || localCmds.javascript here if we want strictness or handling of null
+      if (!pythonCmd && language === "python") {
+        return {
+          stdout: "",
+          stderr: `⚠️ Python is not installed on this server.\n\nThis deployment runs on Vercel serverless, which does not have Python installed.\n\nTo run Python code, you need to set up the LiquidIDE Worker on a server with Docker (e.g., Render.com).`,
+          exitCode: 127
+        };
+      }
+
+      const cmdInfo = localCmds[language];
       if (!cmdInfo) {
-        // If it's undefined (not in map) OR explicitly null (not found)
         return { 
           stdout: "", 
           stderr: `Local Execution Error: ${language} is not installed or detected on the host compute. \nTip: Install ${language} or start Docker for a sandboxed experience.`, 
