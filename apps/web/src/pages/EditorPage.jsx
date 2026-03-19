@@ -226,7 +226,7 @@ export default function EditorPage() {
       </div>
 
       {/* Top Navbar */}
-      <header className={`relative z-20 flex h-16 shrink-0 items-center justify-between border-b px-8 transition-all duration-500 ${isDarkMode ? "border-white/5 bg-[#020408]/80 backdrop-blur-xl" : "border-slate-200 bg-white/80 backdrop-blur-xl"}`}>
+      <header className={`relative z-20 flex h-16 shrink-0 items-center justify-between border-b px-8 transition-all duration-500 ${isDarkMode ? "border-white/5 bg-ink-950/80 backdrop-blur-xl" : "border-slate-200 bg-white/80 backdrop-blur-xl"}`}>
         <div className="flex items-center gap-12">
           <div className="flex items-center gap-4 group cursor-pointer">
             <div className={`flex h-10 w-10 overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 p-0.5 shadow-lg transition-all duration-500 group-hover:scale-105 group-hover:rotate-3`}>
@@ -454,7 +454,7 @@ export default function EditorPage() {
       )}
 
       {/* Minimalist Footer */}
-      <footer className={`relative z-20 flex h-14 shrink-0 items-center justify-between border-t px-10 transition-colors ${isDarkMode ? "bg-[#020408] border-white/5" : "bg-white border-slate-200"}`}>
+      <footer className={`relative z-20 flex h-14 shrink-0 items-center justify-between border-t px-10 transition-colors ${isDarkMode ? "bg-ink-950 border-white/5" : "bg-white border-slate-200"}`}>
         <div className="flex items-center gap-6">
            <div 
              onClick={() => !isWorkerOnline && setActiveModal('engine-help')}
