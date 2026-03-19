@@ -1,6 +1,6 @@
-const { connectMongo } = require("./src/config/mongo");
-const { createApp } = require("./src/app");
-require("dotenv").config();
+const { connectMongo } = require("../src/config/mongo");
+const { createApp } = require("../src/app");
+require("dotenv").config({ path: "../.env" });
 
 let app;
 
