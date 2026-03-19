@@ -130,16 +130,25 @@ async function createRun(input) {
   return run;
 }
 
-async function getRun(runId) {
-  if (mongoose.connection.readyState === 1) {
-    try {
-      const run = await RunModel.findById(runId).lean();
-      if (run) return run;
-    } catch (err) {
-      logger.warn({ err, runId }, "Failed to find run in MongoDB");
-    }
+async function getQueueStatus() {
+  try {
+    const queue = getRunsQueue();
+    if (!queue) return { online: false, message: "Queue disconnected" };
+    
+    // Check for active workers
+    const workers = await queue.getWorkers();
+    const count = workers.length;
+    
+    return {
+      online: count > 0,
+      workerCount: count,
+      queueName: queue.name,
+      timestamp: new Date().toISOString()
+    };
+  } catch (err) {
+    logger.error({ err }, "Failed to get queue status");
+    return { online: false, error: err.message };
   }
-  return null;
 }
 
-module.exports = { createRun, getRun };
+module.exports = { createRun, getRun, getQueueStatus };

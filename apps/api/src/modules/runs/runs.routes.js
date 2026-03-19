@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const { z } = require("zod");
-const { createRun, getRun } = require("./runs.service");
+const { createRun, getRun, getQueueStatus } = require("./runs.service");
 const { authMiddleware } = require("../../middleware/auth.middleware");
 
 const runsRouter = Router();
@@ -45,6 +45,15 @@ runsRouter.get("/:runId", async (req, res, next) => {
       startedAt: run.startedAt ? new Date(run.startedAt).toISOString() : null,
       finishedAt: run.finishedAt ? new Date(run.finishedAt).toISOString() : null
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+runsRouter.get("/health/queue", async (req, res, next) => {
+  try {
+    const status = await getQueueStatus();
+    res.json(status);
   } catch (err) {
     next(err);
   }

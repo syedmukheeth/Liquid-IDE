@@ -77,7 +77,7 @@ async function executeRun(opts) {
       if (!cmdInfo) {
         return { 
           stdout: "", 
-          stderr: `Local Execution Error: ${language} is not installed or detected on the host compute. \nTip: Install ${language} or start Docker for a sandboxed experience.`, 
+          stderr: `LiquidIDE Execution Engine Error:\n- ${language} is not installed on this host.\n- Docker is not available for sandboxed execution.\n\nPlease install ${language} or start Docker to enable execution for this language.`, 
           exitCode: 127 
         };
       }
