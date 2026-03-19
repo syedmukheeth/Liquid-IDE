@@ -29,8 +29,9 @@ export default function EditorPage() {
   const [runStatus, setRunStatus] = useState("Ready");
   const [busy, setBusy] = useState(false);
   const [isOutputVisible, setIsOutputVisible] = useState(true);
-  const [activeModal, setActiveModal] = useState(null); // 'auth', 'settings', 'history', 'upgrade'
+  const [activeModal, setActiveModal] = useState(null); // 'auth', 'settings', 'history', 'upgrade', 'engine-help'
   const [isWorkerOnline, setIsWorkerOnline] = useState(false);
+  const [queueStartTime, setQueueStartTime] = useState(null);
   
   const { user, loginUser, logoutUser } = useAuth();
 
@@ -149,7 +150,8 @@ export default function EditorPage() {
     const language = activeConfig.lang;
 
     setBusy(true);
-    setStdout("");
+    setQueueStartTime(Date.now());
+    outputRef.current?.clear();
     setStderr("");
     setRunStatus("Running");
     setIsOutputVisible(true);
@@ -317,7 +319,13 @@ export default function EditorPage() {
             </div>
             
             {/* Monaco Editor */}
-            <div className="flex-1 overflow-hidden">
+            <div className="flex flex-col flex-1 overflow-hidden relative">
+                {busy && queueStartTime && (Date.now() - queueStartTime > 20000) && (
+                  <div className={`absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 px-4 py-2 rounded-lg border shadow-xl animate-in fade-in slide-in-from-top-4 duration-500 ${isDarkMode ? "bg-amber-500/10 border-amber-500/20 text-amber-500" : "bg-amber-50 border-amber-200 text-amber-700"}`}>
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    <span className="text-[10px] font-bold uppercase tracking-wider">Engine is slow to respond. Check status.</span>
+                  </div>
+                )}
                <CodeEditor
                 language={activeLangId === "javascript" ? "nodejs" : activeLangId}
                 value={buffers[activeLangId]}
@@ -325,7 +333,13 @@ export default function EditorPage() {
                 theme={isDarkMode ? "vs-dark" : "light"}
                 options={{
                   fontSize: settings.fontSize,
-                  tabSize: settings.tabSize
+                  tabSize: settings.tabSize,
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  padding: { top: 20 },
+                  fontFamily: "'JetBrains Mono', monospace",
+                  smoothScrolling: true,
+                  cursorSmoothCaretAnimation: "on",
                 }}
               />
             </div>
@@ -400,10 +414,52 @@ export default function EditorPage() {
         </section>
       </main>
 
+      {/* Troubleshooting Modal */}
+      {activeModal === 'engine-help' && (
+        <Modal 
+          isOpen={true} 
+          onClose={() => setActiveModal(null)} 
+          title="Engine Troubleshooting"
+          isDarkMode={isDarkMode}
+        >
+          <div className="space-y-6 py-4">
+            <div className={`rounded-xl border p-4 ${isDarkMode ? "bg-white/5 border-white/10" : "bg-slate-50 border-slate-200"}`}>
+              <h4 className="text-[12px] font-black uppercase tracking-wider text-blue-500 mb-2">Why is the engine offline?</h4>
+              <p className={`text-[11px] leading-relaxed mb-4 ${isDarkMode ? "text-white/60" : "text-slate-600"}`}>
+                Liquid IDE uses a distributed execution engine. If you are on the free tier of Render.com, your worker service will automatically "sleep" after 15 minutes of inactivity.
+              </p>
+              <ul className={`text-[10px] space-y-2 list-disc pl-4 ${isDarkMode ? "text-white/40" : "text-slate-500"}`}>
+                <li>Check your <strong>Render.com</strong> dashboard for service status.</li>
+                <li>Ensure the <strong>REDIS_URL</strong> is identical in both API and Worker.</li>
+                <li>Visit your worker's health endpoint to wake it up.</li>
+              </ul>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <button 
+                onClick={() => window.open('https://render.com', '_blank')}
+                className="flux-button-primary bg-slate-800 h-10"
+              >
+                Render Dashboard
+              </button>
+              <button 
+                onClick={() => setActiveModal(null)}
+                className="flux-button-secondary h-10"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
       {/* Minimalist Footer */}
       <footer className={`relative z-20 flex h-14 shrink-0 items-center justify-between border-t px-10 transition-colors ${isDarkMode ? "bg-[#020408] border-white/5" : "bg-white border-slate-200"}`}>
         <div className="flex items-center gap-6">
-           <div className="flex items-center gap-2.5 group group-hover:cursor-default">
+           <div 
+             onClick={() => !isWorkerOnline && setActiveModal('engine-help')}
+             className={`flex items-center gap-2.5 group cursor-pointer transition-all ${!isWorkerOnline ? "hover:scale-105" : "cursor-default"}`}
+           >
               <div className="relative flex items-center justify-center h-1.5 w-1.5">
                  <div className={`absolute h-full w-full rounded-full animate-ping opacity-40 ${isWorkerOnline ? "bg-emerald-500" : "bg-rose-500"}`} />
                  <div className={`relative h-1.5 w-1.5 rounded-full shadow-sm ${isWorkerOnline ? "bg-emerald-500 shadow-emerald-500/50" : "bg-rose-500 shadow-rose-500/50"}`} />
@@ -411,6 +467,11 @@ export default function EditorPage() {
               <span className={`text-[10px] font-bold uppercase tracking-[0.2em] ${isWorkerOnline ? "text-emerald-500/70" : "text-rose-500/70"}`}>
                 {isWorkerOnline ? "Engine Online" : "Engine Offline"}
               </span>
+              {!isWorkerOnline && (
+                <span className={`text-[8px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity translate-x-1 ${isDarkMode ? "text-white/40" : "text-slate-400"}`}>
+                  (Troubleshoot)
+                </span>
+              )}
            </div>
         </div>
 
