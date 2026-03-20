@@ -1,303 +1,225 @@
 const { spawn } = require("node:child_process");
-const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
-const crypto = require("node:crypto");
-const { logger } = require("../../config/logger");
+const fs = require("node:fs/promises");
+const logger = require("../../utils/logger");
 const { getBufferedInput } = require("./socketHandler");
 
-const TIMEOUT_MS = 15000;
+let pty;
+try {
+  pty = require("node-pty");
+  logger.info("✅ node-pty successfully initialized for professional terminal support");
+} catch (e) {
+  logger.warn("⚠️ node-pty not available, falling back to simple spawn for execution");
+}
+
+const IS_WINDOWS = os.platform() === "win32";
 
 /**
- * Wandbox API — free, open-source online compiler. No API key needed.
- * Supports C++, C, Java, Python, JavaScript, and 50+ languages.
+ * Executes code with a professional PTY environment (node-pty)
+ * or falls back to simple spawn if pty is unavailable.
  */
-const WANDBOX_URL = "https://wandbox.org/api/compile.json";
+async function execWithTimeout(cmd, args, timeoutMs, jobId, onLog, spawnOpts = {}) {
+  return new Promise(async (resolve, reject) => {
+    let stdout = "";
+    let stderr = "";
+    let killed = false;
 
-const WANDBOX_COMPILER_MAP = {
-  cpp: "gcc-13.2.0",
-  c: "gcc-13.2.0-c",
-  java: "openjdk-jdk-22+36",
-  python: "cpython-3.12.7",
-  javascript: "nodejs-20.17.0",
-  nodejs: "nodejs-20.17.0"
-};
+    // Use pty for interactive execution if available and requested (internal execution)
+    if (pty && !spawnOpts.noPty) {
+      try {
+        // Create the PTY
+        const ptyProcess = pty.spawn(cmd, args, {
+          name: 'xterm-color',
+          cols: 80,
+          rows: 24,
+          cwd: spawnOpts.cwd || process.cwd(),
+          env: { ...process.env, ...spawnOpts.env },
+        });
 
-/**
- * Execute code via the Wandbox API (cloud-based).
- * Used when local compilers are not available (e.g., on Vercel).
- */
-async function executeViaWandbox(run) {
-  const { runtime, files } = run;
-  const compiler = WANDBOX_COMPILER_MAP[runtime];
+        const timeout = setTimeout(() => {
+          killed = true;
+          try { ptyProcess.kill(); } catch (e) {}
+          if (onLog) onLog(jobId, "stderr", "\n❌ Execution Timed Out\n");
+          resolve({ stdout, stderr: "Timed Out", exitCode: 124 });
+        }, timeoutMs);
 
-  if (!compiler) {
-    return {
-      stdout: "",
-      stderr: `Unsupported language: ${runtime}`,
-      exitCode: 1
+        const inputHandler = (data) => {
+          try {
+            ptyProcess.write(data);
+          } catch (e) {
+            logger.warn({ jobId, error: e.message }, "PTY write failed");
+          }
+        };
+
+        if (jobId) {
+          process.on(`run:input:${jobId}`, inputHandler);
+          // Drain buffered input (sent during compilation)
+          const buffered = getBufferedInput(jobId);
+          if (buffered.length > 0) {
+            logger.info({ jobId, count: buffered.length }, "Draining buffered input to PTY");
+            // Wait a tiny bit for the process to be ready for input
+            setTimeout(() => {
+              buffered.forEach(input => inputHandler(input));
+            }, 300);
+          }
+        }
+
+        ptyProcess.onData((data) => {
+          stdout += data;
+          if (onLog) onLog(jobId, "stdout", data);
+        });
+
+        ptyProcess.onExit(({ exitCode }) => {
+          clearTimeout(timeout);
+          if (jobId) process.off(`run:input:${jobId}`, inputHandler);
+          if (killed) return;
+          if (onLog) onLog(jobId, "end", { status: exitCode === 0 ? "succeeded" : "failed" });
+          resolve({ stdout, stderr, exitCode });
+        });
+
+        return; 
+      } catch (e) {
+        logger.error({ error: e.message }, "PTY spawn failed, falling back to spawn");
+      }
+    }
+
+    // Fallback/Non-interactive path (compilation usually goes here)
+    const child = spawn(cmd, args, { ...spawnOpts, windowsHide: true });
+    
+    const timeout = setTimeout(() => {
+      killed = true;
+      try { child.kill(); } catch (e) {}
+      resolve({ stdout, stderr: "Timed Out", exitCode: 124 });
+    }, timeoutMs);
+
+    const inputHandler = (data) => {
+      if (child.stdin && !child.stdin.destroyed) {
+        child.stdin.write(data);
+      }
     };
-  }
 
-  let code = files && files.length > 0 ? files[0].content : "";
+    if (jobId) {
+      process.on(`run:input:${jobId}`, inputHandler);
+      const buffered = getBufferedInput(jobId);
+      if (buffered.length > 0) {
+        setTimeout(() => {
+          buffered.forEach(input => inputHandler(input));
+        }, 300); 
+      }
+    }
 
-  // Java: Wandbox uses "prog.java" by default, but Java requires filename = public class name.
-  // Extract the class name and wrap code so Wandbox compiles it correctly.
-  if (runtime === "java") {
-    const classMatch = code.match(/public\s+class\s+(\w+)/);
-    const className = classMatch ? classMatch[1] : "Main";
-    // Replace class name with "Main" and use default prog.java → won't work.
-    // Instead, we rename the class to "prog" to match Wandbox's default filename.
-    code = code.replace(
-      new RegExp(`public\\s+class\\s+${className}`),
-      "public class prog"
-    );
-  }
-
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
-
-    const response = await fetch(WANDBOX_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        compiler: compiler,
-        code: code,
-        options: "",
-        "compiler-option-raw": "",
-        "runtime-option-raw": "",
-        save: false
-      }),
-      signal: controller.signal
+    child.stdout.on("data", (data) => {
+      const chunk = data.toString();
+      stdout += chunk;
+      if (onLog) onLog(jobId, "stdout", chunk);
     });
 
-    clearTimeout(timeout);
+    child.stderr.on("data", (data) => {
+      const chunk = data.toString();
+      stderr += chunk;
+      if (onLog) onLog(jobId, "stderr", chunk);
+    });
 
-    if (!response.ok) {
-      const text = await response.text().catch(() => "Unknown error");
-      logger.error({ status: response.status, text }, "Wandbox API error");
-      return {
-        stdout: "",
-        stderr: `Compilation service error (${response.status}): ${text}`,
-        exitCode: 1
-      };
-    }
+    child.on("close", (code) => {
+      clearTimeout(timeout);
+      if (jobId) process.off(`run:input:${jobId}`, inputHandler);
+      if (killed) return;
+      if (onLog) onLog(jobId, "end", { status: code === 0 ? "succeeded" : "failed" });
+      resolve({ stdout, stderr, exitCode: code ?? 1 });
+    });
 
-    const result = await response.json();
-
-    // Wandbox returns: { program_message, compiler_error, compiler_message, status }
-    const stdout = result.program_message || "";
-    const stderr = result.compiler_error || result.compiler_message || "";
-    const exitCode = parseInt(result.status, 10);
-
-    return {
-      stdout,
-      stderr,
-      exitCode: isNaN(exitCode) ? (stdout ? 0 : 1) : exitCode
-    };
-  } catch (err) {
-    if (err.name === "AbortError") {
-      return { stdout: "", stderr: "⏱ Execution timed out (15s limit).", exitCode: 1 };
-    }
-    logger.error({ err, runtime }, "Wandbox API call failed");
-    return { stdout: "", stderr: `Execution service error: ${err.message}`, exitCode: 1 };
-  }
-}
-
-/**
- * Try local execution first, fall back to Wandbox API.
- */
-async function executeDirectly(run, onLog) {
-  const { runtime } = run;
-
-  // For JS/Node, always try local first (fast and reliable)
-  if (runtime === "javascript" || runtime === "nodejs") {
-    try {
-      return await executeLocally(run, onLog);
-    } catch (err) {
-      logger.warn({ err }, "Local JS execution failed, trying Wandbox");
-      return await executeViaWandbox(run);
-    }
-  }
-
-  // For compiled languages, try local first, fall back to Wandbox
-  try {
-    const result = await executeLocally(run, onLog);
-    // If command was not found, use Wandbox instead
-    if (result.exitCode === 127) {
-      logger.info({ runtime }, "Local compiler not found, using Wandbox API");
-      return await executeViaWandbox(run);
-    }
-    return result;
-  } catch (err) {
-    logger.info({ runtime, err: err.message }, "Local execution failed, using Wandbox API");
-    return await executeViaWandbox(run);
-  }
-}
-
-/**
- * Local execution — works when compilers are installed.
- */
-const LOCAL_LANG_CONFIG = {
-  javascript: {
-    compile: null,
-    run: (entry) => ({ cmd: "node", args: [entry] })
-  },
-  nodejs: {
-    compile: null,
-    run: (entry) => ({ cmd: "node", args: [entry] })
-  },
-  python: {
-    compile: null,
-    run: (entry) => ({ cmd: "python", args: [entry] })
-  },
-  cpp: {
-    compile: (entry) => ({ cmd: "g++", args: ["-o", "program", entry] }),
-    run: () => {
-      const exe = os.platform() === "win32" ? ".\\program.exe" : "./program";
-      return { cmd: exe, args: [] };
-    }
-  },
-  c: {
-    compile: (entry) => ({ cmd: "gcc", args: ["-o", "program", entry] }),
-    run: () => {
-      const exe = os.platform() === "win32" ? ".\\program.exe" : "./program";
-      return { cmd: exe, args: [] };
-    }
-  },
-  java: {
-    compile: (entry) => ({ cmd: "javac", args: [entry] }),
-    run: (entry) => {
-      const className = path.basename(entry, ".java");
-      return { cmd: "java", args: [className] };
-    }
-  }
-};
-
-async function executeLocally(run, onLog) {
-  const { runtime, files, entrypoint, _id: jobId } = run;
-  const config = LOCAL_LANG_CONFIG[runtime];
-
-  logger.info({ runtime, jobId }, "Starting local execution");
-
-  if (!config) {
-    logger.warn({ runtime }, "Unsupported language for local execution");
-    return { stdout: "", stderr: `Unsupported language: ${runtime}`, exitCode: 1 };
-  }
-
-  const runDir = await fs.mkdtemp(path.join(os.tmpdir(), "liquidide-"));
-  try {
-    await materializeFiles(runDir, files);
-    const entry = sanitizeRelPath(entrypoint);
-
-    if (config.compile) {
-      if (onLog) onLog(jobId, "stdout", "🔨 Compiling program...\n");
-      const { cmd, args } = config.compile(entry);
-      const compileResult = await execWithTimeout(cmd, args, TIMEOUT_MS, { cwd: runDir, jobId, onLog });
-      if (compileResult.exitCode === 127) return compileResult;
-      if (compileResult.exitCode !== 0) {
-        return { stdout: "", stderr: compileResult.stderr || "Compilation failed", exitCode: compileResult.exitCode };
-      }
-      if (onLog) onLog(jobId, "stdout", "✅ Compilation successful.\n🚀 Running executable...\n\n");
-    }
-
-    const { cmd, args } = config.run(entry);
-    return await execWithTimeout(cmd, args, TIMEOUT_MS, { cwd: runDir, jobId, onLog });
-  } finally {
-    await fs.rm(runDir, { recursive: true, force: true }).catch(() => {});
-  }
-}
-
-// --- Utility functions ---
-
-async function materializeFiles(root, files) {
-  for (const f of files) {
-    const safeRel = sanitizeRelPath(f.path);
-    const abs = path.join(root, safeRel);
-    await fs.mkdir(path.dirname(abs), { recursive: true });
-    await fs.writeFile(abs, f.content, "utf8");
-  }
-}
-
-function sanitizeRelPath(p) {
-  const normalized = String(p || "").replaceAll("\\", "/");
-  const parts = normalized.split("/").filter(Boolean);
-  const safeParts = parts.filter((seg) => seg !== "." && seg !== ".." && !seg.includes(":"));
-  const joined = safeParts.join(path.sep);
-  if (!joined) return crypto.randomUUID() + ".txt";
-  return joined;
-}
-
-function execWithTimeout(cmd, args, timeoutMs, opts = {}) {
-  const { jobId, onLog, ...spawnOpts } = opts;
-  return new Promise((resolve, reject) => {
-    try {
-      const child = spawn(cmd, args, { ...spawnOpts, windowsHide: true });
-      let stdout = "";
-      let stderr = "";
-
-      if (child.stdout) {
-        child.stdout.on("data", (d) => {
-          const chunk = d.toString();
-          stdout += chunk;
-          if (onLog) onLog(jobId, "stdout", chunk);
-        });
-      }
-      if (child.stderr) {
-        child.stderr.on("data", (d) => {
-          const chunk = d.toString();
-          stderr += chunk;
-          if (onLog) onLog(jobId, "stderr", chunk);
-        });
-      }
-
-      const inputHandler = (data) => {
-        if (child.stdin && !child.stdin.destroyed) {
-          child.stdin.write(data);
-        }
-      };
-
-      if (jobId) {
-        process.on(`run:input:${jobId}`, inputHandler);
-        // Drain buffered input (sent during compilation)
-        const buffered = getBufferedInput(jobId);
-        if (buffered.length > 0) {
-          logger.info({ jobId, count: buffered.length }, "Draining buffered input (with delay)");
-          // Small delay to ensure the executable has reached the read() call
-          setTimeout(() => {
-            buffered.forEach(input => inputHandler(input));
-          }, 150); 
-        }
-      }
-
-      const timeout = setTimeout(() => {
-        const timeoutMsg = "\n⏱ Execution timed out (15s limit).";
-        stderr += timeoutMsg;
-        if (onLog) onLog(jobId, "stderr", timeoutMsg);
-        try { child.kill("SIGKILL"); } catch { /* ignore */ }
-      }, timeoutMs);
-
-      child.on("error", (err) => {
-        clearTimeout(timeout);
-        if (jobId) process.off(`run:input:${jobId}`, inputHandler);
-        if (err.code === "ENOENT") {
-          resolve({ stdout: "", stderr: `Command not found: "${cmd}"`, exitCode: 127 });
-        } else {
-          reject(err);
-        }
-      });
-
-      child.on("close", (code) => {
-        clearTimeout(timeout);
-        if (jobId) process.off(`run:input:${jobId}`, inputHandler);
-        if (onLog) onLog(jobId, "end", { status: code === 0 ? "succeeded" : "failed" });
-        resolve({ stdout, stderr, exitCode: code ?? 1 });
-      });
-    } catch (err) {
+    child.on("error", (err) => {
+      clearTimeout(timeout);
+      if (jobId) process.off(`run:input:${jobId}`, inputHandler);
       reject(err);
-    }
+    });
   });
 }
 
-module.exports = { executeDirectly };
+const directExecutor = {
+  execute: async (run, onLog) => {
+    const { language, code } = run;
+    const jobId = run._id.toString();
+    const tempDir = path.join(os.tmpdir(), `liquid-${jobId}`);
+    
+    try {
+      await fs.mkdir(tempDir, { recursive: true });
+      
+      if (language === "cpp") {
+        const filePath = path.join(tempDir, "solution.cpp");
+        const outPath = path.join(tempDir, IS_WINDOWS ? "program.exe" : "program");
+        await fs.writeFile(filePath, code);
+        
+        if (onLog) onLog(jobId, "stdout", "🔨 \x1b[1;34mCompiling program...\x1b[0m\n");
+        const compile = await execWithTimeout("g++", [filePath, "-o", outPath], 15000, null, null, { noPty: true });
+        
+        if (compile.exitCode !== 0) {
+          if (onLog) onLog(jobId, "stderr", compile.stderr || "Compilation failed\n");
+          return { status: "failed", stderr: compile.stderr };
+        }
+        
+        if (onLog) onLog(jobId, "stdout", "✅ \x1b[1;32mCompilation successful.\x1b[0m\n🚀 \x1b[1;36mRunning interactive terminal...\x1b[0m\n\r\n");
+        return await execWithTimeout(outPath, [], 60000, jobId, onLog, { cwd: tempDir });
+
+      } else if (language === "c") {
+        const filePath = path.join(tempDir, "solution.c");
+        const outPath = path.join(tempDir, IS_WINDOWS ? "program.exe" : "program");
+        await fs.writeFile(filePath, code);
+        
+        if (onLog) onLog(jobId, "stdout", "🔨 \x1b[1;34mCompiling C program...\x1b[0m\n");
+        const compile = await execWithTimeout("gcc", [filePath, "-o", outPath], 15000, null, null, { noPty: true });
+        
+        if (compile.exitCode !== 0) {
+          if (onLog) onLog(jobId, "stderr", compile.stderr || "Compilation failed\n");
+          return { status: "failed", stderr: compile.stderr };
+        }
+        
+        if (onLog) onLog(jobId, "stdout", "✅ \x1b[1;32mCompilation successful.\x1b[0m\n🚀 \x1b[1;36mRunning interactive terminal...\x1b[0m\n\r\n");
+        return await execWithTimeout(outPath, [], 60000, jobId, onLog, { cwd: tempDir });
+
+      } else if (language === "python" || language === "python3") {
+        const filePath = path.join(tempDir, "solution.py");
+        await fs.writeFile(filePath, code);
+        if (onLog) onLog(jobId, "stdout", "🚀 \x1b[1;36mRunning Python script (PTY mode)...\x1b[0m\n\r\n");
+        return await execWithTimeout(IS_WINDOWS ? "python" : "python3", [filePath], 60000, jobId, onLog, { cwd: tempDir, env: { PYTHONUNBUFFERED: "1" } });
+
+      } else if (language === "nodejs") {
+        const filePath = path.join(tempDir, "solution.js");
+        await fs.writeFile(filePath, code);
+        if (onLog) onLog(jobId, "stdout", "🚀 \x1b[1;36mRunning Node.js script (PTY mode)...\x1b[0m\n\r\n");
+        return await execWithTimeout("node", [filePath], 60000, jobId, onLog, { cwd: tempDir });
+
+      } else if (language === "java") {
+        const filePath = path.join(tempDir, "Solution.java");
+        await fs.writeFile(filePath, code);
+        if (onLog) onLog(jobId, "stdout", "🔨 \x1b[1;34mCompiling Java...\x1b[0m\n");
+        const compile = await execWithTimeout("javac", [filePath], 15000, null, null, { noPty: true });
+        
+        if (compile.exitCode !== 0) {
+          if (onLog) onLog(jobId, "stderr", compile.stderr || "Compilation failed\n");
+          return { status: "failed", stderr: compile.stderr };
+        }
+        
+        if (onLog) onLog(jobId, "stdout", "✅ \x1b[1;32mCompilation successful.\x1b[0m\n🚀 \x1b[1;36mRunning Java (PTY mode)...\x1b[0m\n\r\n");
+        return await execWithTimeout("java", ["Solution"], 60000, jobId, onLog, { cwd: tempDir });
+      }
+
+      throw new Error(`Unsupported language: ${language}`);
+    } catch (err) {
+      if (onLog) onLog(jobId, "stderr", err.message);
+      return { status: "failed", stderr: err.message };
+    } finally {
+      // Small delay before cleanup to ensure all data is read
+      setTimeout(async () => {
+        try {
+          await fs.rm(tempDir, { recursive: true, force: true });
+        } catch (e) {
+          logger.warn({ path: tempDir }, "Failed to cleanup temp execution directory");
+        }
+      }, 10000);
+    }
+  },
+};
+
+module.exports = directExecutor;
