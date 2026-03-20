@@ -1,92 +1,57 @@
-# LiquidIDE Deployment Guide
+# LiquidIDE Deployment Guide: Cloud-Native Execution 🚀
 
-LiquidIDE is a monorepo with three services:
+To achieve a professional, cloud-only experience (like Programiz) where you don't need to run a local worker for C++, Java, Go, or Rust, you must deploy the API as a **Docker Container**.
 
-| Service | Platform | Description |
-|---|---|---|
-| `apps/web` | Vercel | React frontend |
-| `apps/api` | Vercel | Express REST API |
-| `apps/worker` | Render.com | Code execution worker (Docker) |
+## Why Docker?
+Vercel Serverless is great for JS/Node, but it **does not contain compilers** (g++, gcc, go). Our Dockerfile is pre-configured with all these tools, allowing the API to execute code directly in the cloud.
 
 ---
 
-## Architecture
+## Option 1: Render (Recommended)
+Render is the easiest way to deploy a Dockerized monorepo.
 
+1.  **Create a New Web Service** on Render.
+2.  **Connect your GitHub Repository**.
+3.  **Root Directory**: Leave as root or set to `apps/api` (if you only want the API).
+4.  **Language**: Select **Docker**.
+5.  **Docker Command**: Render will automatically find the `Dockerfile` in `apps/api`.
+6.  **Environment Variables**:
+    *   `PORT`: 5000
+    *   `MONGODB_URI`: Your MongoDB Connection String
+    *   `REDIS_URL`: Your Redis Connection String (Upstash/Aiven)
+    *   `NODE_ENV`: production
+
+---
+
+## Option 2: Railway
+Railway is also excellent for monorepos.
+
+1.  **New Project** -> **Deploy from GitHub**.
+2.  Railway will detect the `Dockerfile`.
+3.  In **Settings**, ensure the **Root Directory** is set to `apps/api`.
+4.  Add your Environment Variables.
+
+---
+
+## Option 3: Local "Hybrid" Mode (Current)
+If you prefer to stay on Vercel, you **must** run the worker on your local machine to handle compiled languages:
+
+```bash
+cd apps/worker
+npm start
 ```
-Browser → Vercel API → JavaScript: executes inline (fast)
-                     → C++/Java/Python: queues to Redis (BullMQ)
-Render Worker → pulls from queue → Docker run → saves to MongoDB
-Browser polls → Vercel API reads MongoDB → shows result
+
+Ensure your `REDIS_URL` is the same for both the Vercel API and your local worker.
+
+---
+
+## Verifying Cloud Execution
+Once deployed on a container platform, try running this C++ code:
+```cpp
+#include <iostream>
+int main() {
+    std::cout << "Hello from the Cloud!" << std::endl;
+    return 0;
+}
 ```
-
----
-
-## 1. Vercel — Frontend (`apps/web`)
-
-1. Import `syedmukheeth/Liquid-IDE` on Vercel
-2. Set **Root Directory**: `apps/web`
-3. Set **Framework**: Vite
-4. **Build Settings**: Build Command `npm run build`, Output Directory `dist`, Install Command `npm install --prefix=../..`
-5. **Environment Variables**:
-   - `VITE_API_URL` = `https://liquid-ide-api.vercel.app`
-
----
-
-## 2. Vercel — API (`apps/api`)
-
-1. Import `syedmukheeth/Liquid-IDE` on Vercel
-2. Set **Root Directory**: `apps/api`
-3. Set **Framework**: Express
-4. **Environment Variables** (required):
-   - `MONGO_URI` = your MongoDB Atlas connection string
-   - `REDIS_URL` = your Upstash Redis URL
-5. **Environment Variables** (optional):
-   - `WEB_ORIGIN` = `https://liquid-ide-web.vercel.app`
-   - `JWT_SECRET` = a long random secret string
-
----
-
-## 3. Render.com — Worker (`apps/worker`)
-
-> The Worker runs C++, Python, Java, and C using Docker containers. Requires Docker access.
-
-1. Go to [render.com](https://render.com) → **New** → **Web Service**
-2. Connect your GitHub repo `syedmukheeth/Liquid-IDE`
-3. **Settings**:
-   - **Name**: `liquid-ide-worker`
-   - **Environment**: `Docker`
-   - **Dockerfile Path**: `./apps/worker/Dockerfile`
-   - **Docker Context**: `.` (project root)
-4. **Environment Variables** (required):
-   - `MONGO_URI` = same MongoDB Atlas connection string as the API
-   - `REDIS_URL` = same Upstash Redis URL as the API
-5. Click **Create Web Service**
-
-> ⚠️ Render.com's free plan may sleep the worker after inactivity — consider upgrading to Starter ($7/mo) for always-on execution.
-
----
-
-## Environment Variable Reference
-
-### API (`apps/api`)
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `MONGO_URI` | ✅ | — | MongoDB Atlas connection URL |
-| `REDIS_URL` | ✅ | — | Upstash/Redis connection URL |
-| `WEB_ORIGIN` | | `localhost:5173` | Allowed CORS origin |
-| `JWT_SECRET` | | `flux_super_secret...` | JWT signing secret |
-| `JWT_EXPIRES_IN` | | `7d` | JWT lifetime |
-
-### Worker (`apps/worker`)
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `MONGO_URI` | ✅ | — | MongoDB Atlas connection URL |
-| `REDIS_URL` | ✅ | — | Upstash/Redis connection URL |
-| `RUN_TIMEOUT_MS` | | `10000` | Max execution time per job (ms) |
-| `RUN_MEMORY` | | `256m` | Docker memory limit per container |
-| `RUN_CPUS` | | `0.5` | Docker CPU limit per container |
-
-### Web (`apps/web`)
-| Variable | Required | Description |
-|---|---|---|
-| `VITE_API_URL` | ✅ | Full URL to the deployed API |
+If you see "Compiling program..." followed by the output without the "Worker" message, you are running 100% in the cloud! 💎🏆

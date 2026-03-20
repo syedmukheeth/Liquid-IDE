@@ -90,24 +90,40 @@ async function createRun(input) {
           if (workerOnline) {
             if (emitLog) emitLog(run._id.toString(), "stdout", "📡 \x1b[1;33mCompiler not found in Cloud Sandbox.\x1b[0m\n⏳ \x1b[1;34mDelegating to LiquidIDE Worker (Local)...\x1b[0m\n\r\n");
           } else {
-            if (emitLog) emitLog(run._id.toString(), "stderr", "❌ \x1b[1;31mError: Local Worker is Offline.\x1b[0m\n💡 \x1b[1;36mTo run C++, please start the worker locally:\x1b[0m\n   1. Open a terminal in \x1b[33mapps/worker\x1b[0m\n   2. Run: \x1b[1;32mnpm start\x1b[0m\n\r\n");
+            const workerCommand = "cd apps/worker && npm start";
+            if (emitLog) {
+              emitLog(run._id.toString(), "stderr", 
+                "❌ \x1b[1;31mError: Local Execution Environment Offline.\x1b[0m\n" +
+                "💡 \x1b[1;36mThis environment (Serverless) doesn't have native compilers.\x1b[0m\n\n" +
+                "\x1b[1;33mTo run C++, please start your local worker:\x1b[0m\n" +
+                `   \x1b[1;32m${workerCommand}\x1b[0m\n\n` +
+                "🔗 \x1b[1;34mCloud Tip:\x1b[0m Deploy via Docker (see DEPLOYMENT.md) for 100% cloud execution.\n\r\n"
+              );
+            }
           }
           try {
             await queue.add("execute", { runId: run._id.toString() });
           } catch (qErr) {
             logger.error({ qErr }, "Failed to add job to BullMQ queue");
-            throw new Error(`Queue submission failed: ${qErr.message}. Ensure Redis is reachable.`);
+            if (emitLog) emitLog(run._id.toString(), "stderr", `\n❌ Queue Failure: ${qErr.message}\n`);
           }
-          run.status = "queued";
+          run.status = workerOnline ? "queued" : "failed"; // If worker is offline, mark as failed so it doesn't hang
           if (useMongo) {
             await RunModel.findByIdAndUpdate(run._id, { 
-              status: "queued",
+              status: run.status,
               stdout: workerOnline ? "📡 Delegating to Worker..." : "❌ Local Worker Offline"
             });
           }
+          // CRITICAL: Always signal end so the "EXECUTING" spinner stops
+          if (emitLog) emitLog(run._id.toString(), "end", { status: run.status });
           return;
         } else {
-          throw new Error("Compiler not found in Cloud Sandbox and Redis Queue is offline. Please run the API locally for C++ support.");
+          const errMsg = "Cloud Sandbox lacks compilers and Redis Queue is offline.";
+          if (emitLog) {
+            emitLog(run._id.toString(), "stderr", `❌ ${errMsg}\n`);
+            emitLog(run._id.toString(), "end", { status: "failed" });
+          }
+          throw new Error(errMsg);
         }
       }
       run.finishedAt = new Date();
