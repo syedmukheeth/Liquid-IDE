@@ -8,9 +8,8 @@ let socket = null;
 export function getSocket() {
   if (socket) return socket;
   socket = io(API_URL, {
-    transports: ["websocket"],
+    reconnectionDelayMax: 10000,
     autoConnect: true
   });
   return socket;
 }
-

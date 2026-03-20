@@ -260,9 +260,27 @@ export default function EditorPage() {
 
       socket.on("exec:log", onLog);
 
+      let lastSeenStdout = "";
+      let lastSeenStderr = "";
+
       await pollUntilDone(jobId, {
         onUpdate: (s) => {
           setRunStatus(s.status.charAt(0).toUpperCase() + s.status.slice(1));
+          
+          // Fallback: If socket is not connected, use polling data for terminal
+          const sock = getSocket();
+          if (!sock.connected && xtermRef.current) {
+            if (s.stdout && s.stdout.length > lastSeenStdout) {
+              const newPart = s.stdout.slice(lastSeenStdout);
+              xtermRef.current.write(newPart);
+              lastSeenStdout = s.stdout.length;
+            }
+            if (s.stderr && s.stderr.length > lastSeenStderr) {
+              const newPart = s.stderr.slice(lastSeenStderr);
+              xtermRef.current.write(newPart);
+              lastSeenStderr = s.stderr.length;
+            }
+          }
         }
       });
 
