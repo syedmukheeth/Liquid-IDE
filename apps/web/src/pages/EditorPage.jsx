@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, useCallback } from "react";
 import CodeEditor from "../components/CodeEditor";
 import logo from "../assets/logo.jpg";
 import LanguageSelector from "../components/LanguageSelector";
-import { GithubLogo, GithubModal } from '../components/GithubModal';
+import { GithubModal } from '../components/GithubModal';
 import { Terminal as XTerm } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
@@ -19,9 +19,7 @@ const languageConfigs = {
   c: { name: "solution.c", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/c/c-original.svg", template: `#include <stdio.h>\n\nint main() {\n  // Write your code here\n  printf("Hello from LiquidIDE C\\n");\n  return 0;\n}\n`, lang: "c" },
   python: { name: "solution.py", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg", template: `print("Hello from LiquidIDE Python")\n`, lang: "python" },
   javascript: { name: "solution.js", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg", template: `// Write your code here\nconsole.log("Hello from LiquidIDE JS");\n`, lang: "nodejs" },
-  java: { name: "Solution.java", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg", template: `import java.util.*;\n\npublic class Solution {\n  public static void main(String[] args) {\n    // Write your code here\n    System.out.println("Hello from LiquidIDE Java");\n  }\n}\n`, lang: "java" },
-  go: { name: "main.go", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg", template: `package main\n\nimport "fmt"\n\nfunc main() {\n    // Write your code here\n    fmt.Println("Hello from LiquidIDE Go")\n}\n`, lang: "go" },
-  rust: { name: "main.rs", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/rust/rust-original.svg", template: `fn main() {\n    // Write your code here\n    println!("Hello from LiquidIDE Rust");\n}\n`, lang: "rust" }
+  java: { name: "Solution.java", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg", template: `import java.util.*;\n\npublic class Solution {\n  public static void main(String[] args) {\n    // Write your code here\n    System.out.println("Hello from LiquidIDE Java");\n  }\n}\n`, lang: "java" }
 };
 
 export default function EditorPage() {
@@ -29,38 +27,24 @@ export default function EditorPage() {
   const [buffers, setBuffers] = useState(
     Object.fromEntries(Object.entries(languageConfigs).map(([id, cfg]) => [id, cfg.template]))
   );
-  const [stdout, setStdout] = useState("");
-  const [stderr, setStderr] = useState("");
   const [runStatus, setRunStatus] = useState("Ready");
   const [busy, setBusy] = useState(false);
   const [activeModal, setActiveModal] = useState(null); 
   const [isWorkerOnline, setIsWorkerOnline] = useState(false);
   const [apiVersion, setApiVersion] = useState(null);
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
   
   const terminalRef = useRef(null);
   const xtermRef = useRef(null);
   const fitAddonRef = useRef(null);
   const [activeMobileTab, setActiveMobileTab] = useState("editor"); // "editor" or "terminal"
   
-  const { user, loginUser, logoutUser } = useAuth();
+  const { user, loginUser } = useAuth();
 
-  useEffect(() => {
-    const handleOnline = () => setIsOffline(false);
-    const handleOffline = () => setIsOffline(true);
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
 
   // Poll worker status
   useEffect(() => {
     const checkStatus = async () => {
       if (!navigator.onLine) {
-        setIsOffline(true);
         setIsWorkerOnline(false);
         return;
       }
@@ -70,15 +54,11 @@ export default function EditorPage() {
           const data = await res.json();
           setIsWorkerOnline(data.online);
           setApiVersion(data.version);
-          setIsOffline(false);
         } else {
-           // If health check fails, but we have internet, maybe API is just down
            setIsWorkerOnline(false);
         }
       } catch (err) {
         setIsWorkerOnline(false);
-        // If it was a network error, maybe we are actually "offline" from browser's perspective
-        if (!navigator.onLine) setIsOffline(true);
       }
     };
     checkStatus();
@@ -96,8 +76,8 @@ export default function EditorPage() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  const saveHistory = useCallback((code, language, languageId) => {
-    const newEntry = { code, language, languageId, timestamp: Date.now() };
+  const saveHistory = useCallback((code, language, lId) => {
+    const newEntry = { code, language, languageId: lId, timestamp: Date.now() };
     const newHistory = [newEntry, ...history].slice(0, 10);
     setHistory(newHistory);
     localStorage.setItem("flux_history", JSON.stringify(newHistory));
@@ -166,14 +146,12 @@ export default function EditorPage() {
     fitAddonRef.current = fitAddon;
 
     term.onData((data) => {
-      // Handle data (typing)
       if (runRef.current.jobId) {
         const socket = getSocket();
         socket.emit("exec:input", { jobId: runRef.current.jobId, input: data });
       }
     });
 
-    // Resize handler
     const handleResize = () => fitAddon.fit();
     window.addEventListener('resize', handleResize);
 
@@ -194,13 +172,10 @@ export default function EditorPage() {
   async function runPythonInBrowser(code) {
     if (!pyodide) throw new Error("Python engine is still booting...");
     
-    let output = "";
     pyodide.setStdout({ batched: (str) => { 
-      output += str + "\n"; 
       xtermRef.current.write(str + "\n");
     } });
     pyodide.setStderr({ batched: (str) => { 
-      output += str + "\n"; 
       xtermRef.current.write(str + "\n");
     } });
 
@@ -261,14 +236,13 @@ export default function EditorPage() {
 
       socket.on("exec:log", onLog);
 
-      let lastSeenStdout = "";
-      let lastSeenStderr = "";
+      let lastSeenStdout = 0;
+      let lastSeenStderr = 0;
 
       await pollUntilDone(jobId, {
         onUpdate: (s) => {
           setRunStatus(s.status.charAt(0).toUpperCase() + s.status.slice(1));
           
-          // Fallback: If socket is not connected, use polling data for terminal
           const sock = getSocket();
           if (!sock.connected && xtermRef.current) {
             if (s.stdout && s.stdout.length > lastSeenStdout) {
@@ -312,7 +286,6 @@ export default function EditorPage() {
       <div className="bg-mesh" />
       <div className="noise-overlay" />
 
-      {/* Header */}
       <header className="relative z-20 flex h-14 md:h-16 shrink-0 items-center justify-between border-b border-white/5 bg-black/20 px-4 md:px-8 backdrop-blur-2xl">
         <div className="flex items-center gap-4 md:gap-10">
           <div className="flex items-center gap-2 md:gap-3 transition-transform hover:scale-[1.02]">
@@ -351,7 +324,6 @@ export default function EditorPage() {
           )}
           <button onClick={() => setActiveModal('upgrade')} className="flux-button-primary animate-shimmer py-1 md:py-1.5 px-3 md:px-6 text-[10px] md:text-[13px]">Upgrade</button>
           
-          {/* Mobile Menu Trigger (History/Settings) */}
           <div className="flex md:hidden items-center gap-2">
              <button onClick={() => setActiveModal('history')} className="p-2 text-white/40 hover:text-white">
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -363,7 +335,6 @@ export default function EditorPage() {
         </div>
       </header>
 
-      {/* Mobile Tab Switcher */}
       <div className="flex md:hidden h-12 shrink-0 border-b border-white/5 bg-black/40 backdrop-blur-xl">
         <button 
           onClick={() => setActiveMobileTab('editor')}
@@ -379,7 +350,7 @@ export default function EditorPage() {
           className={`relative flex-1 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeMobileTab === 'terminal' ? "text-blue-400 bg-white/5" : "text-white/30"}`}
         >
           <div className="relative">
-            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
             {busy && <div className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-blue-500 animate-pulse border border-black" />}
           </div>
           Output
@@ -387,9 +358,7 @@ export default function EditorPage() {
         </button>
       </div>
 
-      {/* Main Content */}
       <main className="relative z-10 flex flex-1 flex-col md:flex-row overflow-hidden p-2 md:p-4 gap-2 md:gap-4">
-        {/* Editor Side */}
         <section className={`flex flex-col overflow-hidden gap-4 ${activeMobileTab === 'editor' ? 'flex-1' : 'hidden'} md:flex md:flex-[7]`}>
           <div className="glass-card flex flex-1 flex-col overflow-hidden">
             <div className="flex h-11 shrink-0 items-center justify-between border-b border-white/5 px-3 md:px-5 bg-white/[0.02]">
@@ -441,10 +410,8 @@ export default function EditorPage() {
           </div>
         </section>
 
-        {/* Terminal Section */}
         <section className={`flex flex-col overflow-hidden gap-4 ${activeMobileTab === 'terminal' ? 'flex-1' : 'hidden'} md:flex md:flex-[3]`}>
           <div className="glass-card flex flex-1 flex-col overflow-hidden bg-black/40">
-            {/* Terminal Header */}
             <div className="flex h-11 shrink-0 items-center justify-between border-b border-white/5 px-4 md:px-6 bg-white/[0.02]">
               <div className="flex items-center gap-2 md:gap-3">
                 <button 
@@ -462,7 +429,6 @@ export default function EditorPage() {
               <div className="text-[8px] md:text-[9px] font-bold tracking-widest text-white/30 uppercase">{runStatus}</div>
             </div>
             
-            {/* Terminal Body */}
             <div className="flex-1 overflow-hidden p-0 bg-black/20 relative">
               <div ref={terminalRef} className="h-full w-full" />
               
@@ -475,7 +441,6 @@ export default function EditorPage() {
               )}
             </div>
 
-            {/* Terminal Footer */}
             <div className="flex h-8 md:h-10 shrink-0 items-center justify-between border-t border-white/5 px-4 md:px-6 bg-black/40">
               <div className="flex items-center gap-2">
                 <span className="text-[9px] font-bold uppercase tracking-widest text-white/20">Flux Engine</span>
@@ -487,7 +452,6 @@ export default function EditorPage() {
         </section>
       </main>
 
-      {/* Footer */}
       <footer className="relative z-20 flex flex-col md:flex-row h-auto md:h-12 shrink-0 items-center justify-between border-t border-white/5 bg-black/60 px-4 md:px-8 py-3 md:py-0 backdrop-blur-xl gap-3 md:gap-0">
         <div className="flex items-center gap-4 md:gap-6">
           <div className="flex items-center gap-2">
@@ -510,14 +474,11 @@ export default function EditorPage() {
         </div>
       </footer>
 
-      {/* Modals */}
       <AuthModal isOpen={activeModal === 'auth'} onClose={() => setActiveModal(null)} isDarkMode={true} onLogin={loginUser} />
       <SettingsModal isOpen={activeModal === 'settings'} onClose={() => setActiveModal(null)} isDarkMode={true} settings={settings} onSettingsChange={onSettingsUpdate} />
       <HistoryModal isOpen={activeModal === 'history'} onClose={() => setActiveModal(null)} isDarkMode={true} history={history} onRestore={onRestoreHistory} />
-      <GithubModal isOpen={activeModal === 'github'} onClose={() => setActiveModal(null)} code={buffers[activeLangId]} language={activeLangId} isDarkMode={true} />
+      <GithubModal isOpen={activeModal === 'github'} onClose={() => setActiveModal(null)} code={buffers[activeLangId]} isDarkMode={true} />
       <UpgradeModal isOpen={activeModal === 'upgrade'} onClose={() => setActiveModal(null)} isDarkMode={true} />
-      {/* Offline Overlay */}
     </div>
   );
 }
-

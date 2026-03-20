@@ -1,7 +1,6 @@
 const { Router } = require("express");
 const { z } = require("zod");
 const { createRun, getRun, getQueueStatus } = require("./runs.service");
-const { authMiddleware } = require("../../middleware/auth.middleware");
 
 const runsRouter = Router();
 
@@ -59,8 +58,8 @@ runsRouter.get("/health/queue", async (req, res, next) => {
   }
 });
 
+// eslint-disable-next-line no-unused-vars
 runsRouter.use((err, _req, res, next) => {
-  void next;
   if (err instanceof z.ZodError) {
     return res.status(400).json({ message: "Invalid request", issues: err.issues });
   }

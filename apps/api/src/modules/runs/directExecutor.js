@@ -36,112 +36,118 @@ function isToolAvailable(cmd) {
 }
 
 async function execWithTimeout(cmd, args, timeoutMs, jobId, onLog, spawnOpts = {}) {
-  return new Promise(async (resolve, reject) => {
-    let stdout = "";
-    let stderr = "";
-    let killed = false;
+  return new Promise((resolve, reject) => {
+    (async () => {
+      let stdout = "";
+      let stderr = "";
+      let killed = false;
 
-    const ptyMod = getPty();
-    if (ptyMod && !spawnOpts.noPty) {
-      try {
-        const ptyProcess = ptyMod.spawn(cmd, args, {
-          name: 'xterm-color',
-          cols: 80,
-          rows: 24,
-          cwd: spawnOpts.cwd || process.cwd(),
-          env: { ...process.env, ...spawnOpts.env },
-        });
+      const ptyMod = getPty();
+      if (ptyMod && !spawnOpts.noPty) {
+        try {
+          const ptyProcess = ptyMod.spawn(cmd, args, {
+            name: 'xterm-color',
+            cols: 80,
+            rows: 24,
+            cwd: spawnOpts.cwd || process.cwd(),
+            env: { ...process.env, ...spawnOpts.env },
+          });
 
-        const timeout = setTimeout(() => {
-          killed = true;
-          try { ptyProcess.kill(); } catch (e) {}
-          if (onLog) onLog(jobId, "stderr", "\n❌ Execution Timed Out\n");
-          resolve({ stdout, stderr: "Timed Out", exitCode: 124 });
-        }, timeoutMs);
+          const timeout = setTimeout(() => {
+            killed = true;
+            try { ptyProcess.kill(); } catch (e) { /* ignore signal error */ }
+            if (onLog) onLog(jobId, "stderr", "\n❌ Execution Timed Out\n");
+            resolve({ stdout, stderr: "Timed Out", exitCode: 124 });
+          }, timeoutMs);
 
-        const inputHandler = (data) => {
-          try {
-            ptyProcess.write(data);
-          } catch (e) {
-            logger.warn({ jobId, error: e.message }, "PTY write failed");
+          const inputHandler = (data) => {
+            try {
+              ptyProcess.write(data);
+            } catch (e) {
+              logger.warn({ jobId, error: e.message }, "PTY write failed");
+              /* ignore write error */
+            }
+          };
+
+          if (jobId) {
+            process.on(`run:input:${jobId}`, inputHandler);
+            const buffered = getBufferedInput(jobId);
+            if (buffered.length > 0) {
+              setTimeout(() => {
+                buffered.forEach(input => inputHandler(input));
+              }, 300);
+            }
           }
-        };
 
-        if (jobId) {
-          process.on(`run:input:${jobId}`, inputHandler);
-          const buffered = getBufferedInput(jobId);
-          if (buffered.length > 0) {
-            setTimeout(() => {
-              buffered.forEach(input => inputHandler(input));
-            }, 300);
-          }
+          ptyProcess.onData((data) => {
+            stdout += data;
+            if (onLog) onLog(jobId, "stdout", data);
+          });
+
+          ptyProcess.onExit(({ exitCode }) => {
+            clearTimeout(timeout);
+            if (jobId) process.off(`run:input:${jobId}`, inputHandler);
+            if (killed) return;
+            if (onLog) onLog(jobId, "end", { status: exitCode === 0 ? "succeeded" : "failed" });
+            resolve({ stdout, stderr, exitCode });
+          });
+          return;
+        } catch (e) {
+          logger.error({ error: e.message }, "PTY spawn failed, falling back to spawn");
         }
-
-        ptyProcess.onData((data) => {
-          stdout += data;
-          if (onLog) onLog(jobId, "stdout", data);
-        });
-
-        ptyProcess.onExit(({ exitCode }) => {
-          clearTimeout(timeout);
-          if (jobId) process.off(`run:input:${jobId}`, inputHandler);
-          if (killed) return;
-          if (onLog) onLog(jobId, "end", { status: exitCode === 0 ? "succeeded" : "failed" });
-          resolve({ stdout, stderr, exitCode });
-        });
-        return;
-      } catch (e) {
-        logger.error({ error: e.message }, "PTY spawn failed, falling back to spawn");
       }
-    }
 
-    const child = spawn(cmd, args, { ...spawnOpts, windowsHide: true });
-    const timeout = setTimeout(() => {
-      killed = true;
-      try { child.kill(); } catch (e) {}
-      resolve({ stdout, stderr: "Timed Out", exitCode: 124 });
-    }, timeoutMs);
+      const child = spawn(cmd, args, { ...spawnOpts, windowsHide: true });
+      const timeout = setTimeout(() => {
+        killed = true;
+        try { child.kill(); } catch (e) { /* ignore */ }
+        resolve({ stdout, stderr: "Timed Out", exitCode: 124 });
+      }, timeoutMs);
 
-    const inputHandler = (data) => {
-      if (child.stdin && !child.stdin.destroyed) {
-        child.stdin.write(data);
+      const inputHandler = (data) => {
+        if (child.stdin && !child.stdin.destroyed) {
+          child.stdin.write(data);
+        }
+      };
+
+      if (jobId) {
+        process.on(`run:input:${jobId}`, inputHandler);
+        const buffered = getBufferedInput(jobId);
+        if (buffered.length > 0) {
+          setTimeout(() => {
+            buffered.forEach(input => inputHandler(input));
+          }, 300);
+        }
       }
-    };
 
-    if (jobId) {
-      process.on(`run:input:${jobId}`, inputHandler);
-      const buffered = getBufferedInput(jobId);
-      if (buffered.length > 0) {
-        setTimeout(() => {
-          buffered.forEach(input => inputHandler(input));
-        }, 300);
-      }
-    }
+      child.stdout.on("data", (data) => {
+        const chunk = data.toString();
+        stdout += chunk;
+        if (onLog) onLog(jobId, "stdout", chunk);
+      });
 
-    child.stdout.on("data", (data) => {
-      const chunk = data.toString();
-      stdout += chunk;
-      if (onLog) onLog(jobId, "stdout", chunk);
-    });
+      child.stderr.on("data", (data) => {
+        const chunk = data.toString();
+        stderr += chunk;
+        if (onLog) onLog(jobId, "stderr", chunk);
+      });
 
-    child.stderr.on("data", (data) => {
-      const chunk = data.toString();
-      stderr += chunk;
-      if (onLog) onLog(jobId, "stderr", chunk);
-    });
+      child.on("close", (code) => {
+        clearTimeout(timeout);
+        if (jobId) process.off(`run:input:${jobId}`, inputHandler);
+        if (killed) return;
+        if (onLog) onLog(jobId, "end", { status: code === 0 ? "succeeded" : "failed" });
+        resolve({ stdout, stderr, exitCode: code ?? 1 });
+      });
 
-    child.on("close", (code) => {
-      clearTimeout(timeout);
-      if (jobId) process.off(`run:input:${jobId}`, inputHandler);
-      if (killed) return;
-      if (onLog) onLog(jobId, "end", { status: code === 0 ? "succeeded" : "failed" });
-      resolve({ stdout, stderr, exitCode: code ?? 1 });
-    });
-
-    child.on("error", (err) => {
-      clearTimeout(timeout);
-      if (jobId) process.off(`run:input:${jobId}`, inputHandler);
-      reject(err);
+      child.on("error", (err) => {
+        clearTimeout(timeout);
+        if (jobId) process.off(`run:input:${jobId}`, inputHandler);
+        reject(err);
+      });
+    })().catch(err => {
+      logger.error({ err }, "Fatal error in PTY executor");
+      resolve({ stdout: "", stderr: `Execution Error: ${err.message}`, exitCode: 1 });
     });
   });
 }
@@ -168,7 +174,6 @@ async function executeDirectly(run, onLog) {
   const entrypoint = run.entrypoint || (language === "java" ? "Solution.java" : "solution.js");
   const files = run.files || [];
   
-  // Primary code content (for fallback or single file mode)
   const mainFile = files.find(f => f.path === entrypoint);
   const code = mainFile ? mainFile.content : (run.code || "");
 
@@ -183,7 +188,6 @@ async function executeDirectly(run, onLog) {
     await fs.mkdir(tempDir, { recursive: true });
     await materializeFiles(tempDir, files);
 
-    // If no entrypoint file was provided in files array, write the run.code to entrypoint path
     if (files.length === 0 || !mainFile) {
         await fs.writeFile(path.join(tempDir, entrypoint), code);
     }
@@ -231,7 +235,6 @@ async function executeDirectly(run, onLog) {
       const javaFile = `${javaClass}.java`;
       const javaFilePath = path.join(tempDir, javaFile);
       
-      // Ensure the java file matching the class name exists
       await fs.writeFile(javaFilePath, code);
       
       if (onLog) onLog(jobId, "stdout", `🔨 \x1b[1;34mCompiling Java (${javaClass})...\x1b[0m\n`);
@@ -243,22 +246,6 @@ async function executeDirectly(run, onLog) {
       if (onLog) onLog(jobId, "stdout", "✅ \x1b[1;32mCompilation successful.\x1b[0m\n🚀 \x1b[1;36mRunning Java...\x1b[0m\n\r\n");
       return await execWithTimeout("java", [javaClass], 60000, jobId, onLog, { cwd: tempDir });
 
-    } else if (language === "go") {
-      const goFile = entrypoint.endsWith(".go") ? entrypoint : "main.go";
-      if (onLog) onLog(jobId, "stdout", "🚀 \x1b[1;36mRunning Go program...\x1b[0m\n\r\n");
-      return await execWithTimeout("go", ["run", goFile], 60000, jobId, onLog, { cwd: tempDir });
-
-    } else if (language === "rust") {
-      const rustFile = entrypoint.endsWith(".rs") ? entrypoint : "main.rs";
-      const outPath = path.join(tempDir, IS_WINDOWS ? "program.exe" : "program");
-      if (onLog) onLog(jobId, "stdout", "🔨 \x1b[1;34mCompiling Rust...\x1b[0m\n");
-      const compile = await execWithTimeout("rustc", [rustFile, "-o", outPath], 30000, null, null, { noPty: true, cwd: tempDir });
-      if (compile.exitCode !== 0) {
-        if (onLog) onLog(jobId, "stderr", compile.stderr || "Compilation failed\n");
-        return { status: "failed", stderr: compile.stderr };
-      }
-      if (onLog) onLog(jobId, "stdout", "✅ \x1b[1;32mCompilation successful.\x1b[0m\n🚀 \x1b[1;36mRunning Rust...\x1b[0m\n\r\n");
-      return await execWithTimeout(outPath, [], 60000, jobId, onLog, { cwd: tempDir });
     }
     throw new Error(`Unsupported language/runtime: ${runtime}`);
   } catch (err) {
@@ -269,6 +256,7 @@ async function executeDirectly(run, onLog) {
       try {
         await fs.rm(tempDir, { recursive: true, force: true });
       } catch (e) {
+        /* ignore cleanup error */
         logger.warn({ path: tempDir }, "Failed to cleanup temp execution directory");
       }
     }, 10000);

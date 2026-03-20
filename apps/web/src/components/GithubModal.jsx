@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Modal from "./Modal";
 
-export function GithubModal({ isOpen, onClose, code, language, isDarkMode }) {
+export function GithubModal({ isOpen, onClose, code, isDarkMode }) {
   const [token, setToken] = useState(localStorage.getItem("gh_token") || "");
   const [repo, setRepo] = useState(localStorage.getItem("gh_repo") || "");
   const [path, setPath] = useState(localStorage.getItem("gh_path") || "solution.txt");

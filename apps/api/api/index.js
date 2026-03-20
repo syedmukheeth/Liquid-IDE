@@ -9,7 +9,6 @@ let initializationError = null;
 
 module.exports = async (req, res) => {
   // Normalize URL by removing /api prefix if present (consistent with local dev)
-  const originalUrl = req.url;
   req.url = req.url.replace(/^\/api/, "");
   if (req.url === "") req.url = "/";
 

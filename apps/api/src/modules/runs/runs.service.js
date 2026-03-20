@@ -60,12 +60,9 @@ async function createRun(input) {
       const runData = (run && typeof run.toObject === "function") ? run.toObject() : run;
       
       // Determine if we should attempt direct execution or delegate to worker
-      const isCompiled = ["cpp", "c", "java", "go", "rust"].includes(runData.runtime);
       const hostTool = runData.runtime === "cpp" ? "g++" : 
                        runData.runtime === "c" ? "gcc" : 
-                       runData.runtime === "java" ? "javac" : 
-                       runData.runtime === "go" ? "go" :
-                       runData.runtime === "rust" ? "rustc" : null;
+                       runData.runtime === "java" ? "javac" : null;
                        
       // If we are on Render (Cloud), we MUST attempt direct execution
       const isCloud = !!process.env.RENDER;
@@ -105,7 +102,7 @@ async function createRun(input) {
               emitLog(run._id.toString(), "stderr", 
                 "❌ \x1b[1;31mError: Local Execution Environment Offline.\x1b[0m\n" +
                 "💡 \x1b[1;36mThis environment (Serverless) doesn't have native compilers.\x1b[0m\n\n" +
-                "\x1b[1;33mTo run C++, please start your local worker:\x1b[0m\n" +
+                "\x1b[1;33mTo run compiled languages, please start your local worker:\x1b[0m\n" +
                 `   \x1b[1;32m${workerCommand}\x1b[0m\n\n` +
                 "🔗 \x1b[1;34mCloud Tip:\x1b[0m Deploy via Docker (see DEPLOYMENT.md) for 100% cloud execution.\n\r\n"
               );

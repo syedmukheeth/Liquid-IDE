@@ -21,7 +21,16 @@ export default [
         document: "readonly",
         fetch: "readonly",
         setTimeout: "readonly",
-        clearTimeout: "readonly"
+        clearTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
+        localStorage: "readonly",
+        navigator: "readonly",
+        console: "readonly",
+        confirm: "readonly",
+        alert: "readonly",
+        URLSearchParams: "readonly",
+        URL: "readonly"
       }
     },
     rules: {
@@ -57,6 +66,8 @@ export default [
         console: "readonly",
         setTimeout: "readonly",
         clearTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
         URL: "readonly",
         Buffer: "readonly"
       }

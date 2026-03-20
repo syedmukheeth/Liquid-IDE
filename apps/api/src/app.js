@@ -4,7 +4,6 @@ const helmet = require("helmet");
 const pino = require("pino-http");
 const passport = require("./config/passport");
 const { logger } = require("./config/logger");
-const { env } = require("./config/env");
 const { runsRouter } = require("./modules/runs/runs.routes");
 const { githubRouter } = require("./modules/github/github.routes");
 const { authRouter } = require("./modules/auth/auth.routes");
@@ -58,8 +57,8 @@ function createApp() {
   app.use("/", routes);
 
   // Global Error Handler
+  // eslint-disable-next-line no-unused-vars
   app.use((err, req, res, next) => {
-    void next;
     const errorLogger = req.log || logger;
     errorLogger.error({ err }, "Unhandled application error");
     res.status(err.status || 500).json({

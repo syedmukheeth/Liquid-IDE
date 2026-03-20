@@ -1,9 +1,9 @@
 # LiquidIDE Deployment Guide: Cloud-Native Execution 🚀
 
-To achieve a professional, cloud-only experience (like Programiz) where you don't need to run a local worker for C++, Java, Go, or Rust, you must deploy the API as a **Docker Container**.
+To achieve a professional, cloud-only experience (like Programiz) where you don't need to run a local worker for C++, Java, or C, you must deploy the API as a **Docker Container**.
 
 ## Why Docker?
-Vercel Serverless is great for JS/Node, but it **does not contain compilers** (g++, gcc, go). Our Dockerfile is pre-configured with all these tools, allowing the API to execute code directly in the cloud.
+Vercel Serverless is great for JS/Node, but it **does not contain compilers** (g++, gcc). Our Dockerfile is pre-configured with all these tools, allowing the API to execute code directly in the cloud.
 
 ---
 

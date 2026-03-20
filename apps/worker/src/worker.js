@@ -111,4 +111,3 @@ main().catch((err) => {
   logger.fatal({ err }, "Worker crashed");
   process.exit(1);
 });
-

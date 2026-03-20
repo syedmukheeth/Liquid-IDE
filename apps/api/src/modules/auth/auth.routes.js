@@ -53,6 +53,7 @@ router.get("/me", authMiddleware, async (req, res) => {
   }
 });
 
+// eslint-disable-next-line no-unused-vars
 router.post("/register", async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
@@ -66,6 +67,7 @@ router.post("/register", async (req, res, next) => {
   }
 });
 
+// eslint-disable-next-line no-unused-vars
 router.post("/login", async (req, res, next) => {
   try {
     const { email, password } = req.body;

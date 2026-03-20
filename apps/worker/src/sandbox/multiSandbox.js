@@ -33,14 +33,6 @@ const LANGUAGE_CONFIGS = {
       const className = getJavaMainClass(code);
       return ["sh", "-c", `javac ${className}.java && java ${className}`];
     }
-  },
-  go: {
-    image: "golang:1.21-alpine",
-    command: (entry) => ["go", "run", entry]
-  },
-  rust: {
-    image: "rust:1.72-slim",
-    command: (entry) => ["sh", "-c", `rustc ${entry} -o main && ./main`]
   }
 };
 
@@ -90,9 +82,7 @@ async function executeRun(opts) {
           const code = files.find(f => f.path === entrypoint)?.content || "";
           const className = getJavaMainClass(code);
           return [shell, shellFlag, `javac ${className}.java && java ${className}`];
-        })(),
-        go: ["go", "run", entry],
-        rust: [shell, shellFlag, `rustc ${entry} -o main${exeExt} && .${path.sep}main${exeExt}`]
+        })()
       };
 
       const cmdInfo = localCmds[language];
