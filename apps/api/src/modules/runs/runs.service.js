@@ -56,7 +56,8 @@ async function createRun(input) {
     // Small delay to allow frontend to subscribe to the socket
     await new Promise(resolve => setTimeout(resolve, 800));
     try {
-      const result = await executeDirectly(run, emitLog);
+      const runData = (run && typeof run.toObject === "function") ? run.toObject() : run;
+      const result = await executeDirectly(runData, emitLog);
       run.stdout = result.stdout;
       run.stderr = result.stderr;
       run.exitCode = result.exitCode;

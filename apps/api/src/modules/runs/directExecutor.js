@@ -131,9 +131,20 @@ async function execWithTimeout(cmd, args, timeoutMs, jobId, onLog, spawnOpts = {
 }
 
 async function executeDirectly(run, onLog) {
-  const { runtime, code } = run;
-  const language = runtime; // For backward compatibility within this function
+  const runtime = run.runtime || run.language;
+  const language = runtime;
   const jobId = run._id.toString();
+  
+  // Extract code from files based on entrypoint
+  const entrypoint = run.entrypoint || "solution.js";
+  const fileObj = (run.files || []).find(f => f.path === entrypoint);
+  const code = fileObj ? fileObj.content : (run.code || "");
+
+  if (!runtime) {
+    logger.error({ run }, "Execution failed: No runtime/language specified");
+    throw new Error("Unsupported language/runtime: undefined (Check model consistency)");
+  }
+
   const tempDir = path.join(os.tmpdir(), `liquid-${jobId}`);
 
   try {
