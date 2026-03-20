@@ -1,8 +1,9 @@
 const mongoose = require("mongoose");
 const { RunModel } = require("./runs.model");
-const { executeDirectly } = require("./directExecutor");
+const { executeDirectly, isToolAvailable } = require("./directExecutor");
 const { logger } = require("../../config/logger");
 const { emitLog } = require("./socketHandler");
+const { getRunsQueue } = require("./runs.queue");
 
 /**
  * Creates and executes a run directly on this server.
@@ -57,11 +58,36 @@ async function createRun(input) {
     await new Promise(resolve => setTimeout(resolve, 800));
     try {
       const runData = (run && typeof run.toObject === "function") ? run.toObject() : run;
-      const result = await executeDirectly(runData, emitLog);
-      run.stdout = result.stdout;
-      run.stderr = result.stderr;
-      run.exitCode = result.exitCode;
-      run.status = result.exitCode === 0 ? "succeeded" : "failed";
+      
+      // Determine if we should attempt direct execution or delegate to worker
+      const isCompiled = ["cpp", "c", "java"].includes(runData.runtime);
+      const hostTool = runData.runtime === "cpp" ? "g++" : runData.runtime === "c" ? "gcc" : runData.runtime === "java" ? "javac" : null;
+      const canRunDirectly = !hostTool || isToolAvailable(hostTool);
+
+      if (canRunDirectly) {
+        const result = await executeDirectly(runData, emitLog);
+        run.stdout = result.stdout;
+        run.stderr = result.stderr;
+        run.exitCode = result.exitCode;
+        run.status = result.exitCode === 0 ? "succeeded" : "failed";
+      } else {
+        // Delegate to worker queue
+        const queue = getRunsQueue();
+        if (queue) {
+          if (emitLog) emitLog(run._id.toString(), "stdout", "📡 \x1b[1;33mCompiler not found in Cloud Sandbox.\x1b[0m\n⏳ \x1b[1;34mDelegating to LiquidIDE Worker (Local)...\x1b[0m\n\r\n");
+          await queue.add("execute", { runId: run._id.toString() });
+          run.status = "queued";
+          if (useMongo) {
+            await RunModel.findByIdAndUpdate(run._id, { 
+              status: "queued",
+              stdout: "📡 \x1b[1;33mCompiler not found in Cloud Sandbox.\x1b[0m\n⏳ \x1b[1;34mDelegating to LiquidIDE Worker (Local)...\x1b[0m\n\r\n"
+            });
+          }
+          return; // Worker will update the status later
+        } else {
+          throw new Error("Compiler not found in Cloud Sandbox and Redis Queue is offline. Please run the API locally for C++ support.");
+        }
+      }
       run.finishedAt = new Date();
     } catch (err) {
       logger.error({ err }, "Execution error");

@@ -18,6 +18,20 @@ function getPty() {
 }
 
 const IS_WINDOWS = os.platform() === "win32";
+const { execSync } = require("node:child_process");
+
+/**
+ * Checks if a specific command/tool is available in the system PATH.
+ */
+function isToolAvailable(cmd) {
+  try {
+    const checkCmd = IS_WINDOWS ? `where ${cmd}` : `command -v ${cmd}`;
+    execSync(checkCmd, { stdio: "ignore" });
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
 
 async function execWithTimeout(cmd, args, timeoutMs, jobId, onLog, spawnOpts = {}) {
   return new Promise(async (resolve, reject) => {
@@ -215,4 +229,4 @@ async function executeDirectly(run, onLog) {
   }
 }
 
-module.exports = { executeDirectly };
+module.exports = { executeDirectly, isToolAvailable };
