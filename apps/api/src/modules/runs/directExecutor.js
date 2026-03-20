@@ -263,8 +263,11 @@ function execWithTimeout(cmd, args, timeoutMs, opts = {}) {
         // Drain buffered input (sent during compilation)
         const buffered = getBufferedInput(jobId);
         if (buffered.length > 0) {
-          logger.info({ jobId, count: buffered.length }, "Draining buffered input to process");
-          buffered.forEach(input => inputHandler(input));
+          logger.info({ jobId, count: buffered.length }, "Draining buffered input (with delay)");
+          // Small delay to ensure the executable has reached the read() call
+          setTimeout(() => {
+            buffered.forEach(input => inputHandler(input));
+          }, 150); 
         }
       }
 
