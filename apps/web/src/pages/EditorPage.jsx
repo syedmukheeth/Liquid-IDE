@@ -7,6 +7,7 @@ import { getSocket } from "../services/socketClient";
 import AuthModal from "../components/AuthModal";
 import SettingsModal from "../components/SettingsModal";
 import HistoryModal from "../components/HistoryModal";
+import GithubModal from "../components/GithubModal";
 import UpgradeModal from "../components/UpgradeModal";
 import { useAuth } from "../hooks/useAuth";
 
@@ -25,6 +26,7 @@ export default function EditorPage() {
   );
   const [stdout, setStdout] = useState("");
   const [stderr, setStderr] = useState("");
+  const [stdin, setStdin] = useState("");
   const [runStatus, setRunStatus] = useState("Ready");
   const [busy, setBusy] = useState(false);
   const [activeModal, setActiveModal] = useState(null); 
@@ -48,7 +50,6 @@ export default function EditorPage() {
   // Poll worker status
   useEffect(() => {
     const checkStatus = async () => {
-      console.log(`[Network Debug] Online: ${navigator.onLine}, API: ${import.meta.env.VITE_API_URL}`);
       if (!navigator.onLine) {
         setIsOffline(true);
         setIsWorkerOnline(false);
@@ -119,7 +120,6 @@ export default function EditorPage() {
           });
           setPyodide(py);
           setIsPyodideLoading(false);
-          console.log("🐍 Pyodide v0.26.4 loaded successfully.");
         } catch (err) {
           console.error("❌ Pyodide loading failed:", err);
           setIsPyodideLoading(false);
@@ -216,6 +216,27 @@ export default function EditorPage() {
     }
   }
 
+  const onClear = () => {
+    setStdout("");
+    setStderr("");
+    setRunStatus("Ready");
+  };
+
+  const onInputSubmit = (e) => {
+    if (e.key === "Enter" && stdin.trim()) {
+      const socket = getSocket();
+      socket.emit("exec:input", { jobId: runRef.current.jobId, input: stdin + "\n" });
+      setStdout(prev => prev + stdin + "\n");
+      setStdin("");
+    }
+  };
+
+  const onNewFile = () => {
+    if (confirm("Are you sure? This will clear the current code.")) {
+      setBuffers(prev => ({ ...prev, [activeLangId]: languageConfigs[activeLangId].template }));
+    }
+  };
+
   return (
     <div className="relative flex h-screen w-full flex-col overflow-hidden bg-black selection:bg-blue-500/30">
       <div className="bg-mesh" />
@@ -307,6 +328,20 @@ export default function EditorPage() {
               </div>
               <div className="flex items-center gap-2 md:gap-3">
                 <button 
+                  onClick={onNewFile}
+                  className="flux-button-secondary h-7 px-3 md:px-4 text-[10px] md:text-[11px] flex items-center gap-2"
+                >
+                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                  <span>New File</span>
+                </button>
+                <button 
+                  onClick={() => setActiveModal('github')}
+                  className="flux-button-secondary h-7 px-3 md:px-4 text-[10px] md:text-[11px] flex items-center gap-2 border-emerald-500/20 text-emerald-400/80 hover:text-emerald-300 transition-all shadow-[0_0_15px_rgba(16,185,129,0.05)] hover:shadow-[0_0_20px_rgba(16,185,129,0.1)]"
+                >
+                  <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+                  <span>Push to GitHub</span>
+                </button>
+                <button 
                   onClick={onRun}
                   disabled={busy}
                   className="flux-button-primary flex items-center gap-2 h-7 px-3 md:px-4 text-[10px] md:text-[11px]"
@@ -341,6 +376,13 @@ export default function EditorPage() {
           <div className="glass-card flex flex-1 flex-col overflow-hidden bg-black/40">
             <div className="flex h-11 shrink-0 items-center justify-between border-b border-white/5 px-4 md:px-6 bg-white/[0.02]">
               <div className="flex items-center gap-2 md:gap-3">
+                <button 
+                  onClick={onClear}
+                  className="p-1.5 text-white/30 hover:text-white transition-colors rounded-md hover:bg-white/5"
+                  title="Clear Terminal"
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
                 <div className={`h-1.5 w-1.5 md:h-2 md:w-2 rounded-full shadow-[0_0_10px_currentcolor] transition-colors duration-500 ${runStatus === "Succeeded" ? "text-emerald-400 bg-emerald-400" : runStatus === "Failed" ? "text-rose-400 bg-rose-400" : busy ? "text-blue-400 bg-blue-400 animate-pulse" : "text-white/20 bg-white/20"}`} />
                 <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.25em] text-white/50 font-mono">Terminal Output</span>
               </div>
@@ -373,6 +415,21 @@ export default function EditorPage() {
                 <div className="flex h-full flex-col items-center justify-center gap-3 md:gap-4 opacity-[0.05] grayscale select-none">
                   <svg className="h-12 w-12 md:h-16 md:w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                   <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.6em]">Standby</span>
+                </div>
+              )}
+
+              {busy && (
+                <div className="mt-4 flex items-center gap-3 border-t border-white/5 pt-4">
+                  <span className="text-[10px] font-bold text-blue-400/60 uppercase tracking-widest">Input:</span>
+                  <input
+                    type="text"
+                    value={stdin}
+                    onChange={(e) => setStdin(e.target.value)}
+                    onKeyDown={onInputSubmit}
+                    placeholder="Type here..."
+                    className="flex-1 bg-transparent text-[13px] text-white outline-none placeholder:text-white/10"
+                    autoFocus
+                  />
                 </div>
               )}
             </div>
@@ -415,6 +472,7 @@ export default function EditorPage() {
       <AuthModal isOpen={activeModal === 'auth'} onClose={() => setActiveModal(null)} isDarkMode={true} onLogin={loginUser} />
       <SettingsModal isOpen={activeModal === 'settings'} onClose={() => setActiveModal(null)} isDarkMode={true} settings={settings} onSettingsChange={onSettingsUpdate} />
       <HistoryModal isOpen={activeModal === 'history'} onClose={() => setActiveModal(null)} isDarkMode={true} history={history} onRestore={onRestoreHistory} />
+      <GithubModal isOpen={activeModal === 'github'} onClose={() => setActiveModal(null)} code={buffers[activeLangId]} language={activeLangId} isDarkMode={true} />
       <UpgradeModal isOpen={activeModal === 'upgrade'} onClose={() => setActiveModal(null)} isDarkMode={true} />
       {/* Offline Overlay */}
       {isOffline && (

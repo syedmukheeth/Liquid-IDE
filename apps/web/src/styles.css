@@ -66,54 +66,65 @@ body {
 
 .glass-card {
   background: rgba(20, 20, 25, 0.4);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
   border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 28px;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 15px 45px -10px rgba(0, 0, 0, 0.6);
 }
 
 .glass-card:hover {
   border-color: var(--glass-border-bright);
-  background: rgba(25, 25, 30, 0.5);
-  transform: translateY(-2px);
+  background: rgba(25, 25, 30, 0.55);
+  transform: translateY(-4px) scale(1.005);
+  box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.8);
 }
 
 /* Specific UI Components */
 .flux-button-primary {
-  background: var(--accent-primary);
+  background: linear-gradient(135deg, var(--accent-primary) 0%, #4facfe 100%);
   color: white;
-  font-weight: 600;
-  padding: 8px 20px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 12px var(--accent-glow);
-  transition: all 0.3s ease;
-  font-size: 13px;
-  letter-spacing: -0.01em;
+  font-weight: 800;
+  padding: 8px 24px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 15px var(--accent-glow);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 .flux-button-primary:hover {
-  transform: scale(1.02);
+  transform: translateY(-2px) scale(1.02);
   filter: brightness(1.1);
-  box-shadow: 0 6px 20px var(--accent-glow);
+  box-shadow: 0 8px 25px var(--accent-glow);
+}
+
+.flux-button-primary:active {
+  transform: translateY(0) scale(0.98);
 }
 
 .flux-button-secondary {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
-  color: white;
-  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 700;
   padding: 8px 20px;
-  border-radius: 12px;
-  transition: all 0.3s ease;
-  font-size: 13px;
+  border-radius: 14px;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .flux-button-secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
   border-color: var(--glass-border-bright);
+  transform: translateY(-1px);
 }
 
 /* Animations */

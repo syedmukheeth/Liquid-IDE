@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const { RunModel } = require("./runs.model");
 const { executeDirectly } = require("./directExecutor");
 const { logger } = require("../../config/logger");
+const { emitLog } = require("./socketHandler");
 
 /**
  * Creates and executes a run directly on this server.
@@ -52,7 +53,7 @@ async function createRun(input) {
 
   // Execute ALL languages directly on this server
   try {
-    const result = await executeDirectly(run);
+    const result = await executeDirectly(run, emitLog);
     run.stdout = result.stdout;
     run.stderr = result.stderr;
     run.exitCode = result.exitCode;

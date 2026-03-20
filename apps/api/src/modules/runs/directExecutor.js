@@ -107,13 +107,13 @@ async function executeViaWandbox(run) {
 /**
  * Try local execution first, fall back to Wandbox API.
  */
-async function executeDirectly(run) {
+async function executeDirectly(run, onLog) {
   const { runtime } = run;
 
   // For JS/Node, always try local first (fast and reliable)
   if (runtime === "javascript" || runtime === "nodejs") {
     try {
-      return await executeLocally(run);
+      return await executeLocally(run, onLog);
     } catch (err) {
       logger.warn({ err }, "Local JS execution failed, trying Wandbox");
       return await executeViaWandbox(run);
@@ -122,7 +122,7 @@ async function executeDirectly(run) {
 
   // For compiled languages, try local first, fall back to Wandbox
   try {
-    const result = await executeLocally(run);
+    const result = await executeLocally(run, onLog);
     // If command was not found, use Wandbox instead
     if (result.exitCode === 127) {
       logger.info({ runtime }, "Local compiler not found, using Wandbox API");
@@ -174,8 +174,8 @@ const LOCAL_LANG_CONFIG = {
   }
 };
 
-async function executeLocally(run) {
-  const { runtime, files, entrypoint } = run;
+async function executeLocally(run, onLog) {
+  const { runtime, files, entrypoint, _id: jobId } = run;
   const config = LOCAL_LANG_CONFIG[runtime];
 
   if (!config) {
@@ -197,7 +197,7 @@ async function executeLocally(run) {
     }
 
     const { cmd, args } = config.run(entry);
-    return await execWithTimeout(cmd, args, TIMEOUT_MS, { cwd: runDir });
+    return await execWithTimeout(cmd, args, TIMEOUT_MS, { cwd: runDir, jobId, onLog });
   } finally {
     await fs.rm(runDir, { recursive: true, force: true }).catch(() => {});
   }
@@ -224,22 +224,48 @@ function sanitizeRelPath(p) {
 }
 
 function execWithTimeout(cmd, args, timeoutMs, opts = {}) {
+  const { jobId, onLog, ...spawnOpts } = opts;
   return new Promise((resolve, reject) => {
     try {
-      const child = spawn(cmd, args, { ...opts, windowsHide: true });
+      const child = spawn(cmd, args, { ...spawnOpts, windowsHide: true });
       let stdout = "";
       let stderr = "";
 
-      if (child.stdout) child.stdout.on("data", (d) => (stdout += d.toString()));
-      if (child.stderr) child.stderr.on("data", (d) => (stderr += d.toString()));
+      if (child.stdout) {
+        child.stdout.on("data", (d) => {
+          const chunk = d.toString();
+          stdout += chunk;
+          if (onLog) onLog(jobId, "stdout", chunk);
+        });
+      }
+      if (child.stderr) {
+        child.stderr.on("data", (d) => {
+          const chunk = d.toString();
+          stderr += chunk;
+          if (onLog) onLog(jobId, "stderr", chunk);
+        });
+      }
+
+      const inputHandler = (data) => {
+        if (child.stdin && !child.stdin.destroyed) {
+          child.stdin.write(data);
+        }
+      };
+
+      if (jobId) {
+        process.on(`run:input:${jobId}`, inputHandler);
+      }
 
       const timeout = setTimeout(() => {
-        stderr += "\n⏱ Execution timed out (15s limit).";
+        const timeoutMsg = "\n⏱ Execution timed out (15s limit).";
+        stderr += timeoutMsg;
+        if (onLog) onLog(jobId, "stderr", timeoutMsg);
         try { child.kill("SIGKILL"); } catch { /* ignore */ }
       }, timeoutMs);
 
       child.on("error", (err) => {
         clearTimeout(timeout);
+        if (jobId) process.off(`run:input:${jobId}`, inputHandler);
         if (err.code === "ENOENT") {
           resolve({ stdout: "", stderr: `Command not found: "${cmd}"`, exitCode: 127 });
         } else {
@@ -249,6 +275,8 @@ function execWithTimeout(cmd, args, timeoutMs, opts = {}) {
 
       child.on("close", (code) => {
         clearTimeout(timeout);
+        if (jobId) process.off(`run:input:${jobId}`, inputHandler);
+        if (onLog) onLog(jobId, "end", { status: code === 0 ? "succeeded" : "failed" });
         resolve({ stdout, stderr, exitCode: code ?? 1 });
       });
     } catch (err) {
