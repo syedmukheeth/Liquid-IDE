@@ -131,7 +131,8 @@ async function execWithTimeout(cmd, args, timeoutMs, jobId, onLog, spawnOpts = {
 }
 
 async function executeDirectly(run, onLog) {
-  const { language, code } = run;
+  const { runtime, code } = run;
+  const language = runtime; // For backward compatibility within this function
   const jobId = run._id.toString();
   const tempDir = path.join(os.tmpdir(), `liquid-${jobId}`);
 
@@ -188,7 +189,7 @@ async function executeDirectly(run, onLog) {
       if (onLog) onLog(jobId, "stdout", "✅ \x1b[1;32mCompilation successful.\x1b[0m\n🚀 \x1b[1;36mRunning Java...\x1b[0m\n\r\n");
       return await execWithTimeout("java", ["Solution"], 60000, jobId, onLog, { cwd: tempDir });
     }
-    throw new Error(`Unsupported language: ${language}`);
+    throw new Error(`Unsupported language/runtime: ${runtime}`);
   } catch (err) {
     if (onLog) onLog(jobId, "stderr", err.message);
     return { status: "failed", stderr: err.message };
