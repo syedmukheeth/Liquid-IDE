@@ -192,7 +192,10 @@ export default function EditorPage() {
         if (!evt || runRef.current.jobId !== jobId) return;
         if (evt.type === "stdout" && typeof evt.chunk === "string") setStdout((s) => s + evt.chunk);
         if (evt.type === "stderr" && typeof evt.chunk === "string") setStderr((s) => s + evt.chunk);
-        if (evt.type === "end") setRunStatus(evt.status === "succeeded" ? "Succeeded" : "Failed");
+        if (evt.type === "end") {
+          setRunStatus(evt.status === "succeeded" ? "Succeeded" : "Failed");
+          setBusy(false);
+        }
       };
 
       socket.on("exec:log", onLog);
@@ -384,7 +387,9 @@ export default function EditorPage() {
                   <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 </button>
                 <div className={`h-1.5 w-1.5 md:h-2 md:w-2 rounded-full shadow-[0_0_10px_currentcolor] transition-colors duration-500 ${runStatus === "Succeeded" ? "text-emerald-400 bg-emerald-400" : runStatus === "Failed" ? "text-rose-400 bg-rose-400" : busy ? "text-blue-400 bg-blue-400 animate-pulse" : "text-white/20 bg-white/20"}`} />
-                <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.25em] text-white/50 font-mono">Terminal Output</span>
+                <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.25em] text-white/50 font-mono">
+                  {isWorkerOnline ? "Local Terminal" : "Cloud Sandbox"}
+                </span>
               </div>
               <div className="text-[8px] md:text-[9px] font-bold tracking-widest text-white/30 uppercase">{runStatus}</div>
             </div>
@@ -419,17 +424,24 @@ export default function EditorPage() {
               )}
 
               {busy && (
-                <div className="mt-4 flex items-center gap-3 border-t border-white/5 pt-4">
-                  <span className="text-[10px] font-bold text-blue-400/60 uppercase tracking-widest">Input:</span>
-                  <input
-                    type="text"
-                    value={stdin}
-                    onChange={(e) => setStdin(e.target.value)}
-                    onKeyDown={onInputSubmit}
-                    placeholder="Type here..."
-                    className="flex-1 bg-transparent text-[13px] text-white outline-none placeholder:text-white/10"
-                    autoFocus
-                  />
+                <div className="mt-4 flex flex-col gap-2 border-t border-white/5 pt-4">
+                  {!isWorkerOnline && (
+                    <div className="text-[10px] font-bold text-amber-500/50 uppercase tracking-widest bg-amber-500/5 p-2 rounded-lg border border-amber-500/10 mb-2">
+                       ⚠️ Running in Cloud Mode (Limited Interactivity)
+                    </div>
+                  )}
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-bold text-blue-400/60 uppercase tracking-widest">Input:</span>
+                    <input
+                      type="text"
+                      value={stdin}
+                      onChange={(e) => setStdin(e.target.value)}
+                      onKeyDown={onInputSubmit}
+                      placeholder="Type here..."
+                      className="flex-1 bg-transparent text-[13px] text-white outline-none placeholder:text-white/10"
+                      autoFocus
+                    />
+                  </div>
                 </div>
               )}
             </div>
