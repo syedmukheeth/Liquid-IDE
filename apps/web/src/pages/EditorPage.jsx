@@ -173,13 +173,22 @@ export default function EditorPage() {
     if (!pyodide) throw new Error("Python engine is still booting...");
     
     pyodide.setStdout({ batched: (str) => { 
-      xtermRef.current.write(str + "\n");
+      xtermRef.current.write(str);
     } });
     pyodide.setStderr({ batched: (str) => { 
-      xtermRef.current.write(str + "\n");
+      xtermRef.current.write(str);
     } });
 
     try {
+      // Shim input() to use window.prompt()
+      await pyodide.runPythonAsync(`
+import builtins
+from js import window
+def input_shim(prompt=""):
+    return window.prompt(prompt) or ""
+builtins.input = input_shim
+      `);
+      
       await pyodide.runPythonAsync(code);
       setRunStatus("Succeeded");
     } catch (err) {
