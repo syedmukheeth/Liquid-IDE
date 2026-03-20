@@ -3,7 +3,7 @@ const { RunModel } = require("./runs.model");
 const { executeDirectly, isToolAvailable } = require("./directExecutor");
 const { logger } = require("../../config/logger");
 const { emitLog } = require("./socketHandler");
-const { getRunsQueue } = require("./runs.queue");
+const { getRunsQueue, getRedisClient, WORKER_HEARTBEAT_KEY } = require("./runs.queue");
 
 /**
  * Creates and executes a run directly on this server.
@@ -78,17 +78,25 @@ async function createRun(input) {
       } else {
         // Delegate to worker queue
         const queue = getRunsQueue();
+        const redis = getRedisClient();
+        const workerOnline = redis ? !!(await redis.get(WORKER_HEARTBEAT_KEY)) : false;
+
         if (queue) {
-          if (emitLog) emitLog(run._id.toString(), "stdout", "📡 \x1b[1;33mCompiler not found in Cloud Sandbox.\x1b[0m\n⏳ \x1b[1;34mDelegating to LiquidIDE Worker (Local)...\x1b[0m\n\r\n");
+          if (workerOnline) {
+            if (emitLog) emitLog(run._id.toString(), "stdout", "📡 \x1b[1;33mCompiler not found in Cloud Sandbox.\x1b[0m\n⏳ \x1b[1;34mDelegating to LiquidIDE Worker (Local)...\x1b[0m\n\r\n");
+          } else {
+            if (emitLog) emitLog(run._id.toString(), "stderr", "❌ \x1b[1;31mError: Local Worker is Offline.\x1b[0m\n💡 \x1b[1;36mTo run C++, please start the worker locally:\x1b[0m\n   1. Open a terminal in \x1b[33mapps/worker\x1b[0m\n   2. Run: \x1b[1;32mnpm start\x1b[0m\n\r\n");
+            // Still queue it, but with a warning.
+          }
           await queue.add("execute", { runId: run._id.toString() });
           run.status = "queued";
           if (useMongo) {
             await RunModel.findByIdAndUpdate(run._id, { 
               status: "queued",
-              stdout: "📡 \x1b[1;33mCompiler not found in Cloud Sandbox.\x1b[0m\n⏳ \x1b[1;34mDelegating to LiquidIDE Worker (Local)...\x1b[0m\n\r\n"
+              stdout: workerOnline ? "📡 Delegating to Worker..." : "❌ Local Worker Offline"
             });
           }
-          return; // Worker will update the status later
+          return;
         } else {
           throw new Error("Compiler not found in Cloud Sandbox and Redis Queue is offline. Please run the API locally for C++ support.");
         }
@@ -148,11 +156,26 @@ async function getRun(runId) {
  * Engine health — now always "online" since we execute directly.
  */
 async function getQueueStatus() {
+  const redis = getRedisClient();
+  let workerOnline = false;
+  
+  if (redis) {
+    try {
+      const heartbeat = await redis.get(WORKER_HEARTBEAT_KEY);
+      workerOnline = !!heartbeat;
+    } catch (err) {
+      logger.error({ err }, "Failed to get worker heartbeat from Redis");
+    }
+  }
+
   return {
-    online: true,
-    version: "0.5.2", // Match frontend version
-    mode: "direct-execution",
-    message: "Code runs directly on the API server.",
+    online: true, // API is online
+    workerOnline, // NEW: Actual worker status
+    version: "0.5.2",
+    mode: "hybrid-distributed",
+    message: workerOnline 
+      ? "Worker is online and ready for compiled languages." 
+      : "Worker is offline. Compiled languages (C++/Java) will be queued.",
     timestamp: new Date().toISOString()
   };
 }

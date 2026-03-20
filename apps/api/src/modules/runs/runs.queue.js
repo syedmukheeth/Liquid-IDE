@@ -2,8 +2,10 @@ const { env } = require("../../config/env");
 const { logger } = require("../../config/logger");
 
 const RUNS_QUEUE_NAME = "liquidide-runs";
+const WORKER_HEARTBEAT_KEY = "liquidide:worker:heartbeat";
 
 let _runsQueue = null;
+let _redisClient = null;
 
 function getRunsQueue() {
   if (!_runsQueue) {
@@ -22,6 +24,22 @@ function getRunsQueue() {
     }
   }
   return _runsQueue;
+}
+
+function getRedisClient() {
+  if (!_redisClient) {
+    try {
+      const Redis = require("ioredis");
+      _redisClient = new Redis(redisConnectionFromUrl(env.REDIS_URL));
+      _redisClient.on("error", (err) => {
+        logger.error({ err }, "Redis Client Error");
+      });
+    } catch (err) {
+      logger.error({ err }, "Failed to initialize Redis Client");
+      return null;
+    }
+  }
+  return _redisClient;
 }
 
 function redisConnectionFromUrl(redisUrl) {
@@ -50,5 +68,5 @@ function redisConnectionFromUrl(redisUrl) {
   }
 }
 
-module.exports = { RUNS_QUEUE_NAME, getRunsQueue };
+module.exports = { RUNS_QUEUE_NAME, WORKER_HEARTBEAT_KEY, getRunsQueue, getRedisClient };
 

@@ -7,6 +7,23 @@ const { RunModel } = require("./db/run.model");
 const { RUNS_QUEUE_NAME } = require("./queue/constants");
 const { executeRun } = require("./sandbox/multiSandbox");
 
+async function startHeartbeat(redisClient) {
+  const HEARTBEAT_KEY = "liquidide:worker:heartbeat";
+  const interval = 10000; // 10 seconds
+
+  const update = async () => {
+    try {
+      await redisClient.setex(HEARTBEAT_KEY, 30, Date.now());
+      logger.debug("Worker heartbeat sent");
+    } catch (err) {
+      logger.warn({ err }, "Failed to send worker heartbeat");
+    }
+  };
+
+  await update();
+  setInterval(update, interval);
+}
+
 function startHealthServer() {
   const server = http.createServer((req, res) => {
     if (req.url === "/health") {
@@ -21,7 +38,11 @@ function startHealthServer() {
 }
 
 async function main() {
+  const Redis = require("ioredis");
+  const redisClient = new Redis(redisConnectionFromUrl(env.REDIS_URL));
+  
   startHealthServer();
+  await startHeartbeat(redisClient);
   await connectMongo();
 
   logger.info("LiquidIDE worker connected. Waiting for jobs...");
