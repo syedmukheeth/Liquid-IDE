@@ -6,15 +6,6 @@ const IS_PRODUCTION = API_URL.includes("vercel.app");
 let socket = null;
 
 export function getSocket() {
-  if (IS_PRODUCTION) {
-    return {
-      on: () => {},
-      off: () => {},
-      emit: () => {},
-      connected: false
-    };
-  }
-  
   if (socket) return socket;
   socket = io(API_URL, {
     transports: ["websocket"],
