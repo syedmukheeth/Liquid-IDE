@@ -2,7 +2,7 @@ const { spawn } = require("node:child_process");
 const os = require("node:os");
 const path = require("node:path");
 const fs = require("node:fs/promises");
-const logger = require("../../utils/logger");
+const { logger } = require("../../config/logger");
 const { getBufferedInput } = require("./socketHandler");
 
 let pty = null;
