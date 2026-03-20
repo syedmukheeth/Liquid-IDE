@@ -16,19 +16,7 @@ function createApp() {
   app.use(helmet());
   app.use(
     cors({
-      origin: function (origin, callback) {
-        if (!origin) return callback(null, true);
-        const isAllowed = origin.endsWith(".vercel.app") || 
-                         origin.includes("localhost") || 
-                         origin.includes("127.0.0.1") ||
-                         origin === env.WEB_ORIGIN;
-        
-        if (isAllowed) {
-          callback(null, true);
-        } else {
-          callback(new Error("Not allowed by CORS"));
-        }
-      },
+      origin: true, // Reflect origin for reliability on Vercel
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
       credentials: true,
       allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
