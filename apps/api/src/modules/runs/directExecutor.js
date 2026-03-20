@@ -130,7 +130,7 @@ async function executeDirectly(run, onLog) {
     }
     return result;
   } catch (err) {
-    logger.info({ runtime }, "Local execution unavailable, using Wandbox API");
+    logger.info({ runtime, err: err.message }, "Local execution failed, using Wandbox API");
     return await executeViaWandbox(run);
   }
 }
@@ -178,7 +178,10 @@ async function executeLocally(run, onLog) {
   const { runtime, files, entrypoint, _id: jobId } = run;
   const config = LOCAL_LANG_CONFIG[runtime];
 
+  logger.info({ runtime, jobId }, "Starting local execution");
+
   if (!config) {
+    logger.warn({ runtime }, "Unsupported language for local execution");
     return { stdout: "", stderr: `Unsupported language: ${runtime}`, exitCode: 1 };
   }
 

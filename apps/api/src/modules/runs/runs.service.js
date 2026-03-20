@@ -51,37 +51,47 @@ async function createRun(input) {
     };
   }
 
-  // Execute ALL languages directly on this server
-  try {
-    const result = await executeDirectly(run, emitLog);
-    run.stdout = result.stdout;
-    run.stderr = result.stderr;
-    run.exitCode = result.exitCode;
-    run.status = result.exitCode === 0 ? "succeeded" : "failed";
-    run.finishedAt = new Date();
-  } catch (err) {
-    logger.error({ err }, "Execution error");
-    run.stderr = `Execution error: ${err.message}`;
-    run.exitCode = 1;
-    run.status = "failed";
-    run.finishedAt = new Date();
-  }
-
-  // Persist results if MongoDB is available
-  if (useMongo) {
+  // Execute ALL languages directly on this server (in the background)
+  const runTask = async () => {
+    // Small delay to allow frontend to subscribe to the socket
+    await new Promise(resolve => setTimeout(resolve, 800));
     try {
-      await RunModel.findByIdAndUpdate(run._id, {
-        stdout: run.stdout,
-        stderr: run.stderr,
-        exitCode: run.exitCode,
-        status: run.status,
-        startedAt: run.startedAt,
-        finishedAt: run.finishedAt
-      });
+      const result = await executeDirectly(run, emitLog);
+      run.stdout = result.stdout;
+      run.stderr = result.stderr;
+      run.exitCode = result.exitCode;
+      run.status = result.exitCode === 0 ? "succeeded" : "failed";
+      run.finishedAt = new Date();
     } catch (err) {
-      logger.warn({ err }, "Failed to persist run result to MongoDB");
+      logger.error({ err }, "Execution error");
+      run.stderr = `Execution error: ${err.message}`;
+      run.exitCode = 1;
+      run.status = "failed";
+      run.finishedAt = new Date();
     }
-  }
+
+    // Persist results if MongoDB is available
+    if (useMongo) {
+      try {
+        await RunModel.findByIdAndUpdate(run._id, {
+          stdout: run.stdout,
+          stderr: run.stderr,
+          exitCode: run.exitCode,
+          status: run.status,
+          startedAt: run.startedAt,
+          finishedAt: run.finishedAt
+        });
+      } catch (err) {
+        logger.warn({ err }, "Failed to persist run result to MongoDB");
+      }
+    }
+    
+    // Notify frontend that it's done via socket
+    emitLog(run._id.toString(), "end", { status: run.status });
+  };
+
+  // Trigger background task
+  runTask();
 
   return run;
 }
