@@ -2,12 +2,15 @@ import React, { useRef, useState, useEffect, useCallback } from "react";
 import CodeEditor from "../components/CodeEditor";
 import logo from "../assets/logo.jpg";
 import LanguageSelector from "../components/LanguageSelector";
+import { GithubLogo, GithubModal } from '../components/GithubModal';
+import { Terminal as XTerm } from 'xterm';
+import { FitAddon } from 'xterm-addon-fit';
+import 'xterm/css/xterm.css';
 import { pollUntilDone, submitRun } from "../services/codeExecutionApi";
 import { getSocket } from "../services/socketClient";
 import AuthModal from "../components/AuthModal";
 import SettingsModal from "../components/SettingsModal";
 import HistoryModal from "../components/HistoryModal";
-import GithubModal from "../components/GithubModal";
 import UpgradeModal from "../components/UpgradeModal";
 import { useAuth } from "../hooks/useAuth";
 
@@ -26,13 +29,16 @@ export default function EditorPage() {
   );
   const [stdout, setStdout] = useState("");
   const [stderr, setStderr] = useState("");
-  const [stdin, setStdin] = useState("");
   const [runStatus, setRunStatus] = useState("Ready");
   const [busy, setBusy] = useState(false);
   const [activeModal, setActiveModal] = useState(null); 
   const [isWorkerOnline, setIsWorkerOnline] = useState(false);
   const [apiVersion, setApiVersion] = useState(null);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  
+  const terminalRef = useRef(null);
+  const xtermRef = useRef(null);
+  const fitAddonRef = useRef(null);
   const [activeMobileTab, setActiveMobileTab] = useState("editor"); // "editor" or "terminal"
   
   const { user, loginUser, logoutUser } = useAuth();
@@ -131,6 +137,52 @@ export default function EditorPage() {
     }
   }, [isPyodideLoading, pyodide]);
 
+  // Initialize XTerm
+  useEffect(() => {
+    if (!terminalRef.current || xtermRef.current) return;
+
+    const term = new XTerm({
+      theme: {
+        background: 'transparent',
+        foreground: '#e2f3f5',
+        cursor: '#3b82f6',
+        selectionBackground: 'rgba(59, 130, 246, 0.3)',
+      },
+      fontFamily: 'JetBrains Mono, Menlo, monospace',
+      fontSize: 13,
+      lineHeight: 1.4,
+      cursorBlink: true,
+      cursorStyle: 'underline',
+      allowTransparency: true,
+    });
+
+    const fitAddon = new FitAddon();
+    term.loadAddon(fitAddon);
+    term.open(terminalRef.current);
+    fitAddon.fit();
+
+    xtermRef.current = term;
+    fitAddonRef.current = fitAddon;
+
+    term.onData((data) => {
+      // Handle data (typing)
+      if (runRef.current.jobId) {
+        const socket = getSocket();
+        socket.emit("exec:input", { jobId: runRef.current.jobId, input: data });
+      }
+    });
+
+    // Resize handler
+    const handleResize = () => fitAddon.fit();
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      term.dispose();
+      xtermRef.current = null;
+    };
+  }, []);
+
   const runRef = useRef({ jobId: null });
   const activeConfig = languageConfigs[activeLangId];
 
@@ -144,18 +196,18 @@ export default function EditorPage() {
     let output = "";
     pyodide.setStdout({ batched: (str) => { 
       output += str + "\n"; 
-      setStdout(output); 
+      xtermRef.current.write(str + "\n");
     } });
     pyodide.setStderr({ batched: (str) => { 
       output += str + "\n"; 
-      setStderr(output); 
+      xtermRef.current.write(str + "\n");
     } });
 
     try {
       await pyodide.runPythonAsync(code);
       setRunStatus("Succeeded");
     } catch (err) {
-      setStderr(err.message);
+      xtermRef.current.write(err.message + "\n");
       setRunStatus("Failed");
     }
   }
@@ -165,8 +217,7 @@ export default function EditorPage() {
     const language = activeConfig.lang;
 
     setBusy(true);
-    setStdout("");
-    setStderr("");
+    xtermRef.current.clear();
     setRunStatus("Running");
 
     if (activeLangId === "python") {
@@ -176,7 +227,7 @@ export default function EditorPage() {
         setBusy(false);
         return;
       } catch (err) {
-        setStderr(err.message);
+        xtermRef.current.write(err.message + "\n");
         setRunStatus("Failed");
         setBusy(false);
         return;
@@ -184,6 +235,7 @@ export default function EditorPage() {
     }
 
     try {
+      if (xtermRef.current) xtermRef.current.reset();
       const { jobId } = await submitRun({ language, code });
       runRef.current.jobId = jobId;
 
@@ -192,11 +244,17 @@ export default function EditorPage() {
 
       const onLog = (evt) => {
         if (!evt || runRef.current.jobId !== jobId) return;
-        if (evt.type === "stdout" && typeof evt.chunk === "string") setStdout((s) => s + evt.chunk);
-        if (evt.type === "stderr" && typeof evt.chunk === "string") setStderr((s) => s + evt.chunk);
+        if (xtermRef.current) {
+           if (evt.type === "stdout" || evt.type === "stderr") {
+             xtermRef.current.write(evt.chunk);
+           }
+        }
         if (evt.type === "end") {
           setRunStatus(evt.status === "succeeded" ? "Succeeded" : "Failed");
           setBusy(false);
+          if (xtermRef.current) {
+            xtermRef.current.write(`\r\n\r\n\x1b[1;36m🏁 Program finished with status: ${evt.status}\x1b[0m\r\n`);
+          }
         }
       };
 
@@ -205,8 +263,6 @@ export default function EditorPage() {
       await pollUntilDone(jobId, {
         onUpdate: (s) => {
           setRunStatus(s.status.charAt(0).toUpperCase() + s.status.slice(1));
-          if (typeof s.stdout === "string") setStdout(s.stdout);
-          if (typeof s.stderr === "string") setStderr(s.stderr);
         }
       });
 
@@ -215,25 +271,15 @@ export default function EditorPage() {
       saveHistory(code, activeConfig.name, activeLangId);
     } catch (e) {
       setRunStatus("Failed");
-      setStderr(e?.message || String(e));
+      xtermRef.current.write((e?.message || String(e)) + "\n");
     } finally {
       setBusy(false);
     }
   }
 
   const onClear = () => {
-    setStdout("");
-    setStderr("");
+    xtermRef.current.clear();
     setRunStatus("Ready");
-  };
-
-  const onInputSubmit = (e) => {
-    if (e.key === "Enter" && stdin.trim()) {
-      const socket = getSocket();
-      socket.emit("exec:input", { jobId: runRef.current.jobId, input: stdin + "\n" });
-      setStdout(prev => prev + stdin + "\n");
-      setStdin("");
-    }
   };
 
   const onNewFile = () => {
@@ -376,9 +422,10 @@ export default function EditorPage() {
           </div>
         </section>
 
-        {/* Terminal Side */}
+        {/* Terminal Section */}
         <section className={`flex flex-col overflow-hidden gap-4 ${activeMobileTab === 'terminal' ? 'flex-1' : 'hidden'} md:flex md:flex-[3]`}>
           <div className="glass-card flex flex-1 flex-col overflow-hidden bg-black/40">
+            {/* Terminal Header */}
             <div className="flex h-11 shrink-0 items-center justify-between border-b border-white/5 px-4 md:px-6 bg-white/[0.02]">
               <div className="flex items-center gap-2 md:gap-3">
                 <button 
@@ -396,63 +443,20 @@ export default function EditorPage() {
               <div className="text-[8px] md:text-[9px] font-bold tracking-widest text-white/30 uppercase">{runStatus}</div>
             </div>
             
-            <div className="flex-1 overflow-auto p-4 md:p-6 font-mono text-[12px] md:text-[13px] leading-relaxed custom-scrollbar bg-black/20">
-              {busy && !stdout && !stderr && (
-                <div className="flex h-full flex-col items-center justify-center gap-4 opacity-50">
-                  <div className="h-6 w-6 md:h-8 md:w-8 rounded-full border-2 border-white/10 border-t-blue-500 animate-spin" />
-                  <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-[0.4em] text-blue-400">Compiling</span>
-                </div>
-              )}
+            {/* Terminal Body */}
+            <div className="flex-1 overflow-hidden p-0 bg-black/20 relative">
+              <div ref={terminalRef} className="h-full w-full" />
               
-              {stdout && (
-                <div className="mb-4 md:mb-6 animate-in fade-in duration-500">
-                  <div className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em] text-emerald-500/40 mb-2 md:mb-3 ml-1">STDOUT</div>
-                  <div className="p-3 md:p-4 rounded-lg md:rounded-xl border border-emerald-500/10 bg-emerald-500/5 text-emerald-50/90 whitespace-pre-wrap shadow-inner text-xs md:text-sm">{stdout}</div>
-                </div>
-              )}
-              
-              {stderr && (
-                <div className="animate-in fade-in duration-500">
-                  <div className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em] text-rose-500/40 mb-2 md:mb-3 ml-1">STDERR</div>
-                  <div className="p-3 md:p-4 rounded-lg md:rounded-xl border border-rose-500/10 bg-rose-500/5 text-rose-200 whitespace-pre-wrap shadow-inner text-xs md:text-sm">{stderr}</div>
-                </div>
-              )}
-
-              {!stdout && !stderr && !busy && (
-                <div className="flex h-full flex-col items-center justify-center gap-3 md:gap-4 opacity-[0.05] grayscale select-none">
-                  <svg className="h-12 w-12 md:h-16 md:w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                  <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.6em]">Standby</span>
-                </div>
-              )}
-
-              {busy && (
-                <div className="mt-4 flex flex-col gap-2 border-t border-white/5 pt-4">
-                  {!isWorkerOnline && (
-                    <div className="text-[10px] font-bold text-amber-500/50 uppercase tracking-widest bg-amber-500/5 p-2 rounded-lg border border-amber-500/10 mb-2">
-                       ⚠️ Cloud Sandbox - Interactivity limited. Run API locally for full stdin.
-                    </div>
-                  )}
-                  {isWorkerOnline && apiVersion !== "0.5.2" && (
-                    <div className="text-[10px] font-bold text-rose-500/50 uppercase tracking-widest bg-rose-500/5 p-2 rounded-lg border border-rose-500/10 mb-2">
-                       🚨 API Outdated - Stdin may not work. Please `git pull` and restart the local API.
-                    </div>
-                  )}
-                  <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-bold text-blue-400/60 uppercase tracking-widest">Input:</span>
-                    <input
-                      type="text"
-                      value={stdin}
-                      onChange={(e) => setStdin(e.target.value)}
-                      onKeyDown={onInputSubmit}
-                      placeholder="Type here..."
-                      className="flex-1 bg-transparent text-[13px] text-white outline-none placeholder:text-white/10"
-                      autoFocus
-                    />
+              {!isWorkerOnline && busy && (
+                <div className="absolute top-4 left-4 right-4 z-10">
+                  <div className="text-[10px] font-bold text-amber-500/50 uppercase tracking-widest bg-amber-500/5 p-2 rounded-lg border border-amber-500/10 backdrop-blur-md">
+                     ⚠️ Cloud Sandbox - Interactivity limited. Run API locally for full stdin.
                   </div>
                 </div>
               )}
             </div>
 
+            {/* Terminal Footer */}
             <div className="flex h-8 md:h-10 shrink-0 items-center justify-between border-t border-white/5 px-4 md:px-6 bg-black/40">
               <div className="flex items-center gap-2">
                 <span className="text-[9px] font-bold uppercase tracking-widest text-white/20">Flux Engine</span>
