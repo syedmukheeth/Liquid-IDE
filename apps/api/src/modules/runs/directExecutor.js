@@ -4,6 +4,7 @@ const os = require("node:os");
 const path = require("node:path");
 const crypto = require("node:crypto");
 const { logger } = require("../../config/logger");
+const { getBufferedInput } = require("./socketHandler");
 
 const TIMEOUT_MS = 15000;
 
@@ -152,16 +153,16 @@ const LOCAL_LANG_CONFIG = {
     run: (entry) => ({ cmd: "python", args: [entry] })
   },
   cpp: {
-    compile: (entry) => ({ cmd: "g++", args: ["-o", "a.out", entry] }),
+    compile: (entry) => ({ cmd: "g++", args: ["-o", "program", entry] }),
     run: () => {
-      const exe = os.platform() === "win32" ? ".\\a.exe" : "./a.out";
+      const exe = os.platform() === "win32" ? ".\\program.exe" : "./program";
       return { cmd: exe, args: [] };
     }
   },
   c: {
-    compile: (entry) => ({ cmd: "gcc", args: ["-o", "a.out", entry] }),
+    compile: (entry) => ({ cmd: "gcc", args: ["-o", "program", entry] }),
     run: () => {
-      const exe = os.platform() === "win32" ? ".\\a.exe" : "./a.out";
+      const exe = os.platform() === "win32" ? ".\\program.exe" : "./program";
       return { cmd: exe, args: [] };
     }
   },
@@ -191,12 +192,14 @@ async function executeLocally(run, onLog) {
     const entry = sanitizeRelPath(entrypoint);
 
     if (config.compile) {
+      if (onLog) onLog(jobId, "stdout", "🔨 Compiling program...\n");
       const { cmd, args } = config.compile(entry);
-      const compileResult = await execWithTimeout(cmd, args, TIMEOUT_MS, { cwd: runDir });
+      const compileResult = await execWithTimeout(cmd, args, TIMEOUT_MS, { cwd: runDir, jobId, onLog });
       if (compileResult.exitCode === 127) return compileResult;
       if (compileResult.exitCode !== 0) {
         return { stdout: "", stderr: compileResult.stderr || "Compilation failed", exitCode: compileResult.exitCode };
       }
+      if (onLog) onLog(jobId, "stdout", "✅ Compilation successful.\n🚀 Running executable...\n\n");
     }
 
     const { cmd, args } = config.run(entry);
@@ -257,6 +260,12 @@ function execWithTimeout(cmd, args, timeoutMs, opts = {}) {
 
       if (jobId) {
         process.on(`run:input:${jobId}`, inputHandler);
+        // Drain buffered input (sent during compilation)
+        const buffered = getBufferedInput(jobId);
+        if (buffered.length > 0) {
+          logger.info({ jobId, count: buffered.length }, "Draining buffered input to process");
+          buffered.forEach(input => inputHandler(input));
+        }
       }
 
       const timeout = setTimeout(() => {

@@ -2,6 +2,7 @@ const { Server } = require("socket.io");
 const { logger } = require("../../config/logger");
 
 let io = null;
+const inputBuffers = new Map(); // jobId -> string[]
 
 function initSocket(server) {
   io = new Server(server, {
@@ -26,8 +27,20 @@ function initSocket(server) {
 
     socket.on("exec:input", ({ jobId, input }) => {
       logger.info({ socketId: socket.id, jobId }, "Socket received input for job");
-      // This will be handled by the executor if we can find the process
-      process.emit(`run:input:${jobId}`, input);
+      
+      const listenerCount = process.listenerCount(`run:input:${jobId}`);
+      if (listenerCount > 0) {
+        process.emit(`run:input:${jobId}`, input);
+      } else {
+        // Buffer the input if no listener is active (e.g., still compiling)
+        if (!inputBuffers.has(jobId)) inputBuffers.set(jobId, []);
+        inputBuffers.get(jobId).push(input);
+        logger.info({ jobId }, "Buffered input (no active listener yet)");
+      }
+    });
+
+    socket.on("exec:log:end", ({ jobId }) => {
+       inputBuffers.delete(jobId);
     });
 
     socket.on("disconnect", () => {
@@ -47,7 +60,14 @@ function getIO() {
  */
 function emitLog(jobId, type, chunk) {
   if (!io) return;
+  if (type === "end") inputBuffers.delete(jobId);
   io.to(`run:${jobId}`).emit("exec:log", { type, chunk });
 }
 
-module.exports = { initSocket, getIO, emitLog };
+function getBufferedInput(jobId) {
+  const buffered = inputBuffers.get(jobId) || [];
+  inputBuffers.delete(jobId);
+  return buffered;
+}
+
+module.exports = { initSocket, getIO, emitLog, getBufferedInput };
