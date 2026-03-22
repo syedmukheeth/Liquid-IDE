@@ -355,9 +355,15 @@ builtins.input = input_shim
               </div>
             </div>
           ) : (
-            <button onClick={() => setActiveModal('auth')} className="liquid-button-secondary py-1.5 md:py-1.5 px-3 md:px-6 text-[10px] md:text-[13px]">
-              <svg className="h-4 w-4 md:h-4 md:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
-              <span className="hidden md:inline">Sign In</span>
+            <button 
+              onClick={() => setActiveModal('auth')} 
+              className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 p-1 pr-4 transition-all hover:bg-white/10"
+              title="Sign In"
+            >
+              <div className="h-7 w-7 md:h-8 md:w-8 overflow-hidden rounded-full border border-white/20 bg-blue-600/20">
+                <img src={logo} alt="Login" className="h-full w-full object-cover" />
+              </div>
+              <span className="text-[10px] md:text-[12px] font-black uppercase tracking-widest text-white/80">Sign In</span>
             </button>
           )}
           <button onClick={() => setActiveModal('upgrade')} className="liquid-button-primary animate-shimmer py-1.5 md:py-1.5 px-3 md:px-6 text-[10px] md:text-[13px]">

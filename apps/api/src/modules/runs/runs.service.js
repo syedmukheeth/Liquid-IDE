@@ -92,8 +92,10 @@ async function createRun(input) {
           await queue.add("execute", { runId: run._id.toString() });
           run.status = "queued";
         } else {
+          const toolName = hostTool === 'javac' ? 'JDK' : hostTool === 'g++' ? 'G++' : hostTool === 'gcc' ? 'GCC' : 'Compiler';
           const errMsg = `❌ \x1b[1;31mError: ${hostTool || "Compiler"} not found.\x1b[0m\n` +
-                         `💡 \x1b[1;36mStart your local worker to run ${hostTool || "compiled languages"}.\x1b[0m\n\r\n`;
+                         `💡 \x1b[1;36mIf running locally, ensure ${toolName} is installed and in your PATH.\x1b[0m\n` +
+                         `💡 \x1b[1;36mOtherwise, start your LiquidIDE worker to handle compiled languages.\x1b[0m\n\r\n`;
           if (emitLog) emitLog(run._id.toString(), "stderr", errMsg);
           run.status = "failed";
           run.stderr = "Compiler not found";

@@ -46,13 +46,15 @@ export default function CodeEditor({ language, value, onChange, onCursorChange, 
           lineNumbers: "on",
           smoothScrolling: true,
           cursorSmoothCaretAnimation: "on",
-          padding: { top: 20, bottom: 20 },
+          padding: { top: 12, bottom: 12 },
           automaticLayout: true,
           formatOnPaste: true,
           formatOnType: true,
           scrollBeyondLastLine: false,
           readOnly: false,
           renderLineHighlight: "none",
+          renderIndentGuides: false,
+          guides: { indentation: false },
           backgroundColor: "#00000000" // Transparent
         }}
         loading={<div className="flex h-full items-center justify-center text-blue-500/20 font-black uppercase tracking-widest animate-pulse">Initializing LiquidIDE</div>}
