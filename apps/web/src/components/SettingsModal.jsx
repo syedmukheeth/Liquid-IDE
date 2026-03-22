@@ -84,7 +84,7 @@ export default function SettingsModal({ isOpen, onClose, isDarkMode, settings, o
                 </div>
               </div>
               <div className="text-center space-y-2">
-                <p className={`text-sm font-black uppercase tracking-widest ${isDarkMode ? "text-white" : "text-slate-800"}`}>Flux Member</p>
+                <p className={`text-sm font-black uppercase tracking-widest ${isDarkMode ? "text-white" : "text-slate-800"}`}>LiquidIDE Member</p>
                 <div className="inline-flex rounded-lg bg-emerald-500/10 px-4 py-1.5 text-[9px] font-black uppercase tracking-widest text-emerald-500 ring-1 ring-emerald-500/20 shadow-[0_0_12px_rgba(16,185,129,0.1)]">Active Developer</div>
               </div>
               <button className="rounded-2xl bg-gradient-to-r from-blue-600/10 to-indigo-600/10 border border-blue-500/20 px-10 py-4 text-[10px] font-black uppercase tracking-widest transition-all hover:brightness-125 active:scale-95 text-blue-400">Manage Subscription</button>
@@ -99,7 +99,7 @@ export default function SettingsModal({ isOpen, onClose, isDarkMode, settings, o
                     <p className="text-[11px] font-black uppercase tracking-[0.3em] text-blue-400">Engine V0.2.3-PRO</p>
                   </div>
                   <div className={`space-y-4 text-[10px] font-bold leading-7 ${isDarkMode ? "text-white/30" : "text-slate-500"}`}>
-                    <p>Connected to <span className="text-blue-400/60 font-black">Flux-Cluster-Global</span>. Latency: 1ms.</p>
+                    <p>Connected to <span className="text-blue-400/60 font-black">Liquid-Cluster-Global</span>. Latency: 1ms.</p>
                     <p>Execution Limits: <span className={isDarkMode ? "text-white/60" : "text-slate-800"}>Unlimited RAM, 60s Time Limit</span>.</p>
                     <p>Status: <span className="text-emerald-500 font-black italic">OPTIMIZED</span></p>
                   </div>

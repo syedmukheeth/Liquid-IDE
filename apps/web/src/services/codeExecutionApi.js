@@ -1,7 +1,7 @@
 const API_BASE = "/api/runs";
 
 export async function submitRun({ language, code }) {
-  const token = localStorage.getItem("flux_token");
+  const token = localStorage.getItem("liquid_token");
   const headers = { "content-type": "application/json" };
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
