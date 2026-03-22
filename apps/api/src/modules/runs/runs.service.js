@@ -64,26 +64,23 @@ async function createRun(input) {
                        runData.runtime === "c" ? "gcc" : 
                        runData.runtime === "java" ? "javac" : null;
                        
-      // If we are on Render (Cloud), we MUST attempt direct execution
+      // If we are on Render (Cloud), we should attempt direct execution ONLY if the tool is available
       const isCloud = !!process.env.RENDER;
-      let canRunDirectly = isCloud || !hostTool || isToolAvailable(hostTool);
+      let canRunDirectly = !hostTool || isToolAvailable(hostTool);
       
-      // Safety: Never attempt direct compilation on Vercel even if tool seems present
+      // Safety: Never attempt direct compilation on Vercel
       if (process.env.VERCEL && hostTool) {
         canRunDirectly = false;
       }
 
       if (canRunDirectly) {
-        if (isCloud && hostTool && !isToolAvailable(hostTool)) {
-            logger.warn({ hostTool }, "Attempting direct execution on Cloud even though initial check failed.");
-        }
         const result = await executeDirectly(runData, emitLog);
         run.stdout = result.stdout;
         run.stderr = result.stderr;
         run.exitCode = result.exitCode;
         run.status = result.exitCode === 0 ? "succeeded" : "failed";
       } else {
-        // Delegate to worker queue
+        // Delegate to worker queue or fail with a helpful message
         const queue = getRunsQueue();
         const redis = getRedisClient();
         let workerOnline = false;
@@ -93,45 +90,42 @@ async function createRun(input) {
           logger.warn({ e }, "Failed to fetch worker heartbeat during run creation");
         }
 
-        if (queue) {
-          if (workerOnline) {
-            if (emitLog) emitLog(run._id.toString(), "stdout", "📡 \x1b[1;33mCompiler not found in Cloud Sandbox.\x1b[0m\n⏳ \x1b[1;34mDelegating to LiquidIDE Worker (Local)...\x1b[0m\n\r\n");
-          } else {
-            const workerCommand = "cd apps/worker && npm start";
-            if (emitLog) {
-              emitLog(run._id.toString(), "stderr", 
-                "❌ \x1b[1;31mError: Local Execution Environment Offline.\x1b[0m\n" +
-                "💡 \x1b[1;36mThis environment (Serverless) doesn't have native compilers.\x1b[0m\n\n" +
-                "\x1b[1;33mTo run compiled languages, please start your local worker:\x1b[0m\n" +
-                `   \x1b[1;32m${workerCommand}\x1b[0m\n\n` +
-                "🔗 \x1b[1;34mCloud Tip:\x1b[0m Deploy via Docker (see DEPLOYMENT.md) for 100% cloud execution.\n\r\n"
-              );
-            }
-          }
+        if (queue && workerOnline) {
+          if (emitLog) emitLog(run._id.toString(), "stdout", `📡 \x1b[1;33m${hostTool} not found in Cloud Sandbox.\x1b[0m\n⏳ \x1b[1;34mDelegating to LiquidIDE Worker (Local)...\x1b[0m\n\r\n`);
           try {
             await queue.add("execute", { runId: run._id.toString() });
           } catch (qErr) {
             logger.error({ qErr }, "Failed to add job to BullMQ queue");
             if (emitLog) emitLog(run._id.toString(), "stderr", `\n❌ Queue Failure: ${qErr.message}\n`);
           }
-          run.status = workerOnline ? "queued" : "failed"; // If worker is offline, mark as failed so it doesn't hang
-          if (useMongo) {
-            await RunModel.findByIdAndUpdate(run._id, { 
-              status: run.status,
-              stdout: workerOnline ? "📡 Delegating to Worker..." : "❌ Local Worker Offline"
-            });
-          }
-          // CRITICAL: Always signal end so the "EXECUTING" spinner stops
-          if (emitLog) emitLog(run._id.toString(), "end", { status: run.status });
-          return;
+          run.status = "queued";
         } else {
-          const errMsg = "Cloud Sandbox lacks compilers and Redis Queue is offline.";
+          // No worker and no local tool
+          const msg = workerOnline ? `Redis Queue unreachable` : `${hostTool || "Compiler"} not found and Local Worker is offline`;
+          const workerCommand = "cd apps/worker && npm start";
+          const errMsg = `❌ \x1b[1;31mError: ${msg}.\x1b[0m\n` +
+                         `💡 \x1b[1;36mThis environment (${isCloud ? "Cloud" : "Serverless"}) doesn't have native compilers.\x1b[0m\n\n` +
+                         "\x1b[1;33mTo run compiled languages, please start your local worker:\x1b[0m\n" +
+                         `   \x1b[1;32m${workerCommand}\x1b[0m\n\n` +
+                         "🔗 \x1b[1;34mCloud Tip:\x1b[0m Deploy via Docker (see DEPLOYMENT.md) for 100% cloud execution.\n\r\n";
+          
           if (emitLog) {
-            emitLog(run._id.toString(), "stderr", `❌ ${errMsg}\n`);
-            emitLog(run._id.toString(), "end", { status: "failed" });
+            emitLog(run._id.toString(), "stderr", errMsg);
           }
-          throw new Error(errMsg);
+          run.status = "failed";
+          run.stderr = msg;
         }
+
+        if (useMongo) {
+          await RunModel.findByIdAndUpdate(run._id, { 
+            status: run.status,
+            stdout: run.stdout,
+            stderr: run.stderr
+          });
+        }
+        
+        if (emitLog) emitLog(run._id.toString(), "end", { status: run.status });
+        return;
       }
       run.finishedAt = new Date();
     } catch (err) {
