@@ -1,148 +1,103 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/syedmukheeth/Liquid-IDE/main/apps/web/src/assets/logo.jpg" alt="LiquidIDE Logo" width="120" height="120" style="border-radius: 20px; box-shadow: 0 4px 14px 0 rgba(0,0,0,0.39);">
+  <img src="https://raw.githubusercontent.com/syedmukheeth/Liquid-IDE/main/apps/web/src/assets/logo.jpg" alt="LiquidIDE Logo" width="160" height="160" style="border-radius: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.5);">
   <br>
   <h1>LiquidIDE</h1>
   <p><b>The Next-Generation Cloud Code Editor</b></p>
-  <p><i>A sleek, "Liquid Glass Apple" themed, production-ready browser IDE built for instant execution, zero-config deployments, and seamless developer experience.</i></p>
+  
+  <p>
+    <img src="https://img.shields.io/badge/Architecture-Hybrid--Distributed-blue?style=for-the-badge&logo=architecture" alt="Architecture">
+    <img src="https://img.shields.io/badge/Tech%20Stack-MERN%20%2B%20Redis-61DAFB?style=for-the-badge&logo=react" alt="Tech Stack">
+    <img src="https://img.shields.io/badge/Deployment-Vercel%20%2B%20Docker-black?style=for-the-badge&logo=vercel" alt="Deployment">
+  </p>
+
+  <p><i>A sleek, "Liquid Glass" themed browser IDE built for instant execution, zero-config deployments, and a premium developer experience.</i></p>
 </div>
 
 ---
 
-## ✨ Key Features
+## ✨ Core Pillars
 
-- **🚀 Instant Execution**: Run code in milliseconds. Python runs instantly in the browser via WebAssembly (Pyodide).
-- **☁️ Cloud Compilation**: Seamless integration with the Wandbox API for compiling C++, C, and Java Serverless on platforms like Vercel.
-- **🛡️ Dual-Execution Engine**: Automatically switches between lightning-fast local compilers (if available) and cloud execution fallbacks.
-- **🔐 Social Authentication**: Built-in GitHub and Google OAuth 2.0 flows via Passport.js.
-- **🎨 Premium UI/UX**: "Liquid Glass Apple" design system featuring mesh gradients, glassmorphism, Monaco Editor, and responsive layouts.
-- **⚡ Vercel Optimized**: Serverless-first architecture natively deployed to Vercel without requiring long-running worker processes.
+### 🚀 Performance
+Experience sub-second execution. LiquidIDE uses a **Dual-Execution Engine** that intelligently leverages local compilers for performance and cloud fallbacks for portability.
+
+### 🎨 Visual Excellence
+Designed with a "Liquid Glass" aesthetic inspired by modern macOS interfaces. Featuring mesh gradients, glassmorphism, and a seamless Monaco Editor integration.
+
+### 🛡️ Scalability
+Built on a hybrid-distributed architecture. Scale from a single serverless function to a worldwide cluster of execution workers.
 
 ---
 
-## 🏗️ Technical Architecture
+## 🏗️ Intelligent Architecture
 
-LiquidIDE has been completely re-architected for **serverless environments**, dropping heavy Docker/BullMQ requirements in favor of a modern, lightweight, direct-execution model.
+LiquidIDE intelligently routes code execution based on the environment and available tools.
 
 ```mermaid
 graph TD
-    Client[Browser Frontend/React] -->|Code Submission| API[Vercel Serverless API]
+    Client[Browser Frontend/React] -->|Code Submission| API[Vercel/Node.js API]
     API -->|Persistence| DB[(MongoDB Atlas)]
-    API -->|JS/Node Exec| Node(Local Node.js)
-    API -->|C/C++/Java| Wandbox[Wandbox Cloud Compiler]
-    Client -->|Browser-side Python| Pyodide(Pyodide WebAssembly)
+    
+    API -->|JS/Node Exec| Direct[In-Process Node.js]
+    API -->|Python| Pyodide[Pyodide WebAssembly]
+    
+    API -->|C/C++/Java| Check{Compiler Available?}
+    Check -->|Yes| DirectLocal[Direct Binary Execution]
+    Check -->|No| Redis{Redis Online?}
+    
+    Redis -->|Yes| Queue[BullMQ Queue]
+    Queue -->|Process| Worker[Remote Worker Node]
+    Redis -->|No| Fail[Error: Compiler Not Found]
 ```
 
-### Tech Stack
-- **Frontend**: React, Vite, Monaco Editor, Tailwind CSS, Pyodide.
-- **Backend API**: Node.js, Express, Mongoose, Passport.js (Auth).
-- **Execution Engines**: 
-  - **Browser**: Pyodide (Python)
-  - **Local API**: Node.js (JavaScript), GCC/Javac (if installed)
-  - **Cloud API**: Wandbox API (C, C++, Java)
-- **Infrastructure**: Vercel (Hosting), MongoDB Atlas (Database).
+### Tech Stack Details
+- **Frontend**: Vite, React 18, Monaco Editor, Tailwind CSS, Framer Motion.
+- **Backend**: Node.js (Express), MongoDB (Mongoose), Socket.io (Real-time logs).
+- **Execution**: `node-pty` for real-time terminal emulation.
+- **Async Processing**: BullMQ & Redis for distributed compilation.
 
 ---
 
-## 🚀 Production Deployment (Vercel)
-
-LiquidIDE is perfectly optimized for **Vercel** deployments. Follow these steps to host your own instance.
-
-### 1. Database Setup
-Create a free [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) cluster and get your connection string. 
-
-### 2. OAuth Configuration (Optional but Recommended)
-For social logins to work:
-- **GitHub**: Create an OAuth App in [GitHub Developer Settings](https://github.com/settings/developers).
-- **Google**: Create OAuth Credentials in [Google Cloud Console](https://console.cloud.google.com).
-- Set the redirect URIs to `https://<YOUR_API_DOMAIN>/auth/github/callback` (and `/auth/google/callback`).
-
-### 3. Deploy to Vercel
-You will deploy LiquidIDE as two separate Vercel projects (Frontend and API) from this Monorepo.
-
-#### Backend (API) Deployment
-1. Import the repository into Vercel.
-2. Set the **Root Directory** to `apps/api`.
-3. Vercel will automatically detect `api/index.js` as a Serverless Function based on `vercel.json`.
-4. Add the following **Environment Variables**:
-   ```env
-   NODE_ENV=production
-   PORT=8080
-   MONGO_URI=mongodb+srv://<user>:<password>@cluster...
-   WEB_ORIGIN=https://<YOUR_FRONTEND_DOMAIN>
-   JWT_SECRET=your_super_secret_jwt_key
-   
-   # Social Logins
-   CALLBACK_URL_BASE=https://<YOUR_API_DOMAIN>/auth
-   GITHUB_CLIENT_ID=your_github_client_id
-   GITHUB_CLIENT_SECRET=your_github_client_secret
-   GOOGLE_CLIENT_ID=your_google_client_id
-   GOOGLE_CLIENT_SECRET=your_google_client_secret
-   ```
-
-#### Frontend (Web) Deployment
-1. Import the repository into Vercel again.
-2. Set the **Root Directory** to `apps/web`.
-3. Framework preset: **Vite**.
-4. Add the following **Environment Variable**:
-   ```env
-   VITE_API_URL=https://<YOUR_API_DOMAIN>
-   ```
-
----
-
-## 🛠️ Local Development
+## 🛠️ Quick Start
 
 ### Prerequisites
 - Node.js (v18+)
-- MongoDB (Running locally or via Atlas)
-- (Optional) `gcc`, `g++`, and `javac` installed on your machine for fast local code execution instead of Cloud fallbacks.
+- MongoDB & Redis (Local or Cloud)
+- (Optional) `gcc`, `g++`, and `javac` for local direct execution.
 
-### Setup Instructions
+### Installation
 
-1. **Clone the Repository**:
+1. **Clone & Install**:
    ```bash
    git clone https://github.com/syedmukheeth/Liquid-IDE.git
    cd Liquid-IDE
-   ```
-
-2. **Install Dependencies**:
-   Install monorepo dependencies from the root:
-   ```bash
    npm install
    ```
 
-3. **Configure Environment Variables**:
-   - In `apps/api/.env`:
-     ```env
-     PORT=8080
-     MONGO_URI=your_mongodb_connection_string
-     WEB_ORIGIN=http://localhost:5173
-     JWT_SECRET=local_development_secret
-     CALLBACK_URL_BASE=http://localhost:8080/auth
-     ```
-   - In `apps/web/.env`:
-     ```env
-     VITE_API_URL=http://localhost:8080
-     ```
+2. **Environment Configuration**:
+   Create `.env` files in `apps/api` and `apps/web` based on the provided examples.
 
-4. **Start the Development Servers**:
-   Terminal 1 (Backend API):
+3. **Start Development**:
    ```bash
-   cd apps/api
    npm run dev
    ```
-   
-   Terminal 2 (Frontend Web):
-   ```bash
-   cd apps/web
-   npm run dev
-   ```
+   This will concurrently start the API, Worker, and Web frontend.
 
-5. **Open your browser** to `http://localhost:5173`.
+---
+
+## 🚀 Deployment Strategy
+
+### Option 1: Unified Cloud (Recommended)
+Deploy the API as a **Docker Container** on platforms like Render or Railway. This pre-installs all compilers, enabling C++/Java execution without any additional setup.
+
+### Option 2: Serverless + Local (Hybrid)
+Deploy the API to Vercel and run the `apps/worker` on your local machine or a private VPS. LiquidIDE will automatically delegate compiled languages to your worker.
+
+> [!TIP]
+> Check out [DEPLOYMENT.md](file:///e:/LiquidIDE/DEPLOYMENT.md) for a step-by-step guide to both strategies.
 
 ---
 
 <div align="center">
   <b>Built with ❤️ by Syed Mukheeth</b><br>
-  <i>For developers who need a sleek, lightning-fast cloud code playground.</i>
+  <i>For developers who demand both beauty and power in their playground.</i>
 </div>

@@ -54,4 +54,40 @@ int main() {
     return 0;
 }
 ```
-If you see "Compiling program..." followed by the output without the "Worker" message, you are running 100% in the cloud! 💎🏆
+---
+
+## 🔐 Authentication & Environment Variables
+
+For social logins and full functionality, ensure the following environment variables are set in your production environment (Vercel/Render/Railway).
+
+### Social Auth Setup (GitHub & Google)
+1. **GitHub**: Create an OAuth App in [GitHub Developer Settings](https://github.com/settings/developers).
+2. **Google**: Create OAuth Credentials in [Google Cloud Console](https://console.cloud.google.com).
+3. Set the redirect URIs to `https://<YOUR_API_DOMAIN>/auth/github/callback` (and Google).
+
+### Required Environment Variables
+```env
+# Core
+NODE_ENV=production
+PORT=8080
+MONGO_URI=mongodb+srv://...
+WEB_ORIGIN=https://<YOUR_FRONTEND_DOMAIN>
+JWT_SECRET=your_super_secret_jwt_key
+
+# Execution (Redis for Workers)
+REDIS_URL=rediss://...
+
+# Social Auth
+CALLBACK_URL_BASE=https://<YOUR_API_DOMAIN>/auth
+GITHUB_CLIENT_ID=...
+GITHUB_CLIENT_SECRET=...
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+```
+
+---
+
+<div align="center">
+  <b>LiquidIDE Deployment Guide</b><br>
+  <i>Ensuring a seamless, professional cloud-hosting experience.</i>
+</div>
