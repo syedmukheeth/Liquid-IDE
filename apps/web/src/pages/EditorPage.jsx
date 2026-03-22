@@ -394,7 +394,7 @@ builtins.input = input_shim
       <main className="relative z-10 flex flex-1 flex-col md:flex-row overflow-hidden p-2 md:p-4 gap-2 md:gap-4">
         <section className={`flex flex-col overflow-hidden gap-4 ${activeMobileTab === 'editor' ? 'flex-1' : 'hidden'} md:flex md:flex-[7]`}>
           <div className="glass-card flex flex-1 flex-col overflow-hidden">
-            <div className="flex h-11 shrink-0 items-center justify-between border-b border-white/5 px-3 md:px-5 bg-white/5 md:bg-white/[0.02]">
+            <div className="flex h-11 shrink-0 items-center justify-between border-b border-white/5 px-3 md:px-5 bg-[#0a0a0c] md:bg-white/[0.02]">
               <div className="flex items-center gap-2 md:gap-5">
                 <LanguageSelector activeLanguage={activeLangId} onLanguageChange={setActiveLangId} isDarkMode={true} />
               </div>
