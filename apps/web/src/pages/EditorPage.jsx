@@ -318,10 +318,9 @@ builtins.input = input_shim
             <div className="flex h-7 w-7 md:h-9 md:w-9 overflow-hidden rounded-lg md:rounded-xl border border-white/10 bg-gradient-to-br from-blue-600 to-indigo-700 p-0.5 shadow-2xl">
               <img src={logo} alt="Logo" className="h-full w-full rounded-[6px] md:rounded-[10px] object-cover" />
             </div>
-            <div className="flex flex-col leading-tight">
+            <div className="hidden sm:flex flex-col leading-tight">
               <span className="text-[11px] md:text-[14px] font-black uppercase tracking-widest text-white/90">LiquidIDE</span>
               <span className="hidden md:block text-[8px] font-bold uppercase tracking-[0.2em] text-blue-400">Pro Cloud Edition</span>
-              <span className="md:hidden text-[7px] font-bold uppercase tracking-[0.1em] text-blue-400/80">Pro</span>
             </div>
           </div>
           
@@ -342,19 +341,19 @@ builtins.input = input_shim
           {user ? (
             <div className="flex items-center gap-1.5 md:gap-3 rounded-full border border-white/5 bg-white/5 py-1 md:py-1.5 pl-2 md:pl-4 pr-1 md:pr-1.5">
               <span className="hidden sm:block text-[10px] md:text-[11px] font-bold text-white/80">{user.name}</span>
-              <div className="h-5 w-5 md:h-7 md:w-7 rounded-full border border-white/10 overflow-hidden shadow-lg">
+              <div className="h-6 w-6 md:h-7 md:w-7 rounded-full border border-white/10 overflow-hidden shadow-lg">
                 <img src={user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=007AFF&color=fff`} className="h-full w-full object-cover" alt="Avatar" />
               </div>
             </div>
           ) : (
-            <button onClick={() => setActiveModal('auth')} className="flux-button-secondary py-1 md:py-1.5 px-3 md:px-6 text-[9px] md:text-[13px]">
-              <svg className="md:hidden h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
-              <span className="hidden md:inline">Sign In</span>
+            <button onClick={() => setActiveModal('auth')} className="flux-button-secondary py-1 md:py-1.5 px-2 md:px-6">
+              <svg className="h-3.5 w-3.5 md:h-4 md:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
+              <span className="text-[9px] md:text-[11px]">Login</span>
             </button>
           )}
-          <button onClick={() => setActiveModal('upgrade')} className="flux-button-primary animate-shimmer py-1 md:py-1.5 px-3 md:px-6 text-[9px] md:text-[13px]">
-            <svg className="md:hidden h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-            <span className="hidden md:inline">Upgrade</span>
+          <button onClick={() => setActiveModal('upgrade')} className="flux-button-primary animate-shimmer py-1 md:py-1.5 px-2 md:px-6">
+            <svg className="h-3.5 w-3.5 md:h-4 md:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+            <span className="text-[9px] md:text-[11px]">Pro</span>
           </button>
           
           <div className="flex md:hidden items-center gap-2">
@@ -489,7 +488,7 @@ builtins.input = input_shim
         </section>
       </main>
 
-      <footer className="relative z-20 flex h-9 md:h-12 shrink-0 items-center justify-between border-t border-white/5 bg-black md:bg-black/80 px-4 md:px-8 md:backdrop-blur-3xl">
+      <footer className="relative z-20 flex h-11 md:h-12 shrink-0 items-center justify-between border-t border-white/5 bg-black md:bg-black/80 px-4 md:px-8 md:backdrop-blur-3xl">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <div className={`h-1.5 w-1.5 rounded-full shadow-[0_0_8px_currentcolor] ${isWorkerOnline ? "text-emerald-500 bg-emerald-500" : "text-rose-500 bg-rose-500"}`} />
