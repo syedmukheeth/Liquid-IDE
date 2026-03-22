@@ -36,7 +36,7 @@ export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin }) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={isLogin ? "Sign In to Flux" : "Create Flux Account"} isDarkMode={isDarkMode}>
+    <Modal isOpen={isOpen} onClose={onClose} title={isLogin ? "Sign In to LiquidIDE" : "Create LiquidIDE Account"} isDarkMode={isDarkMode}>
       <form onSubmit={handleAuth} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
         {error && (
           <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-[11px] font-bold text-rose-500 animate-in shake-1">
@@ -122,7 +122,7 @@ export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin }) {
         </div>
 
         <p className={`text-center text-[11px] font-bold ${isDarkMode ? "text-white/20" : "text-slate-400"}`}>
-          {isLogin ? "New to Flux?" : "Already have an account?"}{" "}
+          {isLogin ? "New to LiquidIDE?" : "Already have an account?"}{" "}
           <button 
             type="button"
             onClick={() => { setIsLogin(!isLogin); setError(null); }}

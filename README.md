@@ -3,7 +3,10 @@
   <br>
   <h1>LiquidIDE</h1>
   <p><b>The Next-Generation Cloud Code Editor</b></p>
-  <p><i>A sleek, "Liquid Glass Apple" themed, production-ready browser IDE built for instant execution, zero-config deployments, and seamless developer experience.</i></p>
+  <p><i>A sleek, "Liquid# LiquidIDE - Pro Cloud Edition
+
+LiquidIDE is a premium, high-performance cloud-based IDE designed for modern developers. With a focus on speed, aesthetics, and powerful features, LiquidIDE provides a seamless coding experience in your browser.
+</i></p>
 </div>
 
 ---

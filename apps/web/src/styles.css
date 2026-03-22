@@ -116,7 +116,7 @@ body {
 }
 
 /* Specific UI Components */
-.flux-button-primary {
+.liquid-button-primary {
   background: linear-gradient(135deg, var(--accent-primary) 0%, #4facfe 100%);
   color: white;
   font-weight: 800;
@@ -136,23 +136,23 @@ body {
 }
 
 @media (max-width: 767px) {
-  .flux-button-primary {
+  .liquid-button-primary {
     padding: 6px 16px;
     border-radius: 10px;
   }
 }
 
-.flux-button-primary:hover {
+.liquid-button-primary:hover {
   transform: translateY(-2px) scale(1.02);
   filter: brightness(1.1);
   box-shadow: 0 8px 25px var(--accent-glow);
 }
 
-.flux-button-primary:active {
+.liquid-button-primary:active {
   transform: translateY(0) scale(0.98);
 }
 
-.flux-button-secondary {
+.liquid-button-secondary {
   background: rgba(255, 255, 255, 0.08); /* More opaque */
   border: 1px solid var(--glass-border);
   color: rgba(255, 255, 255, 0.7);
@@ -171,20 +171,20 @@ body {
 }
 
 @media (max-width: 767px) {
-  .flux-button-secondary {
+  .liquid-button-secondary {
     padding: 6px 12px;
     border-radius: 10px;
   }
 }
 
-.flux-button-secondary:hover {
+.liquid-button-secondary:hover {
   background: rgba(255, 255, 255, 0.08);
   color: white;
   border-color: var(--glass-border-bright);
   transform: translateY(-1px);
 }
 
-.flux-button-secondary:active, .flux-button-primary:active {
+.liquid-button-secondary:active, .liquid-button-primary:active {
   transform: scale(0.95);
   filter: brightness(0.9);
 }
