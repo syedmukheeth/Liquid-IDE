@@ -89,7 +89,7 @@ export function GithubModal({ isOpen, onClose, code, isDarkMode }) {
         <button
           onClick={onPush}
           disabled={status === "Pushing..."}
-          className="flux-button-primary w-full py-4 text-[11px] font-black uppercase tracking-widest animate-shimmer"
+          className="liquid-button-primary w-full py-4 text-[11px] font-black uppercase tracking-widest animate-shimmer"
         >
           {status === "Pushing..." ? (
             <div className="flex items-center justify-center gap-2">

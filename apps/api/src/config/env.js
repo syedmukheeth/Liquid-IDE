@@ -31,7 +31,7 @@ if (!result.success) {
       MONGO_URI: process.env.MONGO_URI,
       REDIS_URL: process.env.REDIS_URL,
       WEB_ORIGIN: process.env.WEB_ORIGIN || "http://localhost:5173",
-      JWT_SECRET: process.env.JWT_SECRET || "fallback_secret_for_emergency",
+      JWT_SECRET: process.env.JWT_SECRET || "liquid-ide-super-secret-key-2026",
       JWT_EXPIRES_IN: "7d",
       CALLBACK_URL_BASE: "http://localhost:8080/auth"
     };

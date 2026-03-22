@@ -7,11 +7,11 @@ export default function SettingsModal({ isOpen, onClose, isDarkMode, settings, o
   const tabs = [
     { id: "editor", label: "Editor", icon: "M14.318 18.222a7.5 7.5 0 000-10.606M11.485 15.39a4.5 4.5 0 000-6.364m-4.582 4.59a1.5 1.5 0 000-2.122m3.106 3.11a.5.5 0 000-.708M14.318 18.222a7.5 7.5 0 000-10.606" },
     { id: "account", label: "Account", icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
-    { id: "engine", label: "Flux Engine", icon: "M13 10V3L4 14h7v7l9-11h-7z" }
+    { id: "engine", label: "LiquidIDE Engine", icon: "M13 10V3L4 14h7v7l9-11h-7z" }
   ];
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Flux System Settings" isDarkMode={isDarkMode}>
+    <Modal isOpen={isOpen} onClose={onClose} title="LiquidIDE System Settings" isDarkMode={isDarkMode}>
       <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Tab Navigation */}
         <div className={`flex items-center gap-2 rounded-2xl p-1.5 transition-colors ${isDarkMode ? "bg-white/5" : "bg-slate-100"}`}>
