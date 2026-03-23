@@ -45,6 +45,9 @@ function createApp() {
     endpoints: ["/runs", "/auth", "/github", "/health"]
   }));
 
+  // Prevent favicon 404 noise in logs
+  app.get(["/favicon.ico", "/favicon.png"], (req, res) => res.status(204).end());
+
   app.get("/health", (_req, res) => res.json({ status: "ok", timestamp: new Date().toISOString() }));
   
   // Standard routes handled at root (prefix stripping done in entry point)
