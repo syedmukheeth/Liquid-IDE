@@ -41,20 +41,25 @@ export default function CodeEditor({ language, value, onChange, onCursorChange, 
         onChange={handleChange}
         options={{
           minimap: { enabled: false },
-          fontSize: options.fontSize || 14,
+          fontSize: options.fontSize || 12, // Smaller default for mobile
           tabSize: options.tabSize || 2,
           lineNumbers: "on",
+          lineNumbersMinChars: 2, // Save space
+          folding: false, // Save space
+          glyphMargin: false, // Save space
+          wordWrap: "on", // CRITICAL for mobile
+          wrappingStrategy: "advanced",
+          automaticLayout: true,
           smoothScrolling: true,
           cursorSmoothCaretAnimation: "on",
           padding: { top: 12, bottom: 12 },
-          automaticLayout: true,
           formatOnPaste: true,
           formatOnType: true,
           scrollBeyondLastLine: false,
           readOnly: false,
           renderLineHighlight: "none",
-          renderIndentGuides: false,
-          guides: { indentation: false },
+          renderIndentGuides: true,
+          guides: { indentation: true },
           backgroundColor: "#00000000" // Transparent
         }}
         loading={<div className="flex h-full items-center justify-center text-blue-500/20 font-black uppercase tracking-widest animate-pulse">Initializing LiquidIDE</div>}

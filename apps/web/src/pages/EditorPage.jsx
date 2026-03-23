@@ -52,7 +52,7 @@ export default function EditorPage() {
         const res = await fetch("/api/runs/health/queue");
         if (res.ok) {
           const data = await res.json();
-          setIsWorkerOnline(data.online);
+          setIsWorkerOnline(data.workerOnline);
           setApiVersion(data.version);
         } else {
            setIsWorkerOnline(false);
@@ -174,14 +174,14 @@ export default function EditorPage() {
   // Ensure terminal fits when switching tabs on mobile
   useEffect(() => {
     if (activeMobileTab === 'terminal' && fitAddonRef.current) {
-      // Small delay to ensure the DOM is visible before fitting
+      // Larger delay to ensure the DOM is visible and transition finished before fitting
       const timer = setTimeout(() => {
         try {
           fitAddonRef.current.fit();
         } catch (e) {
           console.warn("Terminal fit failed (DOM not ready)");
         }
-      }, 100);
+      }, 250); 
       return () => clearTimeout(timer);
     }
   }, [activeMobileTab]);
@@ -479,7 +479,7 @@ builtins.input = input_shim
               <div className="text-[8px] md:text-[9px] font-bold tracking-widest text-white/30 uppercase">{runStatus}</div>
             </div>
             
-            <div className="flex-1 overflow-hidden p-3 md:p-5 bg-black/40 relative">
+            <div className="flex-1 overflow-hidden p-2 md:p-5 bg-black/40 relative">
               <div ref={terminalRef} className="h-full w-full" />
               
               {!isWorkerOnline && busy && (

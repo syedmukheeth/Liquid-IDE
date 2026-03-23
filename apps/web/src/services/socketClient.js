@@ -21,7 +21,7 @@ export function getSocket() {
   });
 
   socket.on("connect", () => {
-    console.log("✅ [LiquidIDE] WebSocket Connected to", endpoint);
+    // Connection successful
   });
 
   socket.on("connect_error", (err) => {
