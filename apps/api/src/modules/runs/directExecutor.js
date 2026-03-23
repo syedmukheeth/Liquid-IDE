@@ -25,10 +25,20 @@ const { execSync } = require("node:child_process");
  */
 function isToolAvailable(cmd) {
   try {
-    const checkCmd = IS_WINDOWS ? `where ${cmd}` : `command -v ${cmd}`;
-    execSync(checkCmd, { stdio: "ignore" });
-    // Verify it actually executes by checking version
-    execSync(`${cmd} --version`, { stdio: "ignore" });
+    const isWin = os.platform() === "win32";
+    const checkCmd = isWin ? `where ${cmd}` : `command -v ${cmd}`;
+    
+    // 1. Try standard path check (where/command -v)
+    try {
+      execSync(checkCmd, { stdio: "ignore" });
+    } catch (e) {
+      // If 'where' fails, it might still be available but not in a way 'where' likes.
+      // We'll proceed to the version check regardless.
+    }
+
+    // 2. Critical Check: Does the tool actually run?
+    // We use a short timeout to prevent hanging.
+    execSync(`${cmd} --version`, { stdio: "ignore", timeout: 3000 });
     return true;
   } catch (e) {
     return false;

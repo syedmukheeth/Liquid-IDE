@@ -92,13 +92,22 @@ async function createRun(input) {
           await queue.add("execute", { runId: run._id.toString() });
           run.status = "queued";
         } else {
+          const isVercel = !!process.env.VERCEL;
           const toolName = hostTool === 'javac' ? 'JDK' : hostTool === 'g++' ? 'G++' : hostTool === 'gcc' ? 'GCC' : 'Compiler';
-          const errMsg = `❌ \x1b[1;31mError: ${hostTool || "Compiler"} not found.\x1b[0m\n` +
-                         `💡 \x1b[1;36mIf running locally, ensure ${toolName} is installed and in your PATH.\x1b[0m\n` +
-                         `💡 \x1b[1;36mOtherwise, start your LiquidIDE worker to handle compiled languages.\x1b[0m\n\r\n`;
+          
+          let errMsg = `❌ \x1b[1;31mError: ${hostTool || "Compiler"} not found.\x1b[0m\n`;
+          
+          if (isVercel) {
+            errMsg += `💡 \x1b[1;36mLiquidIDE Vercel requires an external worker for compiled languages (${hostTool}).\x1b[0m\n` +
+                      `💡 \x1b[1;36mPlease start your LiquidIDE worker locally to process this run.\x1b[0m\n\r\n`;
+          } else {
+            errMsg += `💡 \x1b[1;36mIf running locally, ensure ${toolName} is installed and in your PATH.\x1b[0m\n` +
+                      `💡 \x1b[1;36mOtherwise, start your LiquidIDE worker to handle compiled languages.\x1b[0m\n\r\n`;
+          }
+
           if (emitLog) emitLog(run._id.toString(), "stderr", errMsg);
           run.status = "failed";
-          run.stderr = "Compiler not found";
+          run.stderr = isVercel ? "Worker offline (Required for Vercel)" : "Compiler not found";
         }
 
         if (useMongo) {
