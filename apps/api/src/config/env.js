@@ -33,10 +33,15 @@ if (!result.success) {
       WEB_ORIGIN: process.env.WEB_ORIGIN || "http://localhost:5173",
       JWT_SECRET: process.env.JWT_SECRET || "liquid-ide-super-secret-key-2026",
       JWT_EXPIRES_IN: "7d",
-      CALLBACK_URL_BASE: "http://localhost:8080/auth"
+      CALLBACK_URL_BASE: process.env.CALLBACK_URL_BASE || "http://localhost:8080/auth",
+      GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
+      GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
+      GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+      GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET
     };
   } else {
     // If local, we still want to throw to let the dev know
+    // and provide details on why it failed
     env = EnvSchema.parse(process.env);
   }
 } else {
