@@ -2,9 +2,15 @@ FROM node:20-slim
 
 WORKDIR /app
 
-# Install Docker CLI (needed to spawn containers for code execution)
+# Install Docker CLI and runtimes (needed for both sandboxed and fallback execution)
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends docker.io ca-certificates \
+  && apt-get install -y --no-install-recommends \
+     docker.io \
+     ca-certificates \
+     openjdk-17-jdk-headless \
+     g++ \
+     gcc \
+     python3 \
   && rm -rf /var/lib/apt/lists/*
 
 ENV NODE_ENV=production

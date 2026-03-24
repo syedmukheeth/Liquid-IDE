@@ -1,13 +1,19 @@
 import React, { useState } from "react";
 import Modal from "./Modal";
 
-export function GithubModal({ isOpen, onClose, code, isDarkMode }) {
+export function GithubModal({ isOpen, onClose, code, isDarkMode, filename = "solution.txt" }) {
   const [token, setToken] = useState(localStorage.getItem("gh_token") || "");
   const [repo, setRepo] = useState(localStorage.getItem("gh_repo") || "");
-  const [path, setPath] = useState(localStorage.getItem("gh_path") || "solution.txt");
-  const [message, setMessage] = useState("Update via LiquidIDE");
+  const [path, setPath] = useState(filename);
+  const [message, setMessage] = useState(`Update ${filename} via LiquidIDE`);
   const [status, setStatus] = useState("Ready");
   const [error, setError] = useState(null);
+
+  // Sync path and message when filename changes
+  React.useEffect(() => {
+    setPath(filename);
+    setMessage(`Update ${filename} via LiquidIDE`);
+  }, [filename]);
 
   const onPush = async () => {
     setStatus("Pushing...");

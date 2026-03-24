@@ -10,7 +10,7 @@ import { pollUntilDone, submitRun } from "../services/codeExecutionApi";
 import { getSocket } from "../services/socketClient";
 import AuthModal from "../components/AuthModal";
 import SettingsModal from "../components/SettingsModal";
-import HistoryModal from "../components/HistoryModal";
+import FilesModal from "../components/FilesModal";
 import UpgradeModal from "../components/UpgradeModal";
 import { useAuth } from "../hooks/useAuth";
 
@@ -76,23 +76,6 @@ export default function EditorPage() {
     return saved ? JSON.parse(saved) : { fontSize: 14, tabSize: 2 };
   });
   
-  const [history, setHistory] = useState(() => {
-    const saved = localStorage.getItem("liquid_history");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const saveHistory = useCallback((code, language, lId) => {
-    const newEntry = { code, language, languageId: lId, timestamp: Date.now() };
-    const newHistory = [newEntry, ...history].slice(0, 10);
-    setHistory(newHistory);
-    localStorage.setItem("liquid_history", JSON.stringify(newHistory));
-  }, [history]);
-
-  const onRestoreHistory = (code, languageId) => {
-    setActiveLangId(languageId);
-    setBuffers(prev => ({ ...prev, [languageId]: code }));
-  };
-
   const onSettingsUpdate = (newSettings) => {
     setSettings(newSettings);
     localStorage.setItem("liquid_settings", JSON.stringify(newSettings));
@@ -237,7 +220,6 @@ builtins.input = input_shim
     if (activeLangId === "python") {
       try {
         await runPythonInBrowser(code);
-        saveHistory(code, activeConfig.name, activeLangId);
         setBusy(false);
         return;
       } catch (err) {
@@ -299,7 +281,6 @@ builtins.input = input_shim
 
       socket.off("exec:log", onLog);
       socket.emit("unsubscribe", { jobId });
-      saveHistory(code, activeConfig.name, activeLangId);
     } catch (e) {
       setRunStatus("Failed");
       xtermRef.current.write((e?.message || String(e)) + "\r\n");
@@ -337,7 +318,7 @@ builtins.input = input_shim
           </div>
           
           <nav className="hidden md:flex items-center gap-8">
-            {['Editor', 'History', 'Settings'].map((tab) => (
+            {['Editor', 'Files', 'Settings'].map((tab) => (
               <button 
                 key={tab}
                 onClick={() => setActiveModal(tab === 'Editor' ? null : tab.toLowerCase())}
@@ -375,8 +356,8 @@ builtins.input = input_shim
           </button>
           
           <div className="flex md:hidden items-center gap-2">
-             <button onClick={() => setActiveModal('history')} className="p-2 text-white/40 hover:text-white">
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+             <button onClick={() => setActiveModal('files')} className="p-2 text-white/40 hover:text-white">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
              </button>
              <button onClick={() => setActiveModal('settings')} className="p-2 text-white/40 hover:text-white">
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -526,8 +507,16 @@ builtins.input = input_shim
 
       <AuthModal isOpen={activeModal === 'auth'} onClose={() => setActiveModal(null)} isDarkMode={true} onLogin={loginUser} />
       <SettingsModal isOpen={activeModal === 'settings'} onClose={() => setActiveModal(null)} isDarkMode={true} settings={settings} onSettingsChange={onSettingsUpdate} />
-      <HistoryModal isOpen={activeModal === 'history'} onClose={() => setActiveModal(null)} isDarkMode={true} history={history} onRestore={onRestoreHistory} />
-      <GithubModal isOpen={activeModal === 'github'} onClose={() => setActiveModal(null)} code={buffers[activeLangId]} isDarkMode={true} />
+      <FilesModal 
+        isOpen={activeModal === 'files'} 
+        onClose={() => setActiveModal(null)} 
+        isDarkMode={true} 
+        buffers={buffers} 
+        activeLangId={activeLangId}
+        onSwitch={(id) => setActiveLangId(id)}
+        onPushFile={(id) => { setActiveLangId(id); setActiveModal('github'); }}
+      />
+      <GithubModal isOpen={activeModal === 'github'} onClose={() => setActiveModal(null)} code={buffers[activeLangId]} isDarkMode={true} filename={activeConfig.name} />
       <UpgradeModal isOpen={activeModal === 'upgrade'} onClose={() => setActiveModal(null)} isDarkMode={true} />
     </div>
   );

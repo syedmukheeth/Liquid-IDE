@@ -6,8 +6,13 @@ const crypto = require("node:crypto");
 const { env } = require("../config/env");
 
 function getJavaMainClass(code) {
-  const match = code.match(/public\s+class\s+(\w+)/);
-  return match ? match[1] : "Solution";
+  // Support both public and non-public classes
+  const match = code.match(/(?:public\s+)?class\s+(\w+)/);
+  if (match) return match[1];
+  
+  // Last resort: scan for main method if class not found with regex
+  if (code.includes("public static void main")) return "Solution";
+  return "Solution";
 }
 
 const LANGUAGE_CONFIGS = {
@@ -42,8 +47,21 @@ async function executeRun(opts, onLog) {
   
   const runDir = await fs.mkdtemp(path.join(os.tmpdir(), "liquidide-run-"));
   try {
-    await materializeFiles(runDir, files);
-    const entry = path.posix.normalize(entrypoint).replace(/^(\.\.(\/|\\|$))+/, "");
+    const materializedFiles = [...files];
+    let entry = path.posix.normalize(entrypoint).replace(/^(\.\.(\/|\\|$))+/, "");
+    
+    // For Java, ensuring the entry filename matches the public class name
+    if (language === "java") {
+      const mainFile = materializedFiles.find(f => f.path === entrypoint);
+      if (mainFile) {
+        const className = getJavaMainClass(mainFile.content);
+        const newPath = `${className}.java`;
+        mainFile.path = newPath;
+        entry = newPath;
+      }
+    }
+
+    await materializeFiles(runDir, materializedFiles);
     
     // 1. Try Docker first
     try {
@@ -79,9 +97,8 @@ async function executeRun(opts, onLog) {
         cpp: [shell, shellFlag, `g++ ${entry} -o main${exeExt} && .${path.sep}main${exeExt}`],
         c: [shell, shellFlag, `gcc ${entry} -o main${exeExt} && .${path.sep}main${exeExt}`],
         java: (() => {
-          const code = files.find(f => f.path === entrypoint)?.content || "";
-          const className = getJavaMainClass(code);
-          return [shell, shellFlag, `javac ${className}.java && java ${className}`];
+          const className = entry.replace(".java", "");
+          return [shell, shellFlag, `javac ${entry} && java ${className}`];
         })()
       };
 
