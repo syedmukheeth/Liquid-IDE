@@ -75,7 +75,7 @@ export default function EditorPage() {
   const fitAddonRef = useRef(null);
   const [activeMobileTab, setActiveMobileTab] = useState("editor"); // "editor" or "terminal"
   
-  const { user, loginUser } = useAuth();
+  const { user, loginUser, logoutUser } = useAuth();
 
 
   // Poll worker status
@@ -374,11 +374,19 @@ builtins.input = input_shim
         
         <div className="flex items-center gap-1.5 md:gap-5">
           {user ? (
-            <div className="flex items-center gap-1.5 md:gap-3 rounded-full border border-white/5 bg-white/5 py-1 md:py-1.5 pl-2 md:pl-4 pr-1 md:pr-1.5 shrink-0">
-              <span className="hidden lg:block text-[10px] md:text-[11px] font-bold text-white/80">{user.name}</span>
-              <div className="h-6 w-6 md:h-7 md:w-7 rounded-full border border-white/10 overflow-hidden shadow-lg">
-                <img src={user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=007AFF&color=fff`} className="h-full w-full object-cover" alt="Avatar" />
+            <div className="flex items-center gap-2 md:gap-4 shrink-0">
+              <div className="flex items-center gap-1.5 md:gap-3 rounded-full border border-white/5 bg-white/5 py-1 md:py-1.5 pl-2 md:pl-4 pr-1 md:pr-1.5">
+                <span className="hidden lg:block text-[10px] md:text-[11px] font-bold text-white/80">{user.name}</span>
+                <div className="h-6 w-6 md:h-7 md:w-7 rounded-full border border-white/10 overflow-hidden shadow-lg">
+                  <img src={user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=007AFF&color=fff`} className="h-full w-full object-cover" alt="Avatar" />
+                </div>
               </div>
+              <button 
+                onClick={() => confirm("Are you sure you want to log out?") && logoutUser()}
+                className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-white/30 hover:text-rose-400 transition-colors px-2 py-1"
+              >
+                Log Out
+              </button>
             </div>
           ) : (
             <button 
