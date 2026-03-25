@@ -10,17 +10,20 @@ async function pushToGithub({ token, repo, path, content, message, user: authUse
   const octokit = new Octokit({ auth: githubToken });
 
   try {
-    // 1. Get current user's login (owner)
-    // Preference: use the token to get the actual owner of the token
+    // 1. Resolve owner and repo name
+    // If repo is "owner/name", split it. Otherwise, use authenticated user as owner.
+    let [specOwner, specRepo] = repo.includes("/") ? repo.split("/") : [null, repo];
+    
     const { data: ghUser } = await octokit.rest.users.getAuthenticated();
-    const owner = ghUser.login;
+    const owner = specOwner || ghUser.login;
+    const repoName = specRepo;
 
     // 2. Try to get the file to see if it exists (for SHA)
     let sha;
     try {
       const { data: fileData } = await octokit.rest.repos.getContent({
         owner,
-        repo,
+        repo: repoName,
         path
       });
       sha = fileData.sha;
@@ -31,7 +34,7 @@ async function pushToGithub({ token, repo, path, content, message, user: authUse
     // 3. Create or update file
     const { data: result } = await octokit.rest.repos.createOrUpdateFileContents({
       owner,
-      repo,
+      repo: repoName,
       path,
       message: message || `Update ${path} via LiquidIDE`,
       content: Buffer.from(content).toString("base64"),
