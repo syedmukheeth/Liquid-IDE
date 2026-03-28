@@ -9,6 +9,7 @@ const { logger } = require("./config/logger");
 const { runsRouter } = require("./modules/runs/runs.routes");
 const { githubRouter } = require("./modules/github/github.routes");
 const { authRouter } = require("./modules/auth/auth.routes");
+const { aiRouter } = require("./modules/ai/ai.routes");
 
 function createApp() {
   const app = express();
@@ -77,6 +78,7 @@ function createApp() {
   routes.use("/runs", runLimiter, runsRouter);
   routes.use("/github", githubRouter);
   routes.use("/auth", authRouter);
+  routes.use("/ai", aiRouter);
   routes.get("/health", (_req, res) => res.json({ status: "ok", origin: "api-router" }));
 
   app.use("/", routes);

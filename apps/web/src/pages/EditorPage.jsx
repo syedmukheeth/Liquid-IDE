@@ -12,9 +12,11 @@ import AuthModal from "../components/AuthModal";
 import SettingsModal from "../components/SettingsModal";
 import FilesModal from "../components/FilesModal";
 import UpgradeModal from "../components/UpgradeModal";
+import AiPanel from "../components/AiPanel";
 import { useAuth } from "../hooks/useAuth";
 import { Link, useSearchParams } from "react-router-dom";
-import { Share2, Copy, Check } from "lucide-react";
+import { Share2, Copy, Check, Sparkles } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const languageConfigs = {
   cpp: {
@@ -63,6 +65,7 @@ export default function EditorPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const sessionId = searchParams.get("session") || "default";
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showAiPanel, setShowAiPanel] = useState(false);
   const [copied, setCopied] = useState(false);
 
   // Pre-connect socket for performance
@@ -453,6 +456,15 @@ builtins.input = input_shim
             <span className="hidden md:inline text-[10px] font-black uppercase tracking-widest text-white/40 group-hover:text-white/60">Collaborate</span>
           </button>
 
+          <button 
+            onClick={() => setShowAiPanel(!showAiPanel)}
+            className={`group flex h-7 md:h-8 items-center gap-2 rounded-xl border border-blue-500/30 px-2 md:px-4 transition-all hover:bg-blue-500/10 active:scale-95 ${showAiPanel ? "bg-blue-500/20" : "bg-blue-500/5"}`}
+            title="Senior SRE AI Assistant"
+          >
+            <Sparkles className={`h-3.5 w-3.5 ${showAiPanel ? "text-blue-400" : "text-blue-400/50 group-hover:text-blue-400"}`} />
+            <span className="hidden lg:inline text-[9px] font-black uppercase tracking-widest text-blue-400/80">Ask SRE AI</span>
+          </button>
+
           <button onClick={() => setActiveModal('upgrade')} className="liquid-button-primary animate-shimmer py-1 px-3 md:py-1.5 md:px-6 text-[9px] md:text-[13px] shrink-0">
             <svg className="h-3 w-3 md:h-4 md:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
             <span className="hidden sm:inline">Upgrade</span>
@@ -659,6 +671,18 @@ builtins.input = input_shim
         authToken={authToken}
       />
       <UpgradeModal isOpen={activeModal === 'upgrade'} onClose={() => setActiveModal(null)} isDarkMode={true} />
+      <AiPanel 
+        isOpen={showAiPanel} 
+        onClose={() => setShowAiPanel(false)}
+        currentCode={buffers[activeLangId]}
+        language={activeLangId}
+        metrics={metrics}
+        onApplyRefactor={(newCode) => {
+          setBuffers(prev => ({ ...prev, [activeLangId]: newCode }));
+          // Note: Binary sync will automatically handle the distribution
+          setShowAiPanel(false);
+        }}
+      />
 
       {/* Share Modal */}
       <AnimatePresence>
