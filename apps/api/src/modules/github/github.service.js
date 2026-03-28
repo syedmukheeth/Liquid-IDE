@@ -1,4 +1,27 @@
-async function pushToGithub({ token, repo, path, content, message, user: authUser }) {
+async function getUserRepos({ token, user: authUser }) {
+  const { Octokit } = await import("@octokit/rest");
+  const githubToken = token || authUser?.githubToken;
+  if (!githubToken) throw new Error("GitHub Authentication required");
+
+  const octokit = new Octokit({ auth: githubToken });
+  try {
+    const { data } = await octokit.rest.repos.listForAuthenticatedUser({
+      sort: "updated",
+      per_page: 20
+    });
+    return data.map(r => ({
+      name: r.name,
+      full_name: r.full_name,
+      url: r.html_url,
+      private: r.private,
+      default_branch: r.default_branch
+    }));
+  } catch (err) {
+    throw new Error(`Failed to fetch repositories: ${err.message}`);
+  }
+}
+
+async function pushToGithub({ token, repo, path, content, message, branch, user: authUser }) {
   const { Octokit } = await import("@octokit/rest");
   
   // Use provided token or fallback to user's stored OAuth token
@@ -24,7 +47,8 @@ async function pushToGithub({ token, repo, path, content, message, user: authUse
       const { data: fileData } = await octokit.rest.repos.getContent({
         owner,
         repo: repoName,
-        path
+        path,
+        ref: branch
       });
       sha = fileData.sha;
     } catch (err) {
@@ -38,17 +62,20 @@ async function pushToGithub({ token, repo, path, content, message, user: authUse
       path,
       message: message || `Update ${path} via LiquidIDE`,
       content: Buffer.from(content).toString("base64"),
-      sha
+      sha,
+      branch
     });
 
     return {
       success: true,
       url: result.content.html_url,
-      commit: result.commit.sha
+      commit: result.commit.sha,
+      repo: repoName,
+      branch: branch || "default"
     };
   } catch (err) {
     throw new Error(`GitHub Push Failed: ${err.message}`);
   }
 }
 
-module.exports = { pushToGithub };
+module.exports = { pushToGithub, getUserRepos };

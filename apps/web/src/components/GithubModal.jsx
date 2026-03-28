@@ -1,20 +1,48 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Modal from "./Modal";
+import { ExternalLink, GitBranch, Github as GithubIcon } from "lucide-react";
 
 export function GithubModal({ isOpen, onClose, code, isDarkMode, filename = "solution.txt", user, authToken }) {
+  const [repos, setRepos] = useState([]);
   const [repo, setRepo] = useState(localStorage.getItem("gh_repo") || "");
+  const [branch, setBranch] = useState(localStorage.getItem("gh_branch") || "main");
   const [path, setPath] = useState(filename);
   const [message, setMessage] = useState(`Update ${filename} via LiquidIDE`);
   const [status, setStatus] = useState("Ready");
   const [error, setError] = useState(null);
+  const [resultUrl, setResultUrl] = useState(null);
+  const [loadingRepos, setLoadingRepos] = useState(false);
 
   const isConnected = !!user?.githubToken;
 
   // Sync path and message when filename changes
-  React.useEffect(() => {
+  useEffect(() => {
     setPath(filename);
     setMessage(`Update ${filename} via LiquidIDE`);
   }, [filename]);
+
+  // Fetch repositories
+  useEffect(() => {
+    if (isOpen && isConnected && authToken) {
+      const fetchRepos = async () => {
+        setLoadingRepos(true);
+        try {
+          const res = await fetch("/api/github/repos", {
+            headers: { "Authorization": `Bearer ${authToken}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setRepos(data);
+          }
+        } catch (err) {
+          console.error("Failed to fetch repos", err);
+        } finally {
+          setLoadingRepos(false);
+        }
+      };
+      fetchRepos();
+    }
+  }, [isOpen, isConnected, authToken]);
 
   const onPush = async () => {
     if (!repo.trim()) {
@@ -24,8 +52,9 @@ export function GithubModal({ isOpen, onClose, code, isDarkMode, filename = "sol
 
     setStatus("Pushing...");
     setError(null);
+    setResultUrl(null);
     localStorage.setItem("gh_repo", repo);
-    localStorage.setItem("gh_path", path);
+    localStorage.setItem("gh_branch", branch);
 
     try {
       const res = await fetch("/api/github/push", {
@@ -34,13 +63,19 @@ export function GithubModal({ isOpen, onClose, code, isDarkMode, filename = "sol
           "Content-Type": "application/json",
           "Authorization": `Bearer ${authToken}`
         },
-        body: JSON.stringify({ repo, path, content: code, message }),
+        body: JSON.stringify({ 
+          repo, 
+          path, 
+          content: code, 
+          message,
+          branch 
+        }),
       });
 
       const data = await res.json();
       if (res.ok) {
         setStatus("Success!");
-        setTimeout(() => onClose(), 2000);
+        setResultUrl(data.url);
       } else {
         setError(data.message || "Failed to push to GitHub");
         setStatus("Failed");
@@ -77,7 +112,7 @@ export function GithubModal({ isOpen, onClose, code, isDarkMode, filename = "sol
                 <GithubLogo />
               </div>
               <div className="flex-1">
-                <p className="text-[10px] font-black uppercase tracking-wider text-emerald-400/80 mb-0.5">Pushing directly As</p>
+                <p className="text-[10px] font-black uppercase tracking-wider text-emerald-400/80 mb-0.5">Authorizing As</p>
                 <p className="text-[13px] font-bold text-white">@{user.githubUsername}</p>
               </div>
               <button 
@@ -90,17 +125,56 @@ export function GithubModal({ isOpen, onClose, code, isDarkMode, filename = "sol
             </div>
           )}
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Repository Name</label>
-              <input
-                type="text"
-                value={repo}
-                onChange={(e) => setRepo(e.target.value)}
-                placeholder="my-cool-repo"
-                className="w-full rounded-xl border border-white/5 bg-white/5 px-4 py-3 text-[13px] text-white outline-none focus:border-blue-500/50"
-              />
+              <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Repository</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  list="repo-list"
+                  value={repo}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setRepo(val);
+                    const selected = repos.find(r => r.name === val || r.full_name === val);
+                    if (selected) setBranch(selected.default_branch);
+                  }}
+                  placeholder="Select or type repository..."
+                  className="w-full rounded-xl border border-white/5 bg-white/5 px-4 py-3 text-[13px] text-white outline-none focus:border-blue-500/50"
+                />
+                <datalist id="repo-list">
+                  {repos.map(r => (
+                    <option key={r.full_name} value={r.full_name}>
+                      {r.private ? "🔒 " : "🌐 "}{r.name}
+                    </option>
+                  ))}
+                </datalist>
+                {loadingRepos && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="h-3 w-3 animate-spin rounded-full border border-white/20 border-t-white" />
+                  </div>
+                )}
+              </div>
             </div>
+            
+            <div className="space-y-1">
+              <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Branch</label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20">
+                  <GitBranch size={14} />
+                </div>
+                <input
+                  type="text"
+                  value={branch}
+                  onChange={(e) => setBranch(e.target.value)}
+                  placeholder="main"
+                  className="w-full rounded-xl border border-white/5 bg-white/5 pl-9 pr-4 py-3 text-[13px] text-white outline-none focus:border-blue-500/50"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-[10px] font-black uppercase tracking-widest text-white/40">File Path</label>
               <input
@@ -111,7 +185,20 @@ export function GithubModal({ isOpen, onClose, code, isDarkMode, filename = "sol
                 className="w-full rounded-xl border border-white/5 bg-white/5 px-4 py-3 text-[13px] text-white outline-none focus:border-blue-500/50"
               />
             </div>
+            <div className="space-y-1">
+               <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Commit Type</label>
+               <select 
+                onChange={(e) => setMessage(prev => `${e.target.value}: ${prev.split(': ').pop()}`)}
+                className="w-full rounded-xl border border-white/5 bg-white/5 px-3 py-3 text-[11px] font-bold text-white/60 outline-none focus:border-blue-500/50 appearance-none"
+               >
+                 <option value="feat">Feature (feat)</option>
+                 <option value="fix">Fix (fix)</option>
+                 <option value="docs">Docs (docs)</option>
+                 <option value="chore">Chore (chore)</option>
+               </select>
+            </div>
           </div>
+
           <div className="space-y-1">
             <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Commit Message</label>
             <input
@@ -125,20 +212,38 @@ export function GithubModal({ isOpen, onClose, code, isDarkMode, filename = "sol
 
         {error && <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-[11px] font-bold text-rose-500">{error}</div>}
 
-        <button
-          onClick={onPush}
-          disabled={status === "Pushing..."}
-          className="liquid-button-primary w-full py-4 text-[11px] font-black uppercase tracking-widest animate-shimmer"
-        >
-          {status === "Pushing..." ? (
-            <div className="flex items-center justify-center gap-2">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-              <span>Sycing with GitHub...</span>
-            </div>
-          ) : (
-            "Push to Repository"
-          )}
-        </button>
+        {status === "Success!" && resultUrl ? (
+          <div className="space-y-3">
+             <div className="flex items-center justify-center gap-2 rounded-xl bg-emerald-500/10 py-4 text-[11px] font-black uppercase tracking-widest text-emerald-500 border border-emerald-500/20 animate-in zoom-in duration-300">
+               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-black">✓</span>
+               Sync Successful
+             </div>
+             <a 
+              href={resultUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="group flex items-center justify-center gap-2 w-full py-4 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-all animate-in slide-in-from-top-2 duration-500"
+             >
+               Open on GitHub
+               <ExternalLink size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+             </a>
+          </div>
+        ) : (
+          <button
+            onClick={onPush}
+            disabled={status === "Pushing..." || !isConnected}
+            className={`liquid-button-primary w-full py-4 text-[11px] font-black uppercase tracking-widest animate-shimmer ${!isConnected ? "opacity-30 cursor-not-allowed" : ""}`}
+          >
+            {status === "Pushing..." ? (
+              <div className="flex items-center justify-center gap-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                <span>Syncing with GitHub...</span>
+              </div>
+            ) : (
+              "Push to Repository"
+            )}
+          </button>
+        )}
       </div>
     </Modal>
   );
