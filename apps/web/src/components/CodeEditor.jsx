@@ -42,11 +42,14 @@ export default function CodeEditor({
   const handleMount = useCallback((editor) => {
     editorRef.current = editor;
 
+    // Use a ref to ensure we only initialize once per sessionId
+    if (providerRef.current) return;
+
     // Initialize Yjs
     const ydoc = new Y.Doc();
     const endpoint = window.location.hostname.includes("vercel.app") 
-      ? "https://liquid-ide.onrender.com" 
-      : window.location.origin;
+      ? "https://liquid-ide-api.vercel.app" // Production websocket endpoint
+      : window.location.origin.replace(":3000", ":3001"); // Local dev fallback
 
     const provider = new SocketIOProvider(endpoint, sessionId, ydoc, {
       autoConnect: true,
@@ -78,10 +81,13 @@ export default function CodeEditor({
       onCursorChange?.({ lineNumber: pos.lineNumber, column: pos.column });
     });
 
-    // If initial value exists and doc is empty, populate it
-    if (value && ytext.toString() === "") {
-      ytext.insert(0, value);
-    }
+    // If initial value exists and doc is currently empty (and we are the first one), populate it
+    // We add a tiny delay to ensure we've synced with others first if possible
+    setTimeout(() => {
+      if (value && ytext.toString() === "") {
+        ytext.insert(0, value);
+      }
+    }, 500);
 
   }, [sessionId, localName, localColor, onCursorChange, value]);
 

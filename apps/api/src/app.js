@@ -17,7 +17,7 @@ function createApp() {
   // Rate Limiting - Global & Run Specific
   const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per window
+    max: 500, // Limit each IP to 500 requests per window
     standardHeaders: true,
     legacyHeaders: false,
     message: { message: "Too many requests from this IP, please try again later." }
@@ -25,7 +25,7 @@ function createApp() {
 
   const runLimiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minute
-    max: 10, // Limit each IP to 10 runs per minute
+    max: 30, // Limit each IP to 30 runs per minute
     standardHeaders: true,
     legacyHeaders: false,
     message: { message: "Too many code executions. Please wait a minute." }
@@ -73,13 +73,28 @@ function createApp() {
 
   app.get("/health", (_req, res) => res.json({ status: "ok", timestamp: new Date().toISOString() }));
   
-  // Standard routes handled at root (prefix stripping done in entry point)
+  // Standard routes handled at root
   const routes = express.Router();
+  
+  // 1. Un-limited Health checks
+  routes.get("/health", (_req, res) => res.json({ status: "ok", origin: "api-router" }));
+  
+  // We explicitly match the health/queue path BEFORE the rate-limited group
+  routes.get("/runs/health/queue", async (req, res, next) => {
+    try {
+      const { getQueueStatus } = require("./modules/runs/runs.service");
+      const status = await getQueueStatus();
+      res.json(status);
+    } catch (err) {
+      next(err);
+    }
+  });
+  
+  // 2. Rate-limited execution routes
   routes.use("/runs", runLimiter, runsRouter);
   routes.use("/github", githubRouter);
   routes.use("/auth", authRouter);
   routes.use("/ai", aiRouter);
-  routes.get("/health", (_req, res) => res.json({ status: "ok", origin: "api-router" }));
 
   app.use("/", routes);
 
