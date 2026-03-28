@@ -20,6 +20,8 @@ const RANDOM_NAMES = [
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
+import ENDPOINTS from "../services/endpoints";
+
 export default function CodeEditor({ 
   language, 
   value, 
@@ -47,9 +49,7 @@ export default function CodeEditor({
 
     // Initialize Yjs
     const ydoc = new Y.Doc();
-    const endpoint = window.location.hostname.includes("vercel.app") 
-      ? "https://liquid-ide-api.vercel.app" // Production websocket endpoint
-      : window.location.origin.replace(":3000", ":3001"); // Local dev fallback
+    const endpoint = ENDPOINTS.WS_ENDPOINT;
 
     const provider = new SocketIOProvider(endpoint, sessionId, ydoc, {
       autoConnect: true,
