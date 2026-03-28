@@ -1,4 +1,5 @@
 const http = require("node:http");
+const os = require("node:os");
 const { Worker } = require("bullmq");
 const { logger } = require("./config/logger");
 const { env } = require("./config/env");
@@ -7,14 +8,23 @@ const { RunModel } = require("./db/run.model");
 const { RUNS_QUEUE_NAME } = require("./queue/constants");
 const { executeRun } = require("./sandbox/multiSandbox");
 
-async function startHeartbeat(redisClient) {
+async function startHeartbeat(redisClient, getWorkerStats) {
   const HEARTBEAT_KEY = "liquidide:worker:heartbeat";
-  const interval = 10000; // 10 seconds
+  const interval = 5000; // 5 seconds for more "real-time" feel
 
   const update = async () => {
     try {
-      await redisClient.setex(HEARTBEAT_KEY, 30, Date.now());
-      logger.debug("Worker heartbeat sent");
+      const stats = {
+        timestamp: Date.now(),
+        cpuLoad: os.loadavg()[0],
+        memFree: os.freemem(),
+        memTotal: os.totalmem(),
+        platform: os.platform(),
+        cpus: os.cpus().length,
+        ...(getWorkerStats ? getWorkerStats() : {})
+      };
+      await redisClient.setex(HEARTBEAT_KEY, 15, JSON.stringify(stats));
+      logger.debug({ stats }, "Worker heartbeat sent");
     } catch (err) {
       logger.warn({ err }, "Failed to send worker heartbeat");
     }
@@ -42,60 +52,70 @@ async function main() {
   const redisClient = new Redis(redisConnectionFromUrl(env.REDIS_URL));
   
   startHealthServer();
-  await startHeartbeat(redisClient);
   await connectMongo();
 
   logger.info("LiquidIDE worker connected. Waiting for jobs...");
 
+  let activeJobs = 0;
+
   const worker = new Worker(
     RUNS_QUEUE_NAME,
     async (job) => {
-      const run = await RunModel.findById(job.data.runId);
-      if (!run) {
-        logger.warn({ runId: job.data.runId }, "Run not found");
-        return;
-      }
-
-      logger.info({ runId: run._id, runtime: run.runtime }, "Starting job");
-      run.status = "running";
-      run.startedAt = new Date();
-      await run.save();
-
-      const logChannel = `run:logs:${run._id}`;
-      const publishLog = (type, chunk) => {
-        redisClient.publish(logChannel, JSON.stringify({ type, chunk })).catch(err => {
-          logger.error({ err, runId: run._id }, "Failed to publish log to Redis");
-        });
-      };
-
+      activeJobs++;
       try {
-        const { stdout, stderr, exitCode, metrics } = await executeRun({
-          language: run.runtime,
-          files: run.files,
-          entrypoint: run.entrypoint
-        }, publishLog);
+        const run = await RunModel.findById(job.data.runId);
+        if (!run) {
+          logger.warn({ runId: job.data.runId }, "Run not found");
+          return;
+        }
 
-        run.stdout = stdout;
-        run.stderr = stderr;
-        run.exitCode = exitCode;
-        run.metrics = metrics || {};
-        run.status = exitCode === 0 ? "succeeded" : "failed";
-      } catch (err) {
-        run.status = "failed";
-        logger.error({ err, runId: run._id }, "Job execution failed");
-        const msg = err instanceof Error ? err.stack || err.message : String(err);
-        run.stderr = (run.stderr ?? "") + "\n" + msg;
-        run.exitCode = run.exitCode ?? 1;
-        publishLog("stderr", msg);
-      } finally {
-        run.finishedAt = new Date();
+        logger.info({ runId: run._id, runtime: run.runtime }, "Starting job");
+        run.status = "running";
+        run.startedAt = new Date();
         await run.save();
-        publishLog("end", { status: run.status, metrics: run.metrics });
-        logger.info({ runId: run._id, status: run.status }, "Job finished");
+
+        const logChannel = `run:logs:${run._id}`;
+        const publishLog = (type, chunk) => {
+          redisClient.publish(logChannel, JSON.stringify({ type, chunk })).catch(err => {
+            logger.error({ err, runId: run._id }, "Failed to publish log to Redis");
+          });
+        };
+
+        try {
+          const { stdout, stderr, exitCode, metrics } = await executeRun({
+            language: run.runtime,
+            files: run.files,
+            entrypoint: run.entrypoint
+          }, publishLog);
+
+          run.stdout = stdout;
+          run.stderr = stderr;
+          run.exitCode = exitCode;
+          run.metrics = metrics || {};
+          run.status = exitCode === 0 ? "succeeded" : "failed";
+        } catch (err) {
+          run.status = "failed";
+          logger.error({ err, runId: run._id }, "Job execution failed");
+          const msg = err instanceof Error ? err.stack || err.message : String(err);
+          run.stderr = (run.stderr ?? "") + "\n" + msg;
+          run.exitCode = run.exitCode ?? 1;
+          publishLog("stderr", msg);
+        } finally {
+          run.finishedAt = new Date();
+          await run.save();
+          publishLog("end", { status: run.status, metrics: run.metrics });
+          logger.info({ runId: run._id, status: run.status }, "Job finished");
+        }
+      } catch (err) {
+         logger.error({ err, jobId: job.id }, "Fatal job processing error");
+      } finally {
+        activeJobs = Math.max(0, activeJobs - 1);
       }
     },
     { connection: redisConnectionFromUrl(env.REDIS_URL), concurrency: parseInt(process.env.WORKER_CONCURRENCY || "20") }
   );
+
+  await startHeartbeat(redisClient, () => ({ activeJobs }));
 
   worker.on("failed", (job, err) => {
     logger.error({ job: job?.id, err }, "Job failed permanently");

@@ -13,6 +13,7 @@ import SettingsModal from "../components/SettingsModal";
 import FilesModal from "../components/FilesModal";
 import UpgradeModal from "../components/UpgradeModal";
 import { useAuth } from "../hooks/useAuth";
+import { Link } from "react-router-dom";
 
 const languageConfigs = {
   cpp: {
@@ -365,15 +366,28 @@ builtins.input = input_shim
           </div>
           
           <nav className="hidden md:flex items-center gap-8">
-            {['Editor', 'Files', 'Settings'].map((tab) => (
-              <button 
-                key={tab}
-                onClick={() => setActiveModal(tab === 'Editor' ? null : tab.toLowerCase())}
-                className={`text-[10px] font-bold uppercase tracking-[0.15em] transition-all hover:text-white ${(!activeModal && tab === 'Editor') || activeModal === tab.toLowerCase() ? "text-white" : "text-white/40"}`}
-              >
-                {tab}
-              </button>
-            ))}
+            {['Editor', 'Files', 'Settings', 'Stats'].map((tab) => {
+              if (tab === 'Stats') {
+                return (
+                  <Link 
+                    key={tab}
+                    to="/dashboard"
+                    className="text-[10px] font-bold uppercase tracking-[0.15em] text-white/40 transition-all hover:text-white"
+                  >
+                    Dashboard
+                  </Link>
+                );
+              }
+              return (
+                <button 
+                  key={tab}
+                  onClick={() => setActiveModal(tab === 'Editor' ? null : tab.toLowerCase())}
+                  className={`text-[10px] font-bold uppercase tracking-[0.15em] transition-all hover:text-white ${(!activeModal && tab === 'Editor') || activeModal === tab.toLowerCase() ? "text-white" : "text-white/40"}`}
+                >
+                  {tab}
+                </button>
+              );
+            })}
           </nav>
         </div>
         

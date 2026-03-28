@@ -1,6 +1,7 @@
 const { Router } = require("express");
 const { z } = require("zod");
 const { createRun, getRun, getQueueStatus } = require("./runs.service");
+const { getExecutionStats, getThroughputChart } = require("../analytics/analytics.service");
 
 const runsRouter = Router();
 
@@ -53,6 +54,18 @@ runsRouter.get("/health/queue", async (req, res, next) => {
   try {
     const status = await getQueueStatus();
     res.json(status);
+  } catch (err) {
+    next(err);
+  }
+});
+
+runsRouter.get("/health/stats", async (req, res, next) => {
+  try {
+    const [executionStats, throughput] = await Promise.all([
+      getExecutionStats(),
+      getThroughputChart()
+    ]);
+    res.json({ executionStats, throughput });
   } catch (err) {
     next(err);
   }

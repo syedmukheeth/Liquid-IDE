@@ -186,11 +186,20 @@ async function getRun(runId) {
 async function getQueueStatus() {
   const redis = getRedisClient();
   let workerOnline = false;
+  let workerStats = null;
   
   if (redis) {
     try {
       const heartbeat = await redis.get(WORKER_HEARTBEAT_KEY);
-      workerOnline = !!heartbeat;
+      if (heartbeat) {
+        workerOnline = true;
+        try {
+          workerStats = JSON.parse(heartbeat);
+        } catch (e) {
+          // Compatibility with old timestamp-based heartbeat
+          workerStats = { timestamp: heartbeat };
+        }
+      }
     } catch (err) {
       logger.error({ err }, "Failed to get worker heartbeat from Redis");
     }
@@ -199,15 +208,16 @@ async function getQueueStatus() {
   const isCloud = !!process.env.RENDER;
 
   return {
-    online: true, // API is online
-    workerOnline, // Actual worker status
-    version: "0.6.0-STABLE",
+    online: true, 
+    workerOnline,
+    workerStats,
+    version: "0.7.0-OBSERVABILITY",
     mode: isVercel ? "cloud-native" : "hybrid-distributed",
     message: isVercel
-      ? "Engine is running in Cloud-Native mode (Piston fallback active)."
+      ? "Engine is running in Cloud-Native mode."
       : (workerOnline 
-          ? "Worker is online and ready for compiled languages." 
-          : "Worker is offline. Local compilers or Piston fallback will be used."),
+          ? "Worker is online with active monitoring." 
+          : "Worker is offline. Local compilers or Piston fallback active."),
     timestamp: new Date().toISOString()
   };
 }
