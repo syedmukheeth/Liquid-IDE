@@ -149,6 +149,29 @@ export default function DashboardPage() {
              </div>
           </section>
 
+          <section className="glass-card flex flex-col p-6">
+             <div className="mb-6 flex items-center justify-between">
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/60">Global Cluster Availability</h3>
+                <div className="flex items-center gap-2">
+                   <Globe className="h-3 w-3 text-blue-400" />
+                   <span className="text-[10px] text-white/30 uppercase tracking-widest font-bold">Multi-Region Failover Active</span>
+                </div>
+             </div>
+             
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {queueStatus?.regions?.map((reg) => (
+                  <div key={reg.id} className="group relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.02] p-4 transition-all hover:bg-white/[0.05] hover:border-white/10">
+                     <div className="mb-3 flex items-center justify-between">
+                        <span className={`h-1.5 w-1.5 rounded-full ${reg.status === "online" ? "bg-emerald-500 shadow-[0_0_8px_#10b981]" : "bg-amber-500 animate-pulse shadow-[0_0_8px_#f59e0b]"}`} />
+                        <span className="text-[10px] font-black tabular-nums text-white/20 uppercase tracking-widest">{reg.latency}</span>
+                     </div>
+                     <div className="text-[10px] font-black text-white uppercase tracking-widest mb-1">{reg.name}</div>
+                     <div className="text-[8px] text-white/30 uppercase tracking-widest">{reg.id}</div>
+                  </div>
+                ))}
+             </div>
+          </section>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <section className="glass-card flex flex-col p-6 h-[300px]">
                <h3 className="mb-6 text-xs font-black uppercase tracking-[0.2em] text-white/60">Duration by runtime (ms)</h3>

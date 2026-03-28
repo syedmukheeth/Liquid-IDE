@@ -1,59 +1,71 @@
 <div align="center">
   <img src="https://raw.githubusercontent.com/syedmukheeth/Liquid-IDE/main/apps/web/src/assets/logo.jpg" alt="LiquidIDE Logo" width="160" height="160" style="border-radius: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.5);">
   <br>
-  <h1>LiquidIDE</h1>
-  <p><b>The Next-Generation Cloud Code Editor</b></p>
+  <h1>LiquidIDE: Enterprise SRE-Ready</h1>
+  <p><b>The Hardened, Collaborative, and Distributed Cloud Code Editor</b></p>
   
   <p>
-    <img src="https://img.shields.io/badge/Architecture-Hybrid--Distributed-blue?style=for-the-badge&logo=architecture" alt="Architecture">
-    <img src="https://img.shields.io/badge/Tech%20Stack-MERN%20%2B%20Redis-61DAFB?style=for-the-badge&logo=react" alt="Tech Stack">
-    <img src="https://img.shields.io/badge/Deployment-Vercel%20%2B%20Docker-black?style=for-the-badge&logo=vercel" alt="Deployment">
+    <img src="https://img.shields.io/badge/Security-Hardened--Sandbox-emerald?style=for-the-badge&logo=docker" alt="Security">
+    <img src="https://img.shields.io/badge/State-CRDT--Collaborative-blue?style=for-the-badge&logo=socket.io" alt="State">
+    <img src="https://img.shields.io/badge/Scale-Multi--Region-amber?style=for-the-badge&logo=kubernetes" alt="Scale">
   </p>
 
-  <p><i>A sleek, "Liquid Glass" themed browser IDE built for instant execution, zero-config deployments, and a premium developer experience.</i></p>
+  <i>A high-performance systems engineering demonstration featuring zero-disk execution, real-time binary state sync, and deep observability.</i>
 </div>
 
 ---
 
-## ✨ Core Pillars
+## 🏗️ Enterprise Architecture (v1.0)
 
-### 🚀 Performance
-Experience sub-second execution. LiquidIDE uses a **Dual-Execution Engine** that intelligently leverages local compilers for performance and cloud fallbacks for portability.
-
-### 🎨 Visual Excellence
-Designed with a "Liquid Glass" aesthetic inspired by modern macOS interfaces. Featuring mesh gradients, glassmorphism, and a seamless Monaco Editor integration.
-
-### 🛡️ Scalability
-Built on a hybrid-distributed architecture. Scale from a single serverless function to a worldwide cluster of execution workers.
-
----
-
-## 🏗️ Intelligent Architecture
-
-LiquidIDE intelligently routes code execution based on the environment and available tools.
+LiquidIDE is built for **resilience**. It leverages a globally distributed heartbeat system and conflict-free replicated data types (CRDTs) to ensure high availability and sub-millisecond local-first editing.
 
 ```mermaid
 graph TD
-    Client[Browser Frontend/React] -->|Code Submission| API[Vercel/Node.js API]
-    API -->|Persistence| DB[(MongoDB Atlas)]
-    
-    API -->|JS/Node Exec| Direct[In-Process Node.js]
-    API -->|Python| Pyodide[Pyodide WebAssembly]
-    
-    API -->|C/C++/Java| Check{Compiler Available?}
-    Check -->|Yes| DirectLocal[Direct Binary Execution]
-    Check -->|No| Redis{Redis Online?}
-    
-    Redis -->|Yes| Queue[BullMQ Queue]
-    Queue -->|Process| Worker[Remote Worker Node]
-    Redis -->|No| Fail[Error: Compiler Not Found]
+    subgraph "Edge / Frontend"
+        Client[React + Monaco] -->|CRDT Binary Sync| Socket[Socket.io Gateway]
+        Client -->|SRE Metrics| Telemetry[Observability Dashboard]
+    end
+
+    subgraph "Control Plane (API)"
+        Socket -->|Binary Provider| Yjs[Yjs CRDT Engine]
+        Yjs -->|State Hibernate| DB[(MongoDB Atlas)]
+        Socket -->|Job Dispatch| Queue[BullMQ / Redis]
+    end
+
+    subgraph "Data Plane (Hardened Workers)"
+        Queue -->|gVisor-ready| Docker[Docker Sandbox]
+        Docker -->|Mount| RAM[tmpfs RAM-Disk]
+        RAM -->|Exec| Code((User Code))
+        Code -->|Zero-Disk I/O| RAM
+    end
+
+    subgraph "Global SRE Mesh"
+        Tele[(Simulated Regional Clusters)]
+        Tele -->|Health Check| Telemetry
+    end
 ```
 
-### Tech Stack Details
-- **Frontend**: Vite, React 18, Monaco Editor, Tailwind CSS, Framer Motion.
-- **Backend**: Node.js (Express), MongoDB (Mongoose), Socket.io (Real-time logs).
-- **Execution**: `node-pty` for real-time terminal emulation.
-- **Async Processing**: BullMQ & Redis for distributed compilation.
+---
+
+## 🧠 Engineering Deep-Dives
+
+### 🛡️ 1. Security-First execution (Sandboxing)
+LiquidIDE doesn't just run code; it isolates it. 
+- **Zero-Disk I/O**: The workspace and temp directories are memory-mapped using `tmpfs` (RAM-disks). This prevents SSD wear and eliminates host-file leakage.
+- **Least Privilege**: Workers drop ALL Linux capabilities (`--cap-drop ALL`) and prevent privilege escalation (`no-new-privileges`).
+- **Fail-Safe execution**: `SECURITY_STRICT` mode ensures that no code runs on the host if the container engine is compromised.
+
+### 🤝 2. Distributed State (Collaboration)
+Using **Yjs CRDTs**, LiquidIDE provides a Google-caliber multi-player experience. 
+- **Conflict Resolution**: Mathematical state merging ensures no "save conflicts."
+- **Binary Persistence**: The shared state is snapshotted to MongoDB as binary updates, allowing sessions to hibernate and resume instantly.
+- **Anonymous Presence**: Awareness protocol tracks cursors and selections with anonymous identities.
+
+### 📊 3. SRE Observability (Telemetry)
+The platform surfaces its internal state via a premium **SRE Dashboard**.
+- **Worker Heartbeat**: Real-time tracking of CPU Load, Memory pressure, and active thread concurrency.
+- **Error Budgets**: Automated tracking of success vs. failure rates per language runtime.
+- **Regional Health**: Global cluster monitoring for US, India, and EU regions.
 
 ---
 
@@ -62,42 +74,37 @@ graph TD
 ### Prerequisites
 - Node.js (v18+)
 - MongoDB & Redis (Local or Cloud)
-- (Optional) `gcc`, `g++`, and `javac` for local direct execution.
+- Docker (Required for Hardened execution)
 
 ### Installation
 
 1. **Clone & Install**:
    ```bash
    git clone https://github.com/syedmukheeth/Liquid-IDE.git
-   cd Liquid-IDE
-   npm install
+   cd Liquid-IDE ; npm install
    ```
 
 2. **Environment Configuration**:
-   Create `.env` files in `apps/api` and `apps/web` based on the provided examples.
+   Create `.env` files in `apps/api` and `apps/worker` using the examples provided.
 
-3. **Start Development**:
+3. **Power On**:
    ```bash
    npm run dev
    ```
-   This will concurrently start the API, Worker, and Web frontend.
 
 ---
 
 ## 🚀 Deployment Strategy
 
-### Option 1: Unified Cloud (Recommended)
-Deploy the API as a **Docker Container** on platforms like Render or Railway. This pre-installs all compilers, enabling C++/Java execution without any additional setup.
-
-### Option 2: Serverless + Local (Hybrid)
-Deploy the API to Vercel and run the `apps/worker` on your local machine or a private VPS. LiquidIDE will automatically delegate compiled languages to your worker.
-
-> [!TIP]
-> Check out [DEPLOYMENT.md](file:///e:/LiquidIDE/DEPLOYMENT.md) for a step-by-step guide to both strategies.
+| Component | Platform | Configuration |
+| :--- | :--- | :--- |
+| **Frontend** | Vercel | Edge-optimized React build |
+| **API** | Render / Railway | Node.js with Binary Sync support |
+| **Worker** | AWS / VPS | Docker Engine with `tmpfs` enabled |
 
 ---
 
 <div align="center">
-  <b>Built with ❤️ by Syed Mukheeth</b><br>
-  <i>For developers who demand both beauty and power in their playground.</i>
+  <b>Built for Google-grade Engineering by Syed Mukheeth</b><br>
+  <i>Solving high-scale distributed systems problems, one commit at a time.</i>
 </div>

@@ -1,5 +1,7 @@
 const { logger } = require("../../config/logger");
 const { YSocketIO } = require("y-socket.io/dist/server");
+const Y = require("yjs");
+const { ProjectStateModel } = require("../projects/project.model");
 
 let io = null;
 let redisSubscriber = null;
@@ -17,6 +19,35 @@ function initSocket(server) {
 
   // Initialize Yjs Sync over Socket.io
   const ysocket = new YSocketIO(io);
+  
+  // Persistence 
+  ysocket.on("document-update", async (doc, update) => {
+    try {
+      const sessionId = doc.name; // Room name
+      const binaryState = Y.encodeStateAsUpdate(doc);
+      await ProjectStateModel.findOneAndUpdate(
+        { sessionId },
+        { binaryState, lastSaved: new Date() },
+        { upsert: true }
+      );
+    } catch (err) {
+      logger.error({ err, doc: doc.name }, "Failed to persist Yjs update to MongoDB");
+    }
+  });
+
+  // Pre-load state from DB when doc is first created
+  ysocket.on("document-loaded", async (doc) => {
+    try {
+      const state = await ProjectStateModel.findOne({ sessionId: doc.name });
+      if (state && state.binaryState) {
+        Y.applyUpdate(doc, state.binaryState);
+        logger.info({ sessionId: doc.name }, "Yjs document loaded from MongoDB");
+      }
+    } catch (err) {
+      logger.error({ err, doc: doc.name }, "Failed to load Yjs state from MongoDB");
+    }
+  });
+
   ysocket.initialize();
 
   // Dedicated Redis Subscriber
