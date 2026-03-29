@@ -6,6 +6,11 @@ import { GithubModal } from '../components/GithubModal';
 import { Terminal as XTerm } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
+import { pollUntilDone, submitRun, fetchHistory } from "../services/codeExecutionApi";
+import { getSocket } from "../services/socketClient";
+import AuthModal from "../components/AuthModal";
+import SettingsModal from "../components/SettingsModal";
+import FilesModal from "../components/FilesModal";
 import UpgradeModal from "../components/UpgradeModal";
 import AiPanel from "../components/AiPanel";
 import HistoryPanel from "../components/HistoryPanel";
@@ -14,7 +19,6 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Copy, Check, Share2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ActivityBar from "../components/ActivityBar";
-import { pollUntilDone, submitRun, fetchHistory } from "../services/codeExecutionApi";
 
 const languageConfigs = {
   cpp: {
