@@ -15,8 +15,9 @@ import UpgradeModal from "../components/UpgradeModal";
 import AiPanel from "../components/AiPanel";
 import { useAuth } from "../hooks/useAuth";
 import { Link, useSearchParams } from "react-router-dom";
-import { Share2, Copy, Check, Sparkles } from "lucide-react";
+import { Copy, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import ActivityBar from "../components/ActivityBar";
 
 const languageConfigs = {
   cpp: {
@@ -405,7 +406,7 @@ builtins.input = input_shim
           {user ? (
             <div className="flex items-center gap-2 md:gap-4 shrink-0">
               <div className="flex items-center gap-1.5 md:gap-3 rounded-full border border-white/5 bg-white/5 py-1 md:py-1.5 pl-2 md:pl-4 pr-1 md:pr-1.5">
-                <span className="hidden lg:block text-[10px] md:text-[11px] font-bold text-white/80">{user.name}</span>
+                <span className="hidden lg:block text-[10px] md:text-[11px] font-bold text-white/80 max-w-[100px] xl:max-w-[150px] truncate">{user.name}</span>
               <div className="h-6 w-6 md:h-7 md:w-7 rounded-full border border-white/10 overflow-hidden shadow-lg shrink-0">
                 <img 
                   src={user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=007AFF&color=fff`} 
@@ -448,38 +449,6 @@ builtins.input = input_shim
             <span className="md:hidden truncate">{busy ? "..." : "Run"}</span>
           </button>
 
-          <button 
-            onClick={() => setActiveModal('github')}
-            title="Push to GitHub"
-            className="group flex h-8 items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-2 md:px-4 transition-all hover:bg-emerald-500/10 active:scale-95"
-          >
-            <svg className="h-3.5 w-3.5 text-emerald-500/50 group-hover:text-emerald-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
-            <span className="hidden lg:inline text-[9px] font-black uppercase tracking-widest text-emerald-500/80">Push</span>
-          </button>
-
-          <button 
-            onClick={() => {
-              if (!searchParams.get("session")) {
-                const newSession = Math.random().toString(36).substring(7);
-                setSearchParams({ session: newSession });
-              }
-              setShowShareModal(true);
-            }}
-            className="group flex h-8 items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 md:px-4 transition-all hover:bg-white/10 active:scale-95"
-          >
-            <Share2 className="h-3.5 w-3.5 text-white/40 group-hover:text-white/60" />
-            <span className="hidden md:inline text-[10px] font-black uppercase tracking-widest text-white/40 group-hover:text-white/60">Collaborate</span>
-          </button>
-
-          <button 
-            onClick={() => setShowAiPanel(!showAiPanel)}
-            className={`group flex h-8 items-center gap-2 rounded-xl border border-blue-500/30 px-2 md:px-4 transition-all hover:bg-blue-500/10 active:scale-95 ${showAiPanel ? "bg-blue-500/20" : "bg-blue-500/5"}`}
-            title="Senior SRE AI Assistant"
-          >
-            <Sparkles className={`h-3.5 w-3.5 ${showAiPanel ? "text-blue-400" : "text-blue-400/50 group-hover:text-blue-400"}`} />
-            <span className="hidden lg:inline text-[9px] font-black uppercase tracking-widest text-blue-400/80">Ask SRE AI</span>
-          </button>
-
           <button onClick={() => setActiveModal('upgrade')} className="liquid-button-primary animate-shimmer h-8 px-3 md:px-6 text-[9px] md:text-[11px] shrink-0">
             <svg className="h-3 w-3 md:h-4 md:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
             <span className="hidden sm:inline">Upgrade</span>
@@ -520,6 +489,20 @@ builtins.input = input_shim
       </div>
 
       <main className="relative z-10 flex flex-1 flex-col md:flex-row overflow-hidden p-2 md:p-4 gap-2 md:gap-4">
+        <ActivityBar 
+          activeLanguage={activeLangId} 
+          onLanguageChange={setActiveLangId}
+          onOpenAI={() => setShowAiPanel(true)}
+          aiActive={showAiPanel}
+          onOpenCollaborate={() => {
+            if (!searchParams.get("session")) {
+              const newSession = Math.random().toString(36).substring(7);
+              setSearchParams({ session: newSession });
+            }
+            setShowShareModal(true);
+          }}
+          onOpenSettings={() => setActiveModal('settings')}
+        />
         <section className={`flex flex-col overflow-hidden gap-4 ${activeMobileTab === 'editor' ? 'flex-1' : 'hidden'} md:flex md:flex-[7]`}>
           <div className="glass-card flex flex-1 flex-col overflow-hidden">
             <div className="flex h-11 shrink-0 items-center justify-between border-b border-white/5 px-3 md:px-5 bg-[#0a0a0c] md:bg-white/[0.02]">

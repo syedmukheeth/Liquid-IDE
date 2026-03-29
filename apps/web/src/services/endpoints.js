@@ -9,15 +9,23 @@ const isVercel = window.location.hostname.includes("vercel.app");
 
 export const ENDPOINTS = {
   // REST API Endpoint
-  // In production, we use the Vercel mirror for API speed, or same-origin if not on Vercel.
-  API_BASE_URL: isVercel ? "https://liquid-ide-api.vercel.app" : window.location.origin,
+  // ALIGNMENT: In production, route ALL traffic to Render to avoid Vercel proxy issues
+  API_BASE_URL: isProduction 
+    ? "https://liquid-ide.onrender.com" 
+    : window.location.origin,
 
   // WebSocket Endpoint 
-  // CRITICAL: Vercel does not support persistent WebSockets. 
-  // We MUST route all socket traffic (Socket.io/Yjs) to a dedicated server (Render).
   WS_ENDPOINT: isProduction 
     ? "https://liquid-ide.onrender.com" 
     : window.location.origin.replace(":3000", ":3001"),
+
+  // SOCKET_OPTIONS: Polling first for max reliability on Render free-tier
+  SOCKET_OPTIONS: {
+     transports: ["polling", "websocket"],
+     reconnection: true,
+     reconnectionAttempts: 50,
+     timeout: 30000
+  },
 
   IS_PRODUCTION: isProduction,
   IS_VERCEL: isVercel

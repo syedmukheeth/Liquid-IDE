@@ -1,4 +1,5 @@
 import React from "react";
+import { Share2, Sparkles, Settings } from "lucide-react";
 
 const languages = [
   { id: "cpp", label: "C++", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg" },
@@ -7,14 +8,21 @@ const languages = [
   { id: "java", label: "Java", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" }
 ];
 
-export default function ActivityBar({ activeLanguage, onLanguageChange }) {
+export default function ActivityBar({ 
+  activeLanguage, 
+  onLanguageChange, 
+  onOpenAI, 
+  onOpenCollaborate, 
+  aiActive,
+  onOpenSettings
+}) {
   return (
     <div className="liquid-glass m-4 hidden w-[70px] flex-col items-center rounded-3xl py-6 shadow-2xl md:flex">
-      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 shadow-lg shadow-blue-500/20" title="LiquidIDE">
+      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 shadow-lg shadow-blue-500/20 mb-8" title="LiquidIDE">
         <span className="text-sm font-black text-white">L</span>
       </div>
       
-      <div className="flex flex-1 flex-col gap-4">
+      <div className="flex flex-1 flex-col gap-6">
         {languages.map((lang) => {
           const active = lang.id === activeLanguage;
           return (
@@ -22,6 +30,7 @@ export default function ActivityBar({ activeLanguage, onLanguageChange }) {
               key={lang.id}
               onClick={() => onLanguageChange?.(lang.id)}
               className="group relative flex h-12 w-12 items-center justify-center"
+              title={lang.label}
             >
               {active && (
                 <div className="absolute inset-0 animate-glow rounded-xl bg-blue-500/10" />
@@ -31,7 +40,7 @@ export default function ActivityBar({ activeLanguage, onLanguageChange }) {
                 alt={lang.label}
                 className={[
                   "z-10 h-6 w-6 transition-all duration-500 ease-out group-hover:scale-125 group-hover:rotate-6",
-                  active ? "scale-110 grayscale-0 brightness-110" : "opacity-40 grayscale group-hover:opacity-80 group-hover:grayscale-0"
+                  active ? "scale-110 grayscale-0 brightness-110" : "opacity-30 grayscale group-hover:opacity-80 group-hover:grayscale-0"
                 ].join(" ")}
               />
               {active && (
@@ -40,14 +49,36 @@ export default function ActivityBar({ activeLanguage, onLanguageChange }) {
             </button>
           );
         })}
+
+        <div className="my-2 h-[1px] w-8 border-b border-white/5 mx-auto" />
+
+        <button 
+          onClick={onOpenCollaborate}
+          className="group relative flex h-12 w-12 items-center justify-center text-white/30 transition-all hover:text-white" 
+          title="Collaborate"
+        >
+          <Share2 className="h-5 w-5 transition-transform group-hover:scale-110" />
+        </button>
+
+        <button 
+          onClick={onOpenAI}
+          className={`group relative flex h-12 w-12 items-center justify-center transition-all ${aiActive ? "text-blue-400" : "text-white/30 hover:text-blue-400 hover:bg-blue-500/5 rounded-xl"}`} 
+          title="SRE AI Assistant"
+        >
+          {aiActive && <div className="absolute inset-0 animate-pulse rounded-xl bg-blue-500/10" />}
+          <Sparkles className="h-5 w-5 transition-transform group-hover:scale-110 group-hover:rotate-12" />
+        </button>
       </div>
 
-      <button className="mt-auto text-white/20 transition-colors hover:text-white/60">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
-        </svg>
+      <button 
+        onClick={onOpenSettings}
+        className="mt-auto text-white/20 transition-all hover:text-white/60 hover:rotate-90 duration-500"
+        title="Settings"
+      >
+        <Settings className="h-5 w-5" />
       </button>
     </div>
   );
 }
+
 

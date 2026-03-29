@@ -53,8 +53,8 @@ export default function CodeEditor({
     const endpoint = ENDPOINTS.WS_ENDPOINT;
 
     const provider = new SocketIOProvider(endpoint, sessionId, ydoc, {
-      autoConnect: true,
-      transports: ["websocket", "polling"] // Align with socketClient.js
+      ...ENDPOINTS.SOCKET_OPTIONS,
+      autoConnect: true
     });
 
     const ytext = ydoc.getText("monaco");

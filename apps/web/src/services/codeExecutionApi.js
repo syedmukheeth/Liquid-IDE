@@ -1,4 +1,6 @@
-const API_BASE = "/api/runs";
+import ENDPOINTS from "./endpoints";
+
+const API_BASE = `${ENDPOINTS.API_BASE_URL}/api/runs`;
 
 export async function submitRun({ language, code }) {
   const token = localStorage.getItem("liquid_token");
