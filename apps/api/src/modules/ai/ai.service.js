@@ -23,7 +23,7 @@ Be concise but extremely insightful. End your response with a brief technical su
 async function generateRefactor(context) {
   const { code, language, metrics, query } = context;
   
-  const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
   const prompt = `
 ${SAM_AI_PERSONA}
@@ -58,7 +58,7 @@ ${code}
  */
 async function streamChat(context, onChunk) {
   const { code, language, messages } = context;
-  const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
   const chat = model.startChat({
     history: [
