@@ -22,14 +22,8 @@ import ENDPOINTS from "../services/endpoints";
 function SamNavLogo() {
   return (
     <svg width="32" height="32" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="36" height="36" rx="9" fill="url(#samNavGrad)" />
-      <path d="M22 11.5C20.8 10.5 19.2 10 17.5 10C14.5 10 12 11.8 12 14.2C12 16.4 13.8 17.5 16.5 18.2L17.5 18.5C20.2 19.2 22 20.3 22 22.5C22 25 19.5 26.5 16.8 26.5C14.8 26.5 12.8 25.8 11.5 24.5" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none" />
-      <defs>
-        <linearGradient id="samNavGrad" x1="0" y1="0" x2="36" y2="36">
-          <stop offset="0%" stopColor="#00D4FF" />
-          <stop offset="100%" stopColor="#8B5CF6" />
-        </linearGradient>
-      </defs>
+      <rect width="36" height="36" rx="9" fill="var(--sam-accent)" />
+      <path d="M22 11.5C20.8 10.5 19.2 10 17.5 10C14.5 10 12 11.8 12 14.2C12 16.4 13.8 17.5 16.5 18.2L17.5 18.5C20.2 19.2 22 20.3 22 22.5C22 25 19.5 26.5 16.8 26.5C14.8 26.5 12.8 25.8 11.5 24.5" stroke="var(--sam-bg)" strokeWidth="2.2" strokeLinecap="round" fill="none" />
     </svg>
   );
 }
@@ -397,8 +391,8 @@ builtins.input = input_shim
           <div className="flex items-center gap-3 transition-transform hover:scale-105 shrink-0">
             <SamNavLogo />
             <div className="flex flex-col leading-tight">
-              <span className="sam-headline tracking-tighter" style={{ fontSize: 13, color: '#dde2f1' }}>SAM</span>
-              <span className="text-label" style={{ fontSize: 9, color: 'rgba(0,212,255,0.7)', lineHeight: 1 }}>Compiler</span>
+              <span className="sam-headline tracking-tighter" style={{ fontSize: 13, color: 'var(--sam-text)' }}>SAM</span>
+              <span className="text-label" style={{ fontSize: 8, color: 'var(--sam-text-muted)', lineHeight: 1 }}>Compiler</span>
             </div>
           </div>
           
@@ -477,12 +471,10 @@ builtins.input = input_shim
             <button
               id="signin-btn"
               onClick={() => setActiveModal('auth')}
+              className="sam-button-primary"
               style={{
-                padding: '7px 16px', borderRadius: 8,
-                border: '1px solid rgba(0,212,255,0.25)',
-                background: 'rgba(0,212,255,0.05)',
-                color: '#00D4FF',
-                fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em',
+                padding: '7px 16px', borderRadius: 6,
+                fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em',
                 cursor: 'pointer', transition: 'all 0.25s',
                 fontFamily: 'var(--font-body)',
               }}
@@ -511,9 +503,9 @@ builtins.input = input_shim
 
               <button 
                 onClick={() => setShowAiPanel(!showAiPanel)}
-                className={`group flex h-10 items-center gap-2 rounded-xl border px-4 transition-all duration-300 ${showAiPanel ? 'border-[#00D4FF]/40 bg-[#00D4FF]/10 text-[#00D4FF]' : 'border-white/5 bg-white/5 text-white/60 hover:bg-white/10'}`}
+                className={`group flex h-10 items-center gap-2 rounded-xl border px-4 transition-all duration-300 ${showAiPanel ? 'border-sam-text/40 bg-sam-text/5 text-sam-text' : 'border-white/5 bg-white/5 text-white/60 hover:bg-white/10'}`}
               >
-                <Sparkles className={`h-4 w-4 ${showAiPanel ? 'animate-pulse' : 'text-purple-400'}`} />
+                <Sparkles className={`h-4 w-4 ${showAiPanel ? 'animate-pulse' : 'text-white/40'}`} />
                 <span className="text-[10px] font-black uppercase tracking-widest">Sam AI</span>
               </button>
             </div>
@@ -607,7 +599,7 @@ builtins.input = input_shim
                   onChange={onCodeChange}
                   sessionId={`${sessionId}-${activeLangId}`}
                   userName={user?.name}
-                  theme="vs-dark"
+                  theme="monolith-dark"
                   options={{
                     fontSize: settings.fontSize,
                     tabSize: settings.tabSize,
@@ -618,7 +610,7 @@ builtins.input = input_shim
           </section>
   
           <section className={`flex flex-col overflow-hidden gap-4 ${activeMobileTab === 'terminal' ? 'flex-1' : 'hidden'} md:flex md:flex-[3]`}>
-            <div className="sam-glass flex flex-1 flex-col overflow-hidden" style={{ borderRadius: 16, background: 'rgba(14,19,30,0.6)' }}>
+            <div className="sam-glass flex flex-1 flex-col overflow-hidden" style={{ borderRadius: 16, background: 'var(--sam-surface)' }}>
               <div className="flex h-11 shrink-0 items-center justify-between px-4 md:px-6" style={{ background: 'rgba(14,19,30,0.4)', borderBottom: '1px solid rgba(0,212,255,0.05)' }}>
                 <div className="flex items-center gap-2 md:gap-3">
                   <button
@@ -712,7 +704,7 @@ builtins.input = input_shim
           setBuffers(prev => ({ ...prev, [activeLangId]: newCode }));
           setShowAiPanel(false);
           toast.success("AI refactor applied", {
-            style: { background: '#0e131e', color: '#fff', border: '1px solid rgba(0,212,255,0.2)', fontSize: '10px' }
+            style: { background: 'var(--sam-surface)', color: 'var(--sam-text)', border: '1px solid var(--sam-glass-border)', fontSize: '10px' }
           });
         }}
       />

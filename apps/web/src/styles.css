@@ -5,42 +5,41 @@
 @tailwind utilities;
 
 /* ============================================================
-   SAM COMPILER — EVENT HORIZON DESIGN SYSTEM
-   Primary: #00D4FF (Electric Cyan)
-   Secondary: #8B5CF6 (Neon Purple)
-   Background: #0e131e (Deep Space Black)
+   SAM COMPILER — MONOLITH DESIGN SYSTEM
+   Dark: #000000 (Pure Obsidian)
+   Light: #FAF9F6 (Off-White Paper)
    ============================================================ */
 
 :root {
-  /* === Color Tokens === */
-  --sam-bg:            #0e131e;
-  --sam-surface:       #1a202a;
-  --sam-surface-low:   #161c26;
-  --sam-surface-high:  #242a35;
-  --sam-surface-top:   #2f3540;
-  --sam-bright:        #343945;
+  /* === Color Tokens (Dark Mode by default) === */
+  --sam-bg:            #000000;
+  --sam-surface:       #0A0A0A;
+  --sam-surface-low:   #060606;
+  --sam-surface-high:  #111111;
+  --sam-surface-top:   #1A1A1A;
+  --sam-bright:        #222222;
 
-  --sam-cyan:          #00D4FF;
-  --sam-cyan-dim:      #3cd7ff;
-  --sam-cyan-muted:    rgba(0,212,255,0.2);
-  --sam-purple:        #8B5CF6;
-  --sam-purple-dark:   #571bc1;
-  --sam-orange:        #ffd9a1;
+  --sam-accent:        #FFFFFF;
+  --sam-accent-dim:    #E0E0E0;
+  --sam-accent-muted:  rgba(255,255,255,0.1);
+  
+  /* Status Indicators (Minimalist) */
+  --sam-green:         #22c55e;
+  --sam-red:           #f43f5e;
+  --sam-amber:         #f59e0b;
 
-  --sam-glass-bg:      rgba(26,32,42,0.55);
-  --sam-glass-border:  rgba(0,212,255,0.12);
-  --sam-glass-bright:  rgba(0,212,255,0.3);
+  --sam-glass-bg:      rgba(10,10,10,0.7);
+  --sam-glass-border:  rgba(255,255,255,0.06);
+  --sam-glass-bright:  rgba(255,255,255,0.15);
 
-  --sam-text:          #dde2f1;
-  --sam-text-muted:    #8899bb;
-  --sam-text-dim:      rgba(221,226,241,0.25);
+  --sam-text:          #FFFFFF;
+  --sam-text-muted:    #888888;
+  --sam-text-dim:      rgba(255,255,255,0.25);
 
-  --sam-glow-cyan:     0 0 20px rgba(0,212,255,0.35);
-  --sam-glow-purple:   0 0 20px rgba(139,92,246,0.35);
-  --sam-glow-bloom:    0px 20px 40px rgba(0,212,255,0.08);
+  --sam-glow-bloom:    0px 20px 40px rgba(0,0,0,0.5);
 
   /* === Typography === */
-  --font-display: 'Space Grotesk', 'Inter', -apple-system, sans-serif;
+  --font-display: 'Inter', -apple-system, sans-serif;
   --font-body:    'Inter', -apple-system, sans-serif;
   --font-mono:    'JetBrains Mono', 'Menlo', monospace;
 
@@ -49,18 +48,43 @@
   --glass-bg:           var(--sam-glass-bg);
   --glass-border:       var(--sam-glass-border);
   --glass-border-bright:var(--sam-glass-bright);
-  --accent-primary:     var(--sam-cyan);
-  --accent-glow:        rgba(0,212,255,0.4);
+  --accent-primary:     var(--sam-accent);
+  --accent-glow:        rgba(255,255,255,0.2);
   --text-main:          var(--sam-text);
   --text-muted:         var(--sam-text-muted);
   --text-dim:           var(--sam-text-dim);
-  --font-sans:          var(--font-display);
+}
+
+/* === Light Mode Overrides === */
+@media (prefers-color-scheme: light) {
+  :root {
+    --sam-bg:            #FAF9F6;
+    --sam-surface:       #FFFFFF;
+    --sam-surface-low:   #F5F5F2;
+    --sam-surface-high:  #EDEDE8;
+    --sam-surface-top:   #E5E5E0;
+    --sam-bright:        #DDDDD8;
+
+    --sam-accent:        #000000;
+    --sam-accent-dim:    #222222;
+    --sam-accent-muted:  rgba(0,0,0,0.08);
+
+    --sam-glass-bg:      rgba(255,255,255,0.8);
+    --sam-glass-border:  rgba(0,0,0,0.08);
+    --sam-glass-bright:  rgba(0,0,0,0.12);
+
+    --sam-text:          #000000;
+    --sam-text-muted:    #666666;
+    --sam-text-dim:      rgba(0,0,0,0.3);
+
+    --sam-glow-bloom:    0px 20px 40px rgba(0,0,0,0.05);
+  }
 }
 
 /* === Selection === */
 ::selection {
-  background: rgba(0,212,255,0.25);
-  color: #fff;
+  background: var(--sam-accent-muted);
+  color: var(--sam-accent);
 }
 
 /* === Base Reset === */
@@ -81,38 +105,29 @@ body {
   height: 100dvh;
   width: 100%;
   -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.4s ease, color 0.4s ease;
 }
 
-/* === Dot-Grid Background Texture === */
+/* === Background Texture === */
 .bg-mesh {
   position: fixed;
-  inset: -10%;
+  inset: 0;
   z-index: -1;
   background-color: var(--sam-bg);
-  background-image:
-    radial-gradient(at 20% 10%, rgba(0,212,255,0.10) 0px, transparent 50%),
-    radial-gradient(at 80% 5%,  rgba(139,92,246,0.10) 0px, transparent 50%),
-    radial-gradient(at 50% 90%, rgba(0,212,255,0.06) 0px, transparent 50%),
-    radial-gradient(at 90% 80%, rgba(139,92,246,0.06) 0px, transparent 50%);
-  filter: blur(80px);
-  animation: sam-bg-pulse 25s ease-in-out infinite;
+  /* Subtle vignetting instead of radial gradients */
+  background-image: 
+    radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.15) 100%);
+  opacity: 0.8;
 }
 
-@keyframes sam-bg-pulse {
-  0%, 100% { opacity: 0.8; transform: translate(0,0) scale(1); }
-  33%       { opacity: 1;   transform: translate(2%,1%) scale(1.04); }
-  66%       { opacity: 0.9; transform: translate(-1%,2%) scale(1.02); }
-}
-
-/* Dot-grid overlay */
+/* Noise overlay */
 .noise-overlay {
   position: fixed;
   inset: 0;
   z-index: -1;
-  opacity: 0.4;
+  opacity: 0.03;
   pointer-events: none;
-  background-image: radial-gradient(circle, rgba(0,212,255,0.08) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background-image: url("https://grainy-gradients.vercel.app/noise.svg");
 }
 
 /* === Glassmorphism Core === */
@@ -120,59 +135,39 @@ body {
 .sam-glass {
   background: var(--sam-glass-bg);
   border: 1px solid var(--sam-glass-border);
-  box-shadow:
-    var(--sam-glow-bloom),
-    inset 0 1px 0 rgba(0,212,255,0.08);
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: var(--sam-glow-bloom);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
 }
 
 .glass-card {
-  background: rgba(26,32,42,0.7);
+  background: var(--sam-surface);
   border: 1px solid var(--sam-glass-border);
-  border-radius: 16px;
+  border-radius: 12px;
   transition: all 0.4s cubic-bezier(0.16,1,0.3,1);
   box-shadow: var(--sam-glow-bloom);
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
 }
 
 .glass-card:hover {
-  border-color: rgba(0,212,255,0.25);
-  background: rgba(36,42,53,0.75);
-  transform: translateY(-2px);
-  box-shadow:
-    var(--sam-glow-cyan),
-    var(--sam-glow-bloom);
-}
-
-/* Top-light edge for glass cards */
-.glass-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(135deg, rgba(0,212,255,0.06) 0%, transparent 60%);
-  pointer-events: none;
-  border-radius: 16px;
+  border-color: var(--sam-accent-muted);
+  background: var(--sam-surface-high);
+  transform: translateY(-1px);
 }
 
 /* === Buttons === */
-/* Primary — Gradient Cyan → Purple with glow */
+/* Primary — Monolith Black/White */
 .liquid-button-primary,
 .sam-button-primary {
-  background: linear-gradient(135deg, var(--sam-cyan) 0%, var(--sam-purple) 100%);
-  color: #001f27;
+  background: var(--sam-accent);
+  color: var(--sam-bg);
   font-weight: 800;
-  font-family: var(--font-body);
   padding: 10px 28px;
-  border-radius: 10px;
+  border-radius: 8px;
   border: none;
-  box-shadow: 0 0 18px rgba(0,212,255,0.45), 0 4px 20px rgba(0,0,0,0.4);
   transition: all 0.35s cubic-bezier(0.16,1,0.3,1);
   font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.2em;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -183,30 +178,23 @@ body {
 
 .liquid-button-primary:hover,
 .sam-button-primary:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 0 30px rgba(0,212,255,0.65), 0 8px 30px rgba(0,0,0,0.5);
-  filter: brightness(1.08);
-}
-
-.liquid-button-primary:active,
-.sam-button-primary:active {
-  transform: scale(0.97);
+  transform: translateY(-1px);
+  filter: brightness(0.95);
 }
 
 /* Secondary — Ghost glass */
 .liquid-button-secondary,
 .sam-button-secondary {
-  background: rgba(0,212,255,0.05);
-  border: 1px solid rgba(0,212,255,0.2);
-  color: var(--sam-cyan);
+  background: transparent;
+  border: 1px solid var(--sam-glass-border);
+  color: var(--sam-text);
   font-weight: 700;
-  font-family: var(--font-body);
   padding: 8px 20px;
-  border-radius: 10px;
+  border-radius: 8px;
   transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
-  font-size: 11px;
+  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -217,85 +205,47 @@ body {
 
 .liquid-button-secondary:hover,
 .sam-button-secondary:hover {
-  background: rgba(0,212,255,0.10);
-  border-color: rgba(0,212,255,0.45);
-  box-shadow: 0 0 12px rgba(0,212,255,0.2);
-  transform: translateY(-1px);
+  background: var(--sam-accent-muted);
+  border-color: var(--sam-text-dim);
 }
 
-/* Mobile adjustments */
-@media (max-width: 767px) {
-  .liquid-button-primary, .sam-button-primary { padding: 8px 18px; border-radius: 8px; }
-  .liquid-button-secondary, .sam-button-secondary { padding: 6px 14px; border-radius: 8px; }
-  .glass-card { border-radius: 12px; }
-}
-
-/* === Neon Glow Utilities === */
-.sam-glow-cyan { box-shadow: var(--sam-glow-cyan); }
-.sam-glow-purple { box-shadow: var(--sam-glow-purple); }
-.sam-text-cyan { color: var(--sam-cyan); }
-.sam-text-purple { color: var(--sam-purple); }
-.sam-border-cyan { border-color: rgba(0,212,255,0.3); }
+/* === Neon Glow Utilities (Kept for compatibility, updated for monolith) === */
+.sam-glow-cyan { box-shadow: 0 0 10px var(--sam-accent-muted); }
+.sam-text-cyan { color: var(--sam-text); }
+.sam-border-cyan { border-color: var(--sam-glass-border); }
 
 /* === Pulse / Atom Indicator === */
 @keyframes sam-pulse {
-  0%, 100% { opacity: 1; box-shadow: 0 0 6px currentColor; }
-  50%       { opacity: 0.6; box-shadow: 0 0 14px currentColor; }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(1.2); }
 }
 .sam-dot {
   display: inline-block;
-  height: 7px;
-  width: 7px;
+  height: 6px;
+  width: 6px;
   border-radius: 50%;
   animation: sam-pulse 2s ease-in-out infinite;
 }
-.sam-dot-cyan { color: var(--sam-cyan); background: var(--sam-cyan); }
-.sam-dot-green { color: #22c55e; background: #22c55e; }
-.sam-dot-red { color: #f43f5e; background: #f43f5e; }
-.sam-dot-amber { color: #f59e0b; background: #f59e0b; }
-
-/* === Shimmer Animation === */
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-.animate-shimmer {
-  position: relative;
-  overflow: hidden;
-}
-.animate-shimmer::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(0,212,255,0.06), transparent);
-  animation: shimmer 2.5s infinite;
-}
-
-/* === Circuit Divider === */
-.sam-divider {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0,212,255,0.2), transparent);
-  margin: 0;
-}
+.sam-dot-green { background: var(--sam-green); }
+.sam-dot-red { background: var(--sam-red); }
+.sam-dot-amber { background: var(--sam-amber); }
 
 /* === Custom Scrollbar === */
-::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: rgba(0,212,255,0.12);
+  background: var(--sam-accent-muted);
   border-radius: 10px;
 }
-::-webkit-scrollbar-thumb:hover { background: rgba(0,212,255,0.28); }
+::-webkit-scrollbar-thumb:hover { background: var(--sam-text-dim); }
 
 /* === Typography Helpers === */
 .text-label {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.25em;
   color: var(--sam-text-muted);
-  font-family: var(--font-body);
 }
 
 .text-value {
@@ -306,45 +256,32 @@ body {
 
 .sam-headline {
   font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-weight: 900;
+  letter-spacing: -0.04em;
   color: var(--sam-text);
 }
 
-/* === Status Bar === */
-.sam-status-bar {
-  background: rgba(8,14,24,0.95);
-  border-top: 1px solid rgba(0,212,255,0.08);
-  backdrop-filter: blur(12px);
-}
-
-/* === Mobile Helpers === */
-.hidden-mobile { display: none !important; }
-@media (min-width: 768px) { .hidden-mobile { display: initial !important; } }
-
-/* === Input Command-Line Style === */
+/* === Input Style === */
 .sam-input {
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid rgba(0,212,255,0.15);
-  border-radius: 0;
+  background: var(--sam-surface);
+  border: 1px solid var(--sam-glass-border);
+  border-radius: 8px;
   outline: none;
   color: var(--sam-text);
   font-family: var(--font-body);
-  transition: border-color 0.3s, box-shadow 0.3s;
+  transition: all 0.3s;
   width: 100%;
-  padding: 8px 2px;
+  padding: 10px 14px;
 }
 .sam-input:focus {
-  border-bottom-color: var(--sam-cyan);
-  box-shadow: 0 4px 12px -4px rgba(0,212,255,0.3);
+  border-color: var(--sam-text-muted);
 }
 .sam-input::placeholder { color: var(--sam-text-dim); }
 
-/* === Loading Spinner (cyan) === */
+/* === Loading Spinner === */
 .sam-spinner {
-  border: 2px solid rgba(0,212,255,0.15);
-  border-top-color: var(--sam-cyan);
+  border: 1.5px solid var(--sam-accent-muted);
+  border-top-color: var(--sam-accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

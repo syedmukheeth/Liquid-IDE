@@ -40,8 +40,49 @@ export default function CodeEditor({
   const localName = useMemo(() => userName || RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)], [userName]);
   const localColor = useMemo(() => COLORS[Math.floor(Math.random() * COLORS.length)], []);
 
-  const handleMount = useCallback((editor) => {
+  const handleMount = useCallback((editor, monaco) => {
     editorRef.current = editor;
+
+    // Define Monolith Dark Theme
+    monaco.editor.defineTheme('monolith-dark', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: '', foreground: 'FFFFFF', background: '000000' },
+        { token: 'comment', foreground: '555555', fontStyle: 'italic' },
+        { token: 'keyword', foreground: 'FFFFFF', fontStyle: 'bold' },
+        { token: 'string', foreground: 'AAAAAA' },
+      ],
+      colors: {
+        'editor.background': '#000000',
+        'editor.foreground': '#FFFFFF',
+        'editorLineNumber.foreground': '#333333',
+        'editorLineNumber.activeForeground': '#FFFFFF',
+        'editorIndentGuide.background': '#111111',
+        'editor.selectionBackground': '#222222',
+        'editorCursor.foreground': '#FFFFFF',
+      }
+    });
+
+    // Define Monolith Light Theme
+    monaco.editor.defineTheme('monolith-light', {
+      base: 'vs',
+      inherit: true,
+      rules: [
+        { token: '', foreground: '000000', background: 'FAF9F6' },
+        { token: 'comment', foreground: '999999', fontStyle: 'italic' },
+        { token: 'keyword', foreground: '000000', fontStyle: 'bold' },
+      ],
+      colors: {
+        'editor.background': '#FAF9F6',
+        'editor.foreground': '#000000',
+        'editorLineNumber.foreground': '#CCCCCC',
+        'editorLineNumber.activeForeground': '#000000',
+        'editorIndentGuide.background': '#EEEEEE',
+        'editor.selectionBackground': '#E0E0E0',
+        'editorCursor.foreground': '#000000',
+      }
+    });
 
     if (providerRef.current) return;
 
