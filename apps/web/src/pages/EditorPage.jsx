@@ -15,6 +15,7 @@ import { useAuth } from "../hooks/useAuth";
 import { Link, useSearchParams } from "react-router-dom";
 import { Sparkles, History, Keyboard, Info } from "lucide-react";
 import toast, { Toaster } from 'react-hot-toast';
+import { motion, AnimatePresence } from "framer-motion";
 import ENDPOINTS from "../services/endpoints";
 
 // Inline SAM logo SVG — no image file dependency
