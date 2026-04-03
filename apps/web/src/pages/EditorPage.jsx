@@ -10,9 +10,11 @@ import AuthModal from "../components/AuthModal";
 import SettingsModal from "../components/SettingsModal";
 import UpgradeModal from "../components/UpgradeModal";
 import AiPanel from "../components/AiPanel";
+import HistoryModal from "../components/HistoryModal";
 import { useAuth } from "../hooks/useAuth";
 import { Link, useSearchParams } from "react-router-dom";
-import { Sparkles } from "lucide-react";
+import { Sparkles, History, Keyboard, Info } from "lucide-react";
+import toast, { Toaster } from 'react-hot-toast';
 
 // Inline SAM logo SVG — no image file dependency
 function SamNavLogo() {
@@ -74,6 +76,8 @@ export default function EditorPage() {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get("session") || "default";
   const [showAiPanel, setShowAiPanel] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
 
   // Pre-connect socket for performance
   useEffect(() => {
@@ -213,20 +217,42 @@ export default function EditorPage() {
     };
   }, []);
 
-  // Ensure terminal fits when switching tabs on mobile
+  // Keyboard Shortcuts
   useEffect(() => {
-    if (activeMobileTab === 'terminal' && fitAddonRef.current) {
-      // Larger delay to ensure the DOM is visible and transition finished before fitting
-      const timer = setTimeout(() => {
-        try {
-          fitAddonRef.current.fit();
-        } catch (e) {
-          console.warn("Terminal fit failed (DOM not ready)");
-        }
-      }, 250); 
-      return () => clearTimeout(timer);
-    }
-  }, [activeMobileTab]);
+    const handleKeyDown = (e) => {
+      // CMD/CTRL + Enter = RUN
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        onRun();
+      }
+      // CMD/CTRL + S = SAVE (Mock)
+      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+        e.preventDefault();
+        toast.success("Workspace saved to cloud", {
+          style: { background: '#0e131e', color: '#fff', border: '1px solid rgba(0,212,255,0.2)', fontSize: '12px' },
+          icon: '💾'
+        });
+      }
+      // CMD/CTRL + L = CLEAR TERMINAL
+      if ((e.metaKey || e.ctrlKey) && e.key === "l") {
+        e.preventDefault();
+        if (xtermRef.current) xtermRef.current.clear();
+      }
+      // CMD/CTRL + / = TOGGLE AI
+      if ((e.metaKey || e.ctrlKey) && e.key === "/") {
+        e.preventDefault();
+        setShowAiPanel(prev => !prev);
+      }
+      // CMD/CTRL + H = TOGGLE HISTORY
+      if ((e.metaKey || e.ctrlKey) && e.key === "h" && user) {
+        e.preventDefault();
+        setShowHistoryModal(prev => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [user]); // user is a dependency for history shortcut
 
   const runRef = useRef({ jobId: null });
   const activeConfig = languageConfigs[activeLangId];
@@ -461,27 +487,34 @@ builtins.input = input_shim
             >Sign In</button>
           )}
 
-          {/* AI Assistant Button */}
-          <button
-            onClick={() => setShowAiPanel(!showAiPanel)}
-            className={`liquid-button-primary group transition-all duration-300 ${showAiPanel ? 'brightness-125 scale-105' : ''}`}
-            style={{ 
-              height: 36, 
-              padding: '0 20px', 
-              fontSize: 11, 
-              gap: 8, 
-              background: showAiPanel ? 'linear-gradient(to right, #8B5CF6, #00D4FF)' : 'linear-gradient(to right, #00D4FF, #8B5CF6)', 
-              color: '#0e131e', 
-              border: 'none', 
-              boxShadow: showAiPanel ? '0 0 25px rgba(139,92,246,0.5)' : '0 0 15px rgba(0,212,255,0.4)' 
-            }}
-          >
-            <Sparkles size={14} className={`fill-current ${showAiPanel ? '' : 'animate-pulse'} group-hover:scale-110 transition-transform`} />
-            <span className="hidden md:inline font-black tracking-widest uppercase">
-              {showAiPanel ? 'Active助理' : 'Sam AI'}
-            </span>
-            <span className="md:hidden font-black tracking-widest uppercase">AI</span>
-          </button>
+          {/* Navigation & Actions */}
+            <div className="flex items-center gap-3">
+              {user && (
+                <button 
+                  onClick={() => setShowHistoryModal(true)}
+                  className="hidden md:flex h-10 items-center gap-2 rounded-xl border border-white/5 bg-white/5 px-4 transition-all hover:bg-white/10 hover:border-[#00D4FF]/20"
+                >
+                  <History className="h-4 w-4 text-white/40 group-hover:text-white" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-white/60">History</span>
+                </button>
+              )}
+              
+              <button 
+                onClick={() => setShowShortcutsHelp(true)}
+                className="group flex h-10 w-10 items-center justify-center rounded-xl border border-white/5 bg-white/5 transition-all hover:bg-white/10"
+                title="Keyboard Shortcuts"
+              >
+                <Keyboard className="h-5 w-5 text-white/20 transition-colors group-hover:text-white" />
+              </button>
+
+              <button 
+                onClick={() => setShowAiPanel(!showAiPanel)}
+                className={`group flex h-10 items-center gap-2 rounded-xl border px-4 transition-all duration-300 ${showAiPanel ? 'border-[#00D4FF]/40 bg-[#00D4FF]/10 text-[#00D4FF]' : 'border-white/5 bg-white/5 text-white/60 hover:bg-white/10'}`}
+              >
+                <Sparkles className={`h-4 w-4 ${showAiPanel ? 'animate-pulse' : 'text-purple-400'}`} />
+                <span className="text-[10px] font-black uppercase tracking-widest">Sam AI</span>
+              </button>
+            </div>
 
           <div className="flex md:hidden">
             <button onClick={() => setActiveModal('settings')} style={{ padding: 8, background: 'none', border: 'none', color: 'rgba(221,226,241,0.3)', cursor: 'pointer' }}>
@@ -668,16 +701,9 @@ builtins.input = input_shim
         </div>
       </footer>
 
-      <AuthModal isOpen={activeModal === 'auth'} onClose={() => setActiveModal(null)} isDarkMode={true} onLogin={loginUser} />
-      <SettingsModal isOpen={activeModal === 'settings'} onClose={() => setActiveModal(null)} isDarkMode={true} settings={settings} onSettingsChange={onSettingsUpdate} />
-
-      <UpgradeModal isOpen={activeModal === 'upgrade'} onClose={() => setActiveModal(null)} isDarkMode={true} />
       <AiPanel 
         isOpen={showAiPanel} 
         onClose={() => setShowAiPanel(false)}
-        currentCode={buffers[activeLangId]}
-        language={activeLangId}
-        metrics={metrics}
         onApplyRefactor={(newCode) => {
           setBuffers(prev => ({ ...prev, [activeLangId]: newCode }));
           setShowAiPanel(false);

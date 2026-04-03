@@ -82,10 +82,17 @@ export default function CodeEditor({
     });
 
     // CRITICAL FIX: Only insert initial value ONCE when the doc is synced and empty
-    provider.on('sync', () => {
-      if (!hasInitializedRef.current && value && ytext.toString() === "") {
-        hasInitializedRef.current = true;
-        ytext.insert(0, value);
+    provider.on('sync', (isSynced) => {
+      if (isSynced !== false && !hasInitializedRef.current && value) {
+        // Double check after a frame to let Yjs internal state settle
+        setTimeout(() => {
+          if (ytext.toString().trim() === "") {
+            hasInitializedRef.current = true;
+            ytext.insert(0, value);
+          } else {
+            hasInitializedRef.current = true; // Mark as initialized anyway so we don't try again
+          }
+        }, 50);
       }
     });
 
