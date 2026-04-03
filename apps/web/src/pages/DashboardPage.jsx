@@ -8,7 +8,7 @@ import {
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
-const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
+const COLORS = ["#00D4FF", "#8B5CF6", "#22c55e", "#f59e0b", "#f43f5e", "#3cd7ff"];
 
 export default function DashboardPage() {
   const [stats, setStats] = useState(null);
@@ -60,7 +60,7 @@ export default function DashboardPage() {
   const overallSuccessRate = stats?.executionStats?.reduce((acc, curr) => acc + curr.successRate, 0) / (stats?.executionStats?.length || 1);
 
   return (
-    <div className="relative min-h-screen w-full bg-[#030303] p-4 md:p-8 font-sans text-white overflow-hidden selection:bg-blue-500/30">
+    <div className="relative min-h-screen w-full p-4 md:p-8 font-sans text-white overflow-hidden selection:bg-[#00D4FF]/30" style={{ background: 'var(--sam-bg)' }}>
       <div className="bg-mesh" />
       <div className="noise-overlay" />
 
@@ -71,19 +71,19 @@ export default function DashboardPage() {
             <ArrowLeft className="h-5 w-5 text-white/40 transition-colors group-hover:text-white" />
           </Link>
           <div>
-            <h1 className="text-2xl font-black tracking-tight text-white">System Observability</h1>
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white/30">
-              <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Live SRE Dashboard · Last updated {lastUpdated.toLocaleTimeString()}
-            </div>
+              <h1 className="text-2xl font-black tracking-tight" style={{ fontFamily: 'var(--font-display)', color: '#dde2f1' }}>System Observability</h1>
+              <div className="flex items-center gap-2" style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(221,226,241,0.25)' }}>
+                <span className="flex h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: '#22c55e', boxShadow: '0 0 8px #22c55e' }} />
+                SAM Metrics · Last updated {lastUpdated.toLocaleTimeString()}
+              </div>
           </div>
         </div>
         
         <div className="flex items-center gap-3">
-          <div className="flex h-10 items-center gap-2 rounded-xl border border-white/5 bg-white/5 px-4">
-             <ShieldCheck className="h-4 w-4 text-emerald-400" />
-             <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400/80">Secured Sandbox v0.7</span>
-          </div>
+           <div className="flex h-10 items-center gap-2 rounded-xl px-4" style={{ border: '1px solid rgba(0,212,255,0.12)', background: 'rgba(0,212,255,0.05)' }}>
+             <ShieldCheck className="h-4 w-4" style={{ color: '#00D4FF' }} />
+             <span style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(0,212,255,0.7)', fontFamily: 'var(--font-body)' }}>SAM Engine v1.0</span>
+           </div>
         </div>
       </header>
 
@@ -143,7 +143,7 @@ export default function DashboardPage() {
                       contentStyle={{ backgroundColor: "#111", border: "1px solid #ffffff10", borderRadius: "12px", fontSize: "12px" }} 
                       itemStyle={{ color: "#fff" }}
                     />
-                    <Area type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorCount)" />
+                    <Area type="monotone" dataKey="count" stroke="#00D4FF" strokeWidth={3} fillOpacity={1} fill="url(#colorCount)" />
                   </AreaChart>
                 </ResponsiveContainer>
              </div>
@@ -316,7 +316,7 @@ function KpiCard({ icon, title, value, subtext, color }) {
       className="glass-card p-6 flex flex-col gap-4 group"
     >
       <div className="flex items-center justify-between">
-         <div className="rounded-xl bg-white/5 p-2 transition-colors group-hover:bg-white/10">
+         <div className="rounded-xl bg-[#00D4FF]/5 p-2 transition-colors group-hover:bg-[#00D4FF]/15">
             {React.cloneElement(icon, { size: 20 })}
          </div>
          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">KPI</span>

@@ -1,24 +1,22 @@
 import React, { useState, useRef, useEffect } from "react";
+import { ChevronDown } from "lucide-react";
 
 const languages = [
-  { id: "cpp", label: "C++", color: "hsl(210, 100%, 50%)", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg" },
-  { id: "c", label: "C", color: "hsl(200, 100%, 45%)", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/c/c-original.svg" },
-  { id: "python", label: "Python", color: "hsl(45, 100%, 50%)", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" },
-  { id: "javascript", label: "JavaScript", color: "hsl(55, 100%, 50%)", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" },
-  { id: "java", label: "Java", color: "hsl(10, 100%, 60%)", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" }
+  { id: "cpp",        label: "C++",        icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg" },
+  { id: "c",          label: "C",          icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/c/c-original.svg" },
+  { id: "python",     label: "Python",     icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" },
+  { id: "javascript", label: "JavaScript", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" },
+  { id: "java",       label: "Java",       icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" },
 ];
 
 export default function LanguageSelector({ activeLanguage, onLanguageChange }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
-
   const selectedLang = languages.find((l) => l.id === activeLanguage) || languages[0];
 
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
+    function handleClickOutside(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -27,49 +25,128 @@ export default function LanguageSelector({ activeLanguage, onLanguageChange }) {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
+        id="language-selector-btn"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 md:gap-3 rounded-lg md:rounded-xl border border-white/10 bg-[#1a1a1e] md:bg-white/[0.03] px-2.5 md:px-4 py-1.5 transition-all hover:bg-white/10 hover:border-white/20 active:scale-95 group md:backdrop-blur-md"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "6px 12px",
+          borderRadius: 8,
+          border: "1px solid rgba(0,212,255,0.15)",
+          background: "rgba(0,212,255,0.04)",
+          transition: "all 0.25s",
+          cursor: "pointer",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "rgba(0,212,255,0.09)";
+          e.currentTarget.style.borderColor = "rgba(0,212,255,0.35)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "rgba(0,212,255,0.04)";
+          e.currentTarget.style.borderColor = "rgba(0,212,255,0.15)";
+        }}
       >
-        <div className="relative h-3 w-3 md:h-4 md:w-4 transition-transform group-hover:scale-110">
-          <img src={selectedLang.icon} alt={selectedLang.label} className="h-full w-full object-contain filter grayscale-[0.5] group-hover:grayscale-0 transition-all" />
-        </div>
-        <span className="text-[10px] md:text-[11px] font-bold tracking-tight text-white/70 group-hover:text-white transition-colors">{selectedLang.label}</span>
-        <svg
-          className={`h-2.5 w-2.5 md:h-3 md:w-3 text-white/20 transition-all duration-300 ${isOpen ? "rotate-180 text-blue-500" : "group-hover:text-white/40"}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
-        </svg>
+        <img
+          src={selectedLang.icon}
+          alt={selectedLang.label}
+          style={{ width: 16, height: 16, objectFit: "contain", flexShrink: 0 }}
+        />
+        <span style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: "#dde2f1",
+          letterSpacing: "0.03em",
+          fontFamily: "var(--font-body)",
+        }}>
+          {selectedLang.label}
+        </span>
+        <ChevronDown
+          size={12}
+          style={{
+            color: "#00D4FF",
+            transform: isOpen ? "rotate(180deg)" : "none",
+            transition: "transform 0.25s",
+          }}
+        />
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 mt-3 w-48 overflow-hidden rounded-2xl border border-white/10 bg-black/80 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-3xl z-50 animate-in fade-in duration-300">
-          <div className="p-2 space-y-0.5">
-            {languages.map((lang) => (
+        <div
+          style={{
+            position: "absolute",
+            top: "calc(100% + 8px)",
+            left: 0,
+            minWidth: 180,
+            borderRadius: 12,
+            border: "1px solid rgba(0,212,255,0.18)",
+            background: "rgba(14,19,30,0.95)",
+            backdropFilter: "blur(20px)",
+            boxShadow: "0 20px 50px rgba(0,0,0,0.6), 0 0 30px rgba(0,212,255,0.06)",
+            zIndex: 60,
+            padding: 6,
+            animation: "fadeInDown 0.18s ease",
+          }}
+        >
+          {languages.map((lang) => {
+            const isActive = activeLanguage === lang.id;
+            return (
               <button
                 key={lang.id}
-                onClick={() => {
-                  onLanguageChange(lang.id);
-                  setIsOpen(false);
+                id={`lang-option-${lang.id}`}
+                onClick={() => { onLanguageChange(lang.id); setIsOpen(false); }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  width: "100%",
+                  padding: "8px 10px",
+                  borderRadius: 8,
+                  border: "none",
+                  background: isActive ? "rgba(0,212,255,0.10)" : "transparent",
+                  color: isActive ? "#00D4FF" : "rgba(221,226,241,0.5)",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  textAlign: "left",
+                  fontFamily: "var(--font-body)",
                 }}
-                className={`flex w-full items-center gap-3 px-3 py-2 rounded-lg text-left transition-all hover:bg-white/5 group ${
-                  activeLanguage === lang.id ? "bg-blue-500/10 text-blue-400" : "text-white/40 hover:text-white/80"
-                }`}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = "rgba(0,212,255,0.06)";
+                    e.currentTarget.style.color = "#dde2f1";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.color = "rgba(221,226,241,0.5)";
+                  }
+                }}
               >
-                <div className={`h-5 w-5 rounded-md p-0.5 transition-all ${activeLanguage === lang.id ? "bg-blue-500/20" : "bg-white/5 group-hover:bg-white/10"}`}>
-                   <img src={lang.icon} alt={lang.label} className="h-full w-full object-contain" />
-                </div>
-                <span className="text-[11px] font-bold tracking-tight">{lang.label}</span>
-                {activeLanguage === lang.id && (
-                  <div className="ml-auto h-1 w-1 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6]" />
+                <img src={lang.icon} alt={lang.label} style={{ width: 18, height: 18, objectFit: "contain" }} />
+                <span style={{ fontSize: 12, fontWeight: 600 }}>{lang.label}</span>
+                {isActive && (
+                  <div style={{
+                    marginLeft: "auto",
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: "#00D4FF",
+                    boxShadow: "0 0 8px #00D4FF",
+                  }} />
                 )}
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
       )}
+
+      <style>{`
+        @keyframes fadeInDown {
+          from { opacity: 0; transform: translateY(-6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

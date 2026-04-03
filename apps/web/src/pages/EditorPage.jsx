@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
 import CodeEditor from "../components/CodeEditor";
-import logo from "../assets/logo.jpg";
 import LanguageSelector from "../components/LanguageSelector";
 import { Terminal as XTerm } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
@@ -15,35 +14,51 @@ import { useAuth } from "../hooks/useAuth";
 import { Link, useSearchParams } from "react-router-dom";
 import ActivityBar from "../components/ActivityBar";
 
+// Inline SAM logo SVG — no image file dependency
+function SamNavLogo() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="36" height="36" rx="9" fill="url(#samNavGrad)" />
+      <path d="M22 11.5C20.8 10.5 19.2 10 17.5 10C14.5 10 12 11.8 12 14.2C12 16.4 13.8 17.5 16.5 18.2L17.5 18.5C20.2 19.2 22 20.3 22 22.5C22 25 19.5 26.5 16.8 26.5C14.8 26.5 12.8 25.8 11.5 24.5" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+      <defs>
+        <linearGradient id="samNavGrad" x1="0" y1="0" x2="36" y2="36">
+          <stop offset="0%" stopColor="#00D4FF" />
+          <stop offset="100%" stopColor="#8B5CF6" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
 const languageConfigs = {
   cpp: {
-    name: "solution.cpp",
+    name: "main.cpp",
     icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg",
-    template: "#include <iostream>\n\nint main() {\n    std::cout << \"Hello, LiquidIDE!\" << std::endl;\n    return 0;\n}",
+    template: "#include <iostream>\n\nint main() {\n    std::cout << \"Hello from SAM Compiler!\" << std::endl;\n    return 0;\n}",
     lang: "cpp"
   },
   c: {
-    name: "solution.c",
+    name: "main.c",
     icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/c/c-original.svg",
-    template: "#include <stdio.h>\n\nint main() {\n    printf(\"Hello, LiquidIDE!\\n\");\n    return 0;\n}",
+    template: "#include <stdio.h>\n\nint main() {\n    printf(\"Hello from SAM Compiler!\\n\");\n    return 0;\n}",
     lang: "c"
   },
   python: {
-    name: "solution.py",
+    name: "main.py",
     icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg",
-    template: "print(\"Hello, LiquidIDE!\")",
+    template: "print(\"Hello from SAM Compiler!\")",
     lang: "python"
   },
   javascript: {
-    name: "solution.js",
+    name: "main.js",
     icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg",
-    template: "console.log(\"Hello, LiquidIDE!\");",
+    template: "console.log(\"Hello from SAM Compiler!\");",
     lang: "javascript"
   },
   java: {
-    name: "Solution.java",
+    name: "Main.java",
     icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg",
-    template: "public class Solution {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, LiquidIDE!\");\n    }\n}",
+    template: "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello from SAM Compiler!\");\n    }\n}",
     lang: "java"
   }
 };
@@ -111,13 +126,13 @@ export default function EditorPage() {
 
 
   const [settings, setSettings] = useState(() => {
-    const saved = localStorage.getItem("liquid_settings");
+    const saved = localStorage.getItem("sam_settings") || localStorage.getItem("liquid_settings");
     return saved ? JSON.parse(saved) : { fontSize: 14, tabSize: 2 };
   });
   
   const onSettingsUpdate = (newSettings) => {
     setSettings(newSettings);
-    localStorage.setItem("liquid_settings", JSON.stringify(newSettings));
+    localStorage.setItem("sam_settings", JSON.stringify(newSettings));
   };
   
   const [pyodide, setPyodide] = useState(null);
@@ -152,18 +167,18 @@ export default function EditorPage() {
     const term = new XTerm({
       theme: {
         background: 'transparent',
-        foreground: '#e2f3f5',
-        cursor: '#3b82f6',
-        cursorAccent: '#000000',
-        selectionBackground: 'rgba(59, 130, 246, 0.3)',
-        black: '#1e1e1e',
-        red: '#ff5f56',
-        green: '#27c93f',
-        yellow: '#ffbd2e',
-        blue: '#007aff',
-        magenta: '#ff79c6',
-        cyan: '#8be9fd',
-        white: '#f8f8f2',
+        foreground: '#dde2f1',
+        cursor: '#00D4FF',
+        cursorAccent: '#001f27',
+        selectionBackground: 'rgba(0, 212, 255, 0.2)',
+        black: '#0e131e',
+        red: '#f43f5e',
+        green: '#22c55e',
+        yellow: '#ffd9a1',
+        blue: '#00D4FF',
+        magenta: '#8B5CF6',
+        cyan: '#3cd7ff',
+        white: '#dde2f1',
       },
       fontFamily: 'JetBrains Mono, Menlo, monospace',
       fontSize: 14,
@@ -345,40 +360,51 @@ builtins.input = input_shim
 
 
   return (
-    <div className="relative flex h-screen h-[100dvh] w-full flex-col overflow-hidden bg-black selection:bg-blue-500/30">
+    <div className="relative flex h-screen h-[100dvh] w-full flex-col overflow-hidden selection:bg-cyan-500/20" style={{ background: 'var(--sam-bg)' }}>
       <div className="bg-mesh" />
       <div className="noise-overlay" />
 
-      <header className="relative z-20 flex h-14 md:h-16 shrink-0 items-center justify-between border-b border-white/5 bg-black md:bg-black/20 px-4 md:px-8 md:backdrop-blur-2xl">
+      <header className="relative z-20 flex h-14 md:h-16 shrink-0 items-center justify-between px-4 md:px-8 border-b-0 sam-glass" style={{ borderBottom: '1px solid rgba(0,212,255,0.05)', background: 'rgba(14,19,30,0.85)', backdropFilter: 'blur(30px)' }}>
         <div className="flex items-center gap-4 md:gap-10">
-          <div className="flex items-center gap-2 md:gap-3 transition-transform hover:scale-[1.02] shrink-0">
-            <div className="flex h-7 w-7 md:h-9 md:w-9 overflow-hidden rounded-lg md:rounded-xl border border-white/10 bg-gradient-to-br from-blue-600 to-indigo-700 p-0.5 shadow-2xl">
-              <img src={logo} alt="Logo" className="h-full w-full rounded-[6px] md:rounded-[10px] object-cover" />
-            </div>
+          <div className="flex items-center gap-3 transition-transform hover:scale-105 shrink-0">
+            <SamNavLogo />
             <div className="flex flex-col leading-tight">
-              <span className="text-[10px] md:text-[14px] font-black uppercase tracking-widest text-white/90">LiquidIDE</span>
+              <span className="sam-headline tracking-tighter" style={{ fontSize: 13, color: '#dde2f1' }}>SAM</span>
+              <span className="text-label" style={{ fontSize: 9, color: 'rgba(0,212,255,0.7)', lineHeight: 1 }}>Compiler</span>
             </div>
           </div>
           
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-6">
             {['Editor', 'Dashboard', 'Settings'].map((tab) => {
               if (tab === 'Dashboard') {
                 return (
-                  <Link 
+                  <Link
                     key={tab}
                     to="/dashboard"
-                    className="group relative flex items-center gap-2 rounded-full border border-white/5 bg-white/5 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-white/40 transition-all hover:bg-white/10 hover:text-white"
+                    className="group relative flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all"
+                    style={{ color: 'rgba(221,226,241,0.4)' }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = '#00D4FF'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(221,226,241,0.4)'}
                   >
-                    <div className="h-1.5 w-1.5 rounded-full bg-blue-500/50 group-hover:bg-blue-500 group-hover:shadow-[0_0_8px_#3b82f6]" />
+                    <div className="h-1.5 w-1.5 rounded-full" style={{ background: 'rgba(0,212,255,0.4)' }} />
                     Dashboard
                   </Link>
                 );
               }
+              const isActive = (!activeModal && tab === 'Editor') || activeModal === tab.toLowerCase();
               return (
-                <button 
+                <button
                   key={tab}
                   onClick={() => setActiveModal(tab === 'Editor' ? null : tab.toLowerCase())}
-                  className={`text-[10px] font-bold uppercase tracking-[0.15em] transition-all hover:text-white ${(!activeModal && tab === 'Editor') || activeModal === tab.toLowerCase() ? "text-white" : "text-white/40"}`}
+                  style={{
+                    fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em',
+                    color: isActive ? '#00D4FF' : 'rgba(221,226,241,0.4)',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    transition: 'color 0.2s',
+                    fontFamily: 'var(--font-body)',
+                  }}
+                  onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = '#dde2f1'; }}
+                  onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = 'rgba(221,226,241,0.4)'; }}
                 >
                   {tab}
                 </button>
@@ -387,82 +413,111 @@ builtins.input = input_shim
           </nav>
         </div>
         
-        <div className="flex items-center gap-1.5 md:gap-5">
+        <div className="flex items-center gap-3 md:gap-5">
           {user ? (
-            <div className="flex items-center gap-2 md:gap-4 shrink-0">
-              <div className="flex items-center gap-1.5 md:gap-3 rounded-full border border-white/5 bg-white/5 py-1 md:py-1.5 pl-2 md:pl-4 pr-1 md:pr-1.5">
-                <span className="hidden lg:block text-[10px] md:text-[11px] font-bold text-white/80 max-w-[100px] xl:max-w-[150px] truncate">{user.name}</span>
-              <div className="h-6 w-6 md:h-7 md:w-7 rounded-full border border-white/10 overflow-hidden shadow-lg shrink-0">
-                <img 
-                  src={user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=007AFF&color=fff`} 
-                  className="h-full w-full object-cover" 
-                  style={{ width: '100%', height: '100%' }} // Inline safety
-                  alt="Avatar" 
+            <div className="flex items-center gap-2 md:gap-3 shrink-0">
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '4px 8px 4px 12px',
+                borderRadius: 20,
+                border: '1px solid rgba(0,212,255,0.12)',
+                background: 'rgba(0,212,255,0.04)',
+              }}>
+                <span className="hidden lg:block" style={{ fontSize: 11, fontWeight: 600, color: '#dde2f1', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'var(--font-body)' }}>
+                  {user.name}
+                </span>
+                <img
+                  src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=00D4FF&color=001f27`}
+                  alt="Avatar"
+                  style={{ width: 26, height: 26, borderRadius: '50%', border: '1px solid rgba(0,212,255,0.3)', objectFit: 'cover' }}
                 />
               </div>
-              </div>
-              <button 
-                onClick={() => confirm("Are you sure you want to log out?") && logoutUser()}
-                className="ml-2 rounded-full border border-rose-500/20 bg-rose-500/5 px-4 py-1.5 text-[9px] md:text-[10px] font-black uppercase tracking-widest text-rose-500/60 transition-all hover:bg-rose-500/20 hover:text-rose-400 active:scale-95"
-              >
-                Log Out
-              </button>
+              <button
+                onClick={() => confirm("Sign out of SAM Compiler?") && logoutUser()}
+                style={{
+                  padding: '6px 14px', borderRadius: 8,
+                  border: '1px solid rgba(244,63,94,0.2)',
+                  background: 'rgba(244,63,94,0.05)',
+                  color: 'rgba(244,63,94,0.6)',
+                  fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em',
+                  cursor: 'pointer', transition: 'all 0.2s',
+                  fontFamily: 'var(--font-body)',
+                }}
+              >Sign Out</button>
             </div>
           ) : (
-            <button 
-              onClick={() => setActiveModal('auth')} 
-              className="group flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/5 p-1 pr-3 md:pr-5 transition-all hover:bg-blue-500/10 active:scale-95 shrink-0"
-              title="Sign In"
-            >
-              <div className="h-6 w-6 md:h-8 md:w-8 overflow-hidden rounded-full border border-blue-500/30 bg-blue-600/20 shrink-0">
-                <img src={logo} alt="Login" className="h-full w-full object-cover" style={{ width: '100%', height: '100%' }} />
-              </div>
-              <span className="text-[9px] md:text-[12px] font-black uppercase tracking-widest text-blue-400">Sign In</span>
-            </button>
+            <button
+              id="signin-btn"
+              onClick={() => setActiveModal('auth')}
+              style={{
+                padding: '7px 16px', borderRadius: 8,
+                border: '1px solid rgba(0,212,255,0.25)',
+                background: 'rgba(0,212,255,0.05)',
+                color: '#00D4FF',
+                fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em',
+                cursor: 'pointer', transition: 'all 0.25s',
+                fontFamily: 'var(--font-body)',
+              }}
+            >Sign In</button>
           )}
-          <button 
+
+          {/* Run Button */}
+          <button
+            id="run-code-btn"
             onClick={onRun}
             disabled={busy}
-            className="liquid-button-primary flex items-center gap-1.5 h-8 px-2 md:px-5 text-[10px] md:text-[11px]"
+            className="liquid-button-primary"
+            style={{ height: 36, padding: '0 20px', fontSize: 11, gap: 8 }}
           >
             {busy ? (
-              <div className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+              <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid rgba(0,31,39,0.3)', borderTopColor: '#001f27', animation: 'spin 0.8s linear infinite' }} />
             ) : (
-              <svg className="h-3 w-3 md:h-4 md:w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" /></svg>
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" /></svg>
             )}
-            <span className="hidden md:inline">{busy ? "Executing" : "Run Code"}</span>
-            <span className="md:hidden truncate">{busy ? "..." : "Run"}</span>
+            <span className="hidden md:inline">{busy ? "Compiling..." : "Run Code"}</span>
+            <span className="md:hidden">{busy ? "..." : "Run"}</span>
           </button>
-          
-          <div className="flex md:hidden items-center gap-2">
 
-             <button onClick={() => setActiveModal('settings')} className="p-2 text-white/40 hover:text-white">
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-             </button>
+          <div className="flex md:hidden">
+            <button onClick={() => setActiveModal('settings')} style={{ padding: 8, background: 'none', border: 'none', color: 'rgba(221,226,241,0.3)', cursor: 'pointer' }}>
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            </button>
           </div>
         </div>
       </header>
 
-      <div className="flex md:hidden h-12 shrink-0 border-b border-white/5 bg-[#0a0a0c]">
-        <button 
+      <div className="flex md:hidden h-12 shrink-0" style={{ borderBottom: '1px solid rgba(0,212,255,0.08)', background: 'rgba(8,14,24,0.9)' }}>
+        <button
           onClick={() => setActiveMobileTab('editor')}
-          className={`relative flex-1 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeMobileTab === 'editor' ? "text-blue-400 bg-white/5" : "text-white/30"}`}
+          className="relative flex-1 flex items-center justify-center gap-2"
+          style={{
+            fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em',
+            color: activeMobileTab === 'editor' ? '#00D4FF' : 'rgba(221,226,241,0.3)',
+            background: activeMobileTab === 'editor' ? 'rgba(0,212,255,0.05)' : 'transparent',
+            border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)',
+          }}
         >
-          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
           Code
-          {activeMobileTab === 'editor' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 shadow-[0_0_8px_#3b82f6]" />}
+          {activeMobileTab === 'editor' && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: '#00D4FF', boxShadow: '0 0 8px #00D4FF' }} />}
         </button>
-        <div className="w-px h-full bg-white/5" />
-        <button 
+        <div style={{ width: 1, background: 'rgba(0,212,255,0.08)' }} />
+        <button
           onClick={() => setActiveMobileTab('terminal')}
-          className={`relative flex-1 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeMobileTab === 'terminal' ? "text-blue-400 bg-white/5" : "text-white/30"}`}
+          className="relative flex-1 flex items-center justify-center gap-2"
+          style={{
+            fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em',
+            color: activeMobileTab === 'terminal' ? '#00D4FF' : 'rgba(221,226,241,0.3)',
+            background: activeMobileTab === 'terminal' ? 'rgba(0,212,255,0.05)' : 'transparent',
+            border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)',
+          }}
         >
-          <div className="relative">
-            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
-            {busy && <div className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-blue-500 animate-pulse border border-black" />}
+          <div style={{ position: 'relative' }}>
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
+            {busy && <div style={{ position: 'absolute', top: -3, right: -3, width: 6, height: 6, borderRadius: '50%', background: '#00D4FF', boxShadow: '0 0 8px #00D4FF', animation: 'sam-pulse 1s infinite' }} />}
           </div>
           Output
-          {activeMobileTab === 'terminal' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 shadow-[0_0_8px_#3b82f6]" />}
+          {activeMobileTab === 'terminal' && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: '#00D4FF', boxShadow: '0 0 8px #00D4FF' }} />}
         </button>
       </div>
 
@@ -473,24 +528,41 @@ builtins.input = input_shim
           onOpenSettings={() => setActiveModal('settings')}
         />
         <section className={`flex flex-col overflow-hidden gap-4 ${activeMobileTab === 'editor' ? 'flex-1' : 'hidden'} md:flex md:flex-[7]`}>
-          <div className="glass-card flex flex-1 flex-col overflow-hidden">
-            <div className="flex h-11 shrink-0 items-center justify-between border-b border-white/5 px-3 md:px-5 bg-[#0a0a0c] md:bg-white/[0.02]">
-              <div className="flex items-center gap-2 md:gap-5">
-                <LanguageSelector activeLanguage={activeLangId} onLanguageChange={setActiveLangId} isDarkMode={true} />
-                <div className="h-4 w-px bg-white/10 mx-1 hidden md:block" />
-                <button 
-                  onClick={onRun}
-                  disabled={busy}
-                  className="group flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-1.5 transition-all hover:bg-emerald-500/10 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
-                >
-                  {busy ? (
-                    <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-emerald-500/20 border-t-emerald-500" />
-                  ) : (
-                    <svg className="h-3.5 w-3.5 text-emerald-500 transition-transform group-hover:scale-110" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" /></svg>
-                  )}
-                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500/80 group-hover:text-emerald-400">Run</span>
-                </button>
+          <div className="sam-glass flex flex-1 flex-col overflow-hidden" style={{ borderRadius: 16 }}>
+            <div className="flex h-11 shrink-0 items-center justify-between px-3 md:px-5" style={{ background: 'rgba(14,19,30,0.4)', borderBottom: '1px solid rgba(0,212,255,0.05)' }}>
+              <div className="flex items-center gap-2 md:gap-4">
+                <LanguageSelector activeLanguage={activeLangId} onLanguageChange={setActiveLangId} />
+                <div style={{ width: 1, height: 16, background: 'rgba(0,212,255,0.1)' }} className="hidden md:block" />
+                {/* File name badge */}
+                <span className="hidden md:inline font-mono tracking-wider animate-pulse" style={{ fontSize: 11, fontWeight: 500, color: 'rgba(0,212,255,0.4)' }}>
+                  {languageConfigs[activeLangId]?.name}
+                </span>
               </div>
+              {/* Inline run button for editor toolbar */}
+              <button
+                id="editor-run-btn"
+                onClick={onRun}
+                disabled={busy}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '5px 14px', borderRadius: 7,
+                  border: '1px solid rgba(0,212,255,0.3)',
+                  background: busy ? 'rgba(0,212,255,0.04)' : 'rgba(0,212,255,0.08)',
+                  color: '#00D4FF',
+                  fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em',
+                  cursor: busy ? 'not-allowed' : 'pointer',
+                  opacity: busy ? 0.6 : 1,
+                  transition: 'all 0.2s',
+                  fontFamily: 'var(--font-body)',
+                }}
+              >
+                {busy ? (
+                  <div style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid rgba(0,212,255,0.2)', borderTopColor: '#00D4FF', animation: 'spin 0.8s linear infinite' }} />
+                ) : (
+                  <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" /></svg>
+                )}
+                Run
+              </button>
             </div>
             
             <div className="flex-1 overflow-hidden relative">
@@ -512,32 +584,40 @@ builtins.input = input_shim
         </section>
 
         <section className={`flex flex-col overflow-hidden gap-4 ${activeMobileTab === 'terminal' ? 'flex-1' : 'hidden'} md:flex md:flex-[3]`}>
-          <div className="glass-card flex flex-1 flex-col overflow-hidden bg-black/40">
-            <div className="flex h-11 shrink-0 items-center justify-between border-b border-white/5 px-4 md:px-6 bg-white/[0.02]">
+          <div className="sam-glass flex flex-1 flex-col overflow-hidden" style={{ borderRadius: 16, background: 'rgba(14,19,30,0.6)' }}>
+            <div className="flex h-11 shrink-0 items-center justify-between px-4 md:px-6" style={{ background: 'rgba(14,19,30,0.4)', borderBottom: '1px solid rgba(0,212,255,0.05)' }}>
               <div className="flex items-center gap-2 md:gap-3">
-                <button 
+                <button
                   onClick={onClear}
-                  className="p-1.5 text-white/30 hover:text-white transition-colors rounded-md hover:bg-white/5"
-                  title="Clear Terminal"
+                  title="Clear Output"
+                  style={{ padding: '5px', background: 'none', border: 'none', color: 'rgba(221,226,241,0.25)', cursor: 'pointer', borderRadius: 6, transition: 'all 0.2s' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = '#00D4FF'; e.currentTarget.style.background = 'rgba(0,212,255,0.06)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(221,226,241,0.25)'; e.currentTarget.style.background = 'none'; }}
                 >
-                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 </button>
-                <div className={`h-1.5 w-1.5 md:h-2 md:w-2 rounded-full shadow-[0_0_10px_currentcolor] transition-colors duration-500 ${runStatus === "Succeeded" ? "text-emerald-400 bg-emerald-400" : runStatus === "Failed" ? "text-rose-400 bg-rose-400" : busy ? "text-blue-400 bg-blue-400 animate-pulse" : "text-white/20 bg-white/20"}`} />
-                <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.25em] text-white/50 font-mono">
-                  {isWorkerOnline ? "Terminal" : "Cloud Sandbox"}
+                <div style={{
+                  width: 7, height: 7, borderRadius: '50%',
+                  background: runStatus === 'Succeeded' ? '#22c55e' : runStatus === 'Failed' ? '#f43f5e' : busy ? '#00D4FF' : 'rgba(221,226,241,0.2)',
+                  boxShadow: runStatus === 'Succeeded' ? '0 0 10px #22c55e' : runStatus === 'Failed' ? '0 0 10px #f43f5e' : busy ? '0 0 10px #00D4FF' : 'none',
+                  animation: busy ? 'sam-pulse 1s infinite' : 'none',
+                  transition: 'all 0.5s',
+                }} />
+                <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(221,226,241,0.4)', fontFamily: 'var(--font-mono)' }}>
+                  {isWorkerOnline ? 'Terminal' : 'Cloud Output'}
                 </span>
                 {metrics && (
-                  <div className="flex items-center gap-2 ml-2 pl-2 border-l border-white/10">
-                    <span className="text-[9px] font-bold text-blue-400/80 tracking-widest uppercase">
-                      {metrics.sandbox?.replace("docker-", "")}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 8, paddingLeft: 8, borderLeft: '1px solid rgba(0,212,255,0.1)' }}>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: '#00D4FF', textTransform: 'uppercase', letterSpacing: '0.12em', fontFamily: 'var(--font-mono)' }}>
+                      {metrics.sandbox?.replace('docker-', '')}
                     </span>
-                    <span className="text-[9px] font-bold text-white/30 tracking-widest uppercase">
+                    <span style={{ fontSize: 9, fontWeight: 600, color: 'rgba(221,226,241,0.3)', fontFamily: 'var(--font-mono)' }}>
                       {metrics.durationMs}ms
                     </span>
                   </div>
                 )}
               </div>
-              <div className="text-[8px] md:text-[9px] font-bold tracking-widest text-white/30 uppercase">{runStatus}</div>
+              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(221,226,241,0.25)', fontFamily: 'var(--font-body)' }}>{runStatus}</div>
             </div>
             
             <div className="flex-1 overflow-hidden p-2 md:p-5 bg-black/40 relative">
@@ -552,33 +632,39 @@ builtins.input = input_shim
               )}
             </div>
 
-            <div className="flex h-8 md:h-10 shrink-0 items-center justify-between border-t border-white/5 px-4 md:px-6 bg-white/[0.01]">
-              <div className="flex items-center gap-3">
-                <span className="text-[8px] font-bold text-white/20 uppercase tracking-widest">STABLE-RUNTIME</span>
-              </div>
-              <div className="flex items-center gap-3">
-                 <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-[0.2em] text-white/20 truncate">{activeLangId}</span>
-              </div>
+            <div className="flex h-8 md:h-10 shrink-0 items-center justify-between px-4 md:px-6" style={{ borderTop: '1px solid rgba(0,212,255,0.06)', background: 'rgba(8,14,24,0.4)' }}>
+              <span style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(0,212,255,0.3)', fontFamily: 'var(--font-body)' }}>SAM-RUNTIME</span>
+              <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(221,226,241,0.2)', fontFamily: 'var(--font-mono)' }}>{languageConfigs[activeLangId]?.name}</span>
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="relative z-20 flex h-11 md:h-12 shrink-0 items-center justify-between border-t border-white/5 bg-black md:bg-black/80 px-4 md:px-8 md:backdrop-blur-3xl">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className={`h-1.5 w-1.5 rounded-full shadow-[0_0_8px_currentcolor] ${isApiOnline ? "text-emerald-500 bg-emerald-500" : "text-rose-500 bg-rose-500"}`} />
-            <span className={`text-[9px] md:text-[10px] font-bold uppercase tracking-widest ${isApiOnline ? "text-emerald-500/70" : "text-rose-500/70"}`}>
-              {isApiOnline ? "Online" : "Offline"}
+      <footer className="relative z-20 flex h-10 shrink-0 items-center justify-between px-4 md:px-6 sam-glass border-x-0 border-b-0 border-t border-[#00D4FF]/10 mt-2" style={{ background: 'rgba(14,19,30,0.9)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{
+              width: 6, height: 6, borderRadius: '50%',
+              background: isApiOnline ? '#22c55e' : '#f43f5e',
+              boxShadow: isApiOnline ? '0 0 8px #22c55e' : '0 0 8px #f43f5e',
+            }} />
+            <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: isApiOnline ? 'rgba(34,197,94,0.7)' : 'rgba(244,63,94,0.7)', fontFamily: 'var(--font-body)' }}>
+              {isApiOnline ? 'Online' : 'Offline'}
             </span>
           </div>
+          <span style={{ fontSize: 9, fontWeight: 600, color: 'rgba(0,212,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', fontFamily: 'var(--font-mono)' }}>
+            {activeLangId}
+          </span>
         </div>
-
-        <div className="flex items-center gap-4 md:gap-6">
-           <span className="hidden sm:inline text-[9px] font-bold uppercase tracking-widest text-white/30">
-             Built by <a href="https://linkedin.com/in/syedmukheeth" target="_blank" rel="noopener noreferrer" className="text-blue-400/60 hover:text-blue-400 transition-colors">Syed Mukheeth</a>
-           </span>
-           <span className="text-[9px] font-bold uppercase tracking-widest text-white/20">© 2026</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <span className="hidden sm:inline" style={{ fontSize: 9, fontWeight: 600, color: 'rgba(221,226,241,0.2)', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'var(--font-body)' }}>
+            Built by{' '}
+            <a href="https://linkedin.com/in/syedmukheeth" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(0,212,255,0.5)', textDecoration: 'none' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = '#00D4FF'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(0,212,255,0.5)'}
+            >Syed Mukheeth</a>
+          </span>
+          <span style={{ fontSize: 9, fontWeight: 600, color: 'rgba(221,226,241,0.15)', fontFamily: 'var(--font-body)' }}>SAM © 2026</span>
         </div>
       </footer>
 
