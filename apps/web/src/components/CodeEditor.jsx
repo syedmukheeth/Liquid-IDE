@@ -3,6 +3,7 @@ import Editor from "@monaco-editor/react";
 import * as Y from "yjs";
 import { MonacoBinding } from "y-monaco";
 import { SocketIOProvider } from "y-socket.io";
+import ENDPOINTS from "../services/endpoints";
 
 const LANGUAGE_TO_MONACO = {
   nodejs: "javascript",
@@ -18,8 +19,6 @@ const RANDOM_NAMES = [
 ];
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
-
-import ENDPOINTS from "../services/endpoints";
 
 export default function CodeEditor({ 
   language, 
@@ -44,7 +43,6 @@ export default function CodeEditor({
   const handleMount = useCallback((editor) => {
     editorRef.current = editor;
 
-    // Use a ref to ensure we only initialize once per instance
     if (providerRef.current) return;
 
     // Initialize Yjs
@@ -81,18 +79,26 @@ export default function CodeEditor({
       onCursorChange?.({ lineNumber: pos.lineNumber, column: pos.column });
     });
 
-    // CRITICAL FIX: Only insert initial value ONCE when the doc is synced and empty
+    // ULTIMATE FIX: Only insert initial value if THIS browser tab hasn't already joined this room.
+    // This prevents duplication when switching languages (remounting) in the same session.
+    const roomKey = `sam_synced_${sessionId}`;
+    
     provider.on('sync', (isSynced) => {
       if (isSynced !== false && !hasInitializedRef.current && value) {
-        // Double check after a frame to let Yjs internal state settle
+        hasInitializedRef.current = true;
+        
+        // Wait a bit for server state to land
         setTimeout(() => {
-          if (ytext.toString().trim() === "") {
-            hasInitializedRef.current = true;
+          const currentText = ytext.toString().trim();
+          const alreadySynced = window[roomKey];
+
+          if (currentText === "" && !alreadySynced) {
             ytext.insert(0, value);
+            window[roomKey] = true;
           } else {
-            hasInitializedRef.current = true; // Mark as initialized anyway so we don't try again
+            window[roomKey] = true; // Mark as handled
           }
-        }, 50);
+        }, 120);
       }
     });
 
@@ -101,18 +107,20 @@ export default function CodeEditor({
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (bindingRef.current) bindingRef.current.destroy();
-      if (providerRef.current) providerRef.current.destroy();
+      if (bindingRef.current) {
+        bindingRef.current.destroy();
+        bindingRef.current = null;
+      }
+      if (providerRef.current) {
+        providerRef.current.destroy();
+        providerRef.current = null;
+      }
     };
   }, []);
 
-  const handleChange = useCallback(
-    (v) => {
-      // With Yjs, the binding handles the sync, but we still trigger onChange for the parent
-      onChange?.(v ?? "");
-    },
-    [onChange]
-  );
+  const handleChange = useCallback((v) => {
+    onChange?.(v ?? "");
+  }, [onChange]);
 
   return (
     <div className="h-full w-full bg-transparent">

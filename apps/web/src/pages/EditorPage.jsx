@@ -704,13 +704,83 @@ builtins.input = input_shim
       <AiPanel 
         isOpen={showAiPanel} 
         onClose={() => setShowAiPanel(false)}
+        language={activeLangId}
+        currentCode={buffers[activeLangId]}
         onApplyRefactor={(newCode) => {
           setBuffers(prev => ({ ...prev, [activeLangId]: newCode }));
           setShowAiPanel(false);
+          toast.success("AI refactor applied", {
+            style: { background: '#0e131e', color: '#fff', border: '1px solid rgba(0,212,255,0.2)', fontSize: '10px' }
+          });
         }}
       />
 
+      <HistoryModal 
+        isOpen={showHistoryModal} 
+        onClose={() => setShowHistoryModal(false)}
+        onRestore={(code, lang) => {
+          if (languageConfigs[lang]) {
+            setActiveLangId(lang);
+          }
+          setBuffers(prev => ({ ...prev, [lang || activeLangId]: code }));
+          toast.success("Code restored from history", {
+            style: { background: '#0e131e', color: '#fff', border: '1px solid rgba(0,212,255,0.2)', fontSize: '10px' }
+          });
+        }}
+      />
 
+      <AnimatePresence>
+        {showShortcutsHelp && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <motion.div 
+               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+               onClick={() => setShowShortcutsHelp(false)}
+               className="absolute inset-0 bg-black/40 backdrop-blur-sm" 
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              className="relative w-full max-w-sm rounded-3xl border border-white/10 bg-[#0e131e] p-8 shadow-2xl"
+            >
+              <h3 className="mb-6 flex items-center gap-3 text-lg font-black uppercase tracking-[0.2em] text-white">
+                 <Keyboard className="h-5 w-5 text-[#00D4FF]" />
+                 Shortcuts
+              </h3>
+              <div className="flex flex-col gap-4">
+                 <ShortcutItem keys={["CTRL", "ENTER"]} label="Run Code" />
+                 <ShortcutItem keys={["CTRL", "S"]} label="Save Locally" />
+                 <ShortcutItem keys={["CTRL", "L"]} label="Clear Terminal" />
+                 <ShortcutItem keys={["CTRL", "/"]} label="Toggle Sam AI" />
+                 <ShortcutItem keys={["CTRL", "H"]} label="Open History" />
+              </div>
+              <button 
+                onClick={() => setShowShortcutsHelp(false)}
+                className="mt-8 w-full rounded-xl bg-white/5 p-3 text-[10px] font-black uppercase tracking-widest text-white/40 transition-all hover:bg-white/10 hover:text-white"
+              >
+                Got it
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AuthModal isOpen={activeModal === 'auth'} onClose={() => setActiveModal(null)} onLogin={loginUser} />
+      <SettingsModal isOpen={activeModal === 'settings'} onClose={() => setActiveModal(null)} currentSettings={settings} onUpdate={onSettingsUpdate} />
+      <UpgradeModal isOpen={activeModal === 'upgrade'} onClose={() => setActiveModal(null)} />
+      
+      <Toaster position="bottom-right" reverseOrder={false} />
+    </div>
+  );
+}
+
+function ShortcutItem({ keys, label }) {
+  return (
+    <div className="flex items-center justify-between">
+       <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">{label}</span>
+       <div className="flex gap-1">
+          {keys.map(k => (
+            <kbd key={k} className="flex h-5 items-center justify-center rounded bg-white/10 px-1.5 text-[9px] font-black text-white/80">{k}</kbd>
+          ))}
+       </div>
     </div>
   );
 }
