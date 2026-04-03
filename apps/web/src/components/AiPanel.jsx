@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Send, Sparkles, X, Zap, RefreshCw, Copy, Check, Terminal 
+  Send, Sparkles, X, Zap, RefreshCw, Copy, Check, Terminal, ExternalLink
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import ENDPOINTS from "../services/endpoints";
 
 export default function AiPanel({ 
@@ -14,7 +16,7 @@ export default function AiPanel({
   onApplyRefactor 
 }) {
   const [messages, setMessages] = useState([
-    { role: "model", content: "I am Sam AI, your elite coding partner." }
+    { role: "model", content: "I am Sam AI, your elite coding partner. How can I accelerate your development today?" }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -106,11 +108,76 @@ export default function AiPanel({
     }
   };
 
+  const MarkdownComponents = {
+    code({ node, inline, className, children, ...props }) {
+      const match = /language-(\w+)/.exec(className || "");
+      const codeStr = String(children).replace(/\n$/, "");
+      
+      if (!inline && match) {
+        return (
+          <div className="group relative my-6">
+            <div className="absolute -top-3 left-4 px-2 py-0.5 bg-[#00D4FF] text-[#0e131e] text-[9px] font-black uppercase tracking-tighter rounded-md z-10">
+              {match[1]}
+            </div>
+            <div className="rounded-2xl bg-black/60 border border-white/5 overflow-hidden shadow-2xl backdrop-blur-xl">
+              <pre className="p-5 font-mono text-[12px] leading-relaxed text-emerald-400 overflow-x-auto scrollbar-hide">
+                <code className={className} {...props}>
+                  {children}
+                </code>
+              </pre>
+              <div className="flex items-center justify-end gap-2 border-t border-white/5 bg-white/[0.02] p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button 
+                  onClick={() => navigator.clipboard.writeText(codeStr)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 text-[10px] font-bold text-white/40 hover:bg-white/10 hover:text-white transition-all"
+                >
+                  <Copy size={12} /> Copy
+                </button>
+                <button 
+                  onClick={() => onApplyRefactor(codeStr)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#00D4FF]/10 text-[10px] font-bold text-[#00D4FF] hover:bg-[#00D4FF]/20 hover:text-white transition-all"
+                >
+                  <Zap size={12} fill="currentColor" /> Apply
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <code className="bg-white/10 px-1.5 py-0.5 rounded-md font-mono text-cyan-400" {...props}>
+          {children}
+        </code>
+      );
+    },
+    p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
+    ul: ({ children }) => <ul className="mb-4 space-y-2 list-none">{children}</ul>,
+    li: ({ children }) => (
+      <li className="flex gap-3">
+        <span className="mt-1.5 h-1.5 w-1.5 flex-none rounded-full bg-[#00D4FF] shadow-[0_0_8px_rgba(0,212,255,0.6)]" />
+        <span>{children}</span>
+      </li>
+    ),
+    a: ({ href, children }) => (
+      <a 
+        href={href} 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 text-[#00D4FF] hover:underline hover:text-[#8B5CF6] transition-colors"
+      >
+        {children} <ExternalLink size={10} />
+      </a>
+    ),
+    h1: ({ children }) => <h1 className="text-xl font-bold text-white mb-4 mt-6">{children}</h1>,
+    h2: ({ children }) => <h2 className="text-lg font-bold text-white mb-3 mt-5">{children}</h2>,
+    h3: ({ children }) => <h3 className="text-base font-bold text-white mb-2 mt-4">{children}</h3>,
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop (Mobile Only) */}
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -125,9 +192,9 @@ export default function AiPanel({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: "100%", opacity: 0.5 }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 z-[70] h-screen w-full border-l border-[#00D4FF]/20 bg-[#0e131e]/90 shadow-[ -20px_0_50px_rgba(0,0,0,0.5)] backdrop-blur-3xl md:w-[450px] lg:w-[500px]"
+            className="fixed right-0 top-0 z-[65] h-screen w-full border-l border-[#00D4FF]/20 bg-[#0e131e]/90 shadow-[-20px_0_50px_rgba(0,0,0,0.5)] backdrop-blur-3xl md:w-[450px] lg:w-[500px]"
           >
-            {/* Ambient Background Glow for the panel */}
+            {/* Ambient Background Glow */}
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
                <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[#00D4FF]/10 blur-[80px]" />
                <div className="absolute -bottom-32 -left-20 h-80 w-80 rounded-full bg-[#8B5CF6]/10 blur-[100px]" />
@@ -163,39 +230,17 @@ export default function AiPanel({
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}
                     >
-                      <div className={`max-w-[90%] rounded-3xl px-5 py-4 text-sm leading-relaxed shadow-xl ${
+                      <div className={`max-w-[95%] rounded-3xl px-5 py-4 text-[13px] leading-[1.6] shadow-xl ${
                         msg.role === "user" 
                           ? "bg-[#00D4FF]/10 text-white border border-[#00D4FF]/30 rounded-tr-none shadow-[0_0_15px_rgba(0,212,255,0.1)]" 
                           : "bg-white/[0.03] text-white/90 border border-[#8B5CF6]/20 backdrop-blur-xl rounded-tl-none"
                       }`}>
-                        {msg.content.includes("\`\`\`") ? (
-                          <div className="flex flex-col gap-4">
-                            <div className="text-[13px] font-medium opacity-90">{msg.content.split("\`\`\`")[0]}</div>
-                            <div className="group relative">
-                              <pre className="overflow-x-auto rounded-2xl bg-black/60 p-5 font-mono text-[11px] text-emerald-400 border border-white/5 shadow-inner">
-                                {msg.content.split("\`\`\`")[1]?.split("\n").slice(1).join("\n")}
-                              </pre>
-                              <button 
-                                onClick={() => navigator.clipboard.writeText(msg.content.split("\`\`\`")[1]?.split("\n").slice(1).join("\n"))}
-                                className="absolute top-3 right-3 p-2 rounded-lg bg-white/5 text-white/40 opacity-0 group-hover:opacity-100 transition-all hover:bg-white/10 hover:text-white"
-                              >
-                                <Copy className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
-                            <div className="text-[12px] opacity-70 italic">{msg.content.split("\`\`\`")[2]}</div>
-                            {msg.role === "model" && (
-                              <button 
-                                onClick={() => onApplyRefactor(msg.content.split("\`\`\`")[1]?.split("\n").slice(1).join("\n"))}
-                                className="liquid-button-primary mt-2 w-full text-center py-3"
-                              >
-                                <Zap className="h-3.5 w-3.5 fill-current" />
-                                Optimize Codebase
-                              </button>
-                            )}
-                          </div>
-                        ) : (
-                          msg.content
-                        )}
+                        <ReactMarkdown 
+                          remarkPlugins={[remarkGfm]}
+                          components={MarkdownComponents}
+                        >
+                          {msg.content}
+                        </ReactMarkdown>
                       </div>
                     </motion.div>
                   ))}

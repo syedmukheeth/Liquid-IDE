@@ -463,12 +463,23 @@ builtins.input = input_shim
 
           {/* AI Assistant Button */}
           <button
-            onClick={() => setShowAiPanel(true)}
-            className="liquid-button-primary group"
-            style={{ height: 36, padding: '0 20px', fontSize: 11, gap: 8, background: 'linear-gradient(to right, #00D4FF, #8B5CF6)', color: '#0e131e', border: 'none', boxShadow: '0 0 15px rgba(0,212,255,0.4)' }}
+            onClick={() => setShowAiPanel(!showAiPanel)}
+            className={`liquid-button-primary group transition-all duration-300 ${showAiPanel ? 'brightness-125 scale-105' : ''}`}
+            style={{ 
+              height: 36, 
+              padding: '0 20px', 
+              fontSize: 11, 
+              gap: 8, 
+              background: showAiPanel ? 'linear-gradient(to right, #8B5CF6, #00D4FF)' : 'linear-gradient(to right, #00D4FF, #8B5CF6)', 
+              color: '#0e131e', 
+              border: 'none', 
+              boxShadow: showAiPanel ? '0 0 25px rgba(139,92,246,0.5)' : '0 0 15px rgba(0,212,255,0.4)' 
+            }}
           >
-            <Sparkles size={14} className="fill-current animate-pulse group-hover:scale-110 transition-transform" />
-            <span className="hidden md:inline font-black tracking-widest uppercase">SAM AI</span>
+            <Sparkles size={14} className={`fill-current ${showAiPanel ? '' : 'animate-pulse'} group-hover:scale-110 transition-transform`} />
+            <span className="hidden md:inline font-black tracking-widest uppercase">
+              {showAiPanel ? 'Active助理' : 'Sam AI'}
+            </span>
             <span className="md:hidden font-black tracking-widest uppercase">AI</span>
           </button>
 
@@ -515,119 +526,119 @@ builtins.input = input_shim
         </button>
       </div>
 
-      <main className="relative z-10 flex flex-1 flex-col md:flex-row overflow-hidden p-2 md:p-4 gap-2 md:gap-4">
-        <section className={`flex flex-col overflow-hidden gap-4 ${activeMobileTab === 'editor' ? 'flex-1' : 'hidden'} md:flex md:flex-[7]`}>
-          <div className="sam-glass flex flex-1 flex-col overflow-hidden" style={{ borderRadius: 16 }}>
-            <div className="flex h-11 shrink-0 items-center justify-between px-3 md:px-5" style={{ background: 'rgba(14,19,30,0.4)', borderBottom: '1px solid rgba(0,212,255,0.05)' }}>
-              <div className="flex items-center gap-2 md:gap-4">
-                <LanguageSelector activeLanguage={activeLangId} onLanguageChange={setActiveLangId} />
-                <div style={{ width: 1, height: 16, background: 'rgba(0,212,255,0.1)' }} className="hidden md:block" />
-                {/* File name badge */}
-                <span className="hidden md:inline font-mono tracking-wider animate-pulse" style={{ fontSize: 11, fontWeight: 500, color: 'rgba(0,212,255,0.4)' }}>
-                  {languageConfigs[activeLangId]?.name}
-                </span>
-              </div>
-              {/* Inline run button for editor toolbar */}
-              <button
-                id="editor-run-btn"
-                onClick={onRun}
-                disabled={busy}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '5px 14px', borderRadius: 7,
-                  border: '1px solid rgba(0,212,255,0.3)',
-                  background: busy ? 'rgba(0,212,255,0.04)' : 'rgba(0,212,255,0.08)',
-                  color: '#00D4FF',
-                  fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em',
-                  cursor: busy ? 'not-allowed' : 'pointer',
-                  opacity: busy ? 0.6 : 1,
-                  transition: 'all 0.2s',
-                  fontFamily: 'var(--font-body)',
-                }}
-              >
-                {busy ? (
-                  <div style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid rgba(0,212,255,0.2)', borderTopColor: '#00D4FF', animation: 'spin 0.8s linear infinite' }} />
-                ) : (
-                  <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" /></svg>
-                )}
-                Run
-              </button>
-            </div>
-            
-            <div className="flex-1 overflow-hidden relative">
-              <CodeEditor
-                key={`${sessionId}-${activeLangId}`}
-                language={activeLangId}
-                value={buffers[activeLangId]}
-                onChange={onCodeChange}
-                sessionId={`${sessionId}-${activeLangId}`}
-                userName={user?.name}
-                theme="vs-dark"
-                options={{
-                  fontSize: settings.fontSize,
-                  tabSize: settings.tabSize,
-                }}
-              />
-            </div>
-          </div>
-        </section>
-
-        <section className={`flex flex-col overflow-hidden gap-4 ${activeMobileTab === 'terminal' ? 'flex-1' : 'hidden'} md:flex md:flex-[3]`}>
-          <div className="sam-glass flex flex-1 flex-col overflow-hidden" style={{ borderRadius: 16, background: 'rgba(14,19,30,0.6)' }}>
-            <div className="flex h-11 shrink-0 items-center justify-between px-4 md:px-6" style={{ background: 'rgba(14,19,30,0.4)', borderBottom: '1px solid rgba(0,212,255,0.05)' }}>
-              <div className="flex items-center gap-2 md:gap-3">
-                <button
-                  onClick={onClear}
-                  title="Clear Output"
-                  style={{ padding: '5px', background: 'none', border: 'none', color: 'rgba(221,226,241,0.25)', cursor: 'pointer', borderRadius: 6, transition: 'all 0.2s' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = '#00D4FF'; e.currentTarget.style.background = 'rgba(0,212,255,0.06)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(221,226,241,0.25)'; e.currentTarget.style.background = 'none'; }}
-                >
-                  <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                </button>
-                <div style={{
-                  width: 7, height: 7, borderRadius: '50%',
-                  background: runStatus === 'Succeeded' ? '#22c55e' : runStatus === 'Failed' ? '#f43f5e' : busy ? '#00D4FF' : 'rgba(221,226,241,0.2)',
-                  boxShadow: runStatus === 'Succeeded' ? '0 0 10px #22c55e' : runStatus === 'Failed' ? '0 0 10px #f43f5e' : busy ? '0 0 10px #00D4FF' : 'none',
-                  animation: busy ? 'sam-pulse 1s infinite' : 'none',
-                  transition: 'all 0.5s',
-                }} />
-                <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(221,226,241,0.4)', fontFamily: 'var(--font-mono)' }}>
-                  {isWorkerOnline ? 'Terminal' : 'Cloud Output'}
-                </span>
-                {metrics && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 8, paddingLeft: 8, borderLeft: '1px solid rgba(0,212,255,0.1)' }}>
-                    <span style={{ fontSize: 9, fontWeight: 700, color: '#00D4FF', textTransform: 'uppercase', letterSpacing: '0.12em', fontFamily: 'var(--font-mono)' }}>
-                      {metrics.sandbox?.replace('docker-', '')}
-                    </span>
-                    <span style={{ fontSize: 9, fontWeight: 600, color: 'rgba(221,226,241,0.3)', fontFamily: 'var(--font-mono)' }}>
-                      {metrics.durationMs}ms
-                    </span>
-                  </div>
-                )}
-              </div>
-              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(221,226,241,0.25)', fontFamily: 'var(--font-body)' }}>{runStatus}</div>
-            </div>
-            
-            <div className="flex-1 overflow-hidden p-2 md:p-5 bg-black/40 relative">
-              <div ref={terminalRef} className="h-full w-full" />
-              
-              {!isWorkerOnline && busy && (
-                <div className="absolute top-4 left-4 right-4 z-10">
-                  <div className="text-[10px] font-bold text-amber-500/50 uppercase tracking-widest bg-amber-500/5 p-2 rounded-lg border border-amber-500/10 backdrop-blur-md">
-                     ⚠️ Cloud Sandbox - Interactivity limited. Run API locally for full stdin.
-                  </div>
+      <div className={`flex flex-1 overflow-hidden transition-all duration-500 ease-in-out ${showAiPanel ? 'md:pr-[450px] lg:pr-[500px]' : ''}`}>
+        <main className="relative z-10 flex flex-1 flex-col md:flex-row overflow-hidden p-2 md:p-4 gap-2 md:gap-4 transition-all duration-500">
+          <section className={`flex flex-col overflow-hidden gap-4 ${activeMobileTab === 'editor' ? 'flex-1' : 'hidden'} md:flex md:flex-[7]`}>
+            <div className="sam-glass flex flex-1 flex-col overflow-hidden" style={{ borderRadius: 16 }}>
+              <div className="flex h-11 shrink-0 items-center justify-between px-3 md:px-5" style={{ background: 'rgba(14,19,30,0.4)', borderBottom: '1px solid rgba(0,212,255,0.05)' }}>
+                <div className="flex items-center gap-2 md:gap-4">
+                  <LanguageSelector activeLanguage={activeLangId} onLanguageChange={setActiveLangId} />
+                  <div style={{ width: 1, height: 16, background: 'rgba(0,212,255,0.1)' }} className="hidden md:block" />
+                  <span className="hidden md:inline font-mono tracking-wider animate-pulse" style={{ fontSize: 11, fontWeight: 500, color: 'rgba(0,212,255,0.4)' }}>
+                    {languageConfigs[activeLangId]?.name}
+                  </span>
                 </div>
-              )}
+                <button
+                  id="editor-run-btn"
+                  onClick={onRun}
+                  disabled={busy}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '5px 14px', borderRadius: 7,
+                    border: '1px solid rgba(0,212,255,0.3)',
+                    background: busy ? 'rgba(0,212,255,0.04)' : 'rgba(0,212,255,0.08)',
+                    color: '#00D4FF',
+                    fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em',
+                    cursor: busy ? 'not-allowed' : 'pointer',
+                    opacity: busy ? 0.6 : 1,
+                    transition: 'all 0.2s',
+                    fontFamily: 'var(--font-body)',
+                  }}
+                >
+                  {busy ? (
+                    <div style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid rgba(0,212,255,0.2)', borderTopColor: '#00D4FF', animation: 'spin 0.8s linear infinite' }} />
+                  ) : (
+                    <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" /></svg>
+                  )}
+                  Run
+                </button>
+              </div>
+              
+              <div className="flex-1 overflow-hidden relative">
+                <CodeEditor
+                  key={`${sessionId}-${activeLangId}`}
+                  language={activeLangId}
+                  value={buffers[activeLangId]}
+                  onChange={onCodeChange}
+                  sessionId={`${sessionId}-${activeLangId}`}
+                  userName={user?.name}
+                  theme="vs-dark"
+                  options={{
+                    fontSize: settings.fontSize,
+                    tabSize: settings.tabSize,
+                  }}
+                />
+              </div>
             </div>
-
-            <div className="flex h-8 md:h-10 shrink-0 items-center justify-between px-4 md:px-6" style={{ borderTop: '1px solid rgba(0,212,255,0.06)', background: 'rgba(8,14,24,0.4)' }}>
-              <span style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(0,212,255,0.3)', fontFamily: 'var(--font-body)' }}>SAM-RUNTIME</span>
-              <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(221,226,241,0.2)', fontFamily: 'var(--font-mono)' }}>{languageConfigs[activeLangId]?.name}</span>
+          </section>
+  
+          <section className={`flex flex-col overflow-hidden gap-4 ${activeMobileTab === 'terminal' ? 'flex-1' : 'hidden'} md:flex md:flex-[3]`}>
+            <div className="sam-glass flex flex-1 flex-col overflow-hidden" style={{ borderRadius: 16, background: 'rgba(14,19,30,0.6)' }}>
+              <div className="flex h-11 shrink-0 items-center justify-between px-4 md:px-6" style={{ background: 'rgba(14,19,30,0.4)', borderBottom: '1px solid rgba(0,212,255,0.05)' }}>
+                <div className="flex items-center gap-2 md:gap-3">
+                  <button
+                    onClick={onClear}
+                    title="Clear Output"
+                    style={{ padding: '5px', background: 'none', border: 'none', color: 'rgba(221,226,241,0.25)', cursor: 'pointer', borderRadius: 6, transition: 'all 0.2s' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = '#00D4FF'; e.currentTarget.style.background = 'rgba(0,212,255,0.06)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(221,226,241,0.25)'; e.currentTarget.style.background = 'none'; }}
+                  >
+                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
+                  <div style={{
+                    width: 7, height: 7, borderRadius: '50%',
+                    background: runStatus === 'Succeeded' ? '#22c55e' : runStatus === 'Failed' ? '#f43f5e' : busy ? '#00D4FF' : 'rgba(221,226,241,0.2)',
+                    boxShadow: runStatus === 'Succeeded' ? '0 0 10px #22c55e' : runStatus === 'Failed' ? '0 0 10px #f43f5e' : busy ? '0 0 10px #00D4FF' : 'none',
+                    animation: busy ? 'sam-pulse 1s infinite' : 'none',
+                    transition: 'all 0.5s',
+                  }} />
+                  <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(221,226,241,0.4)', fontFamily: 'var(--font-mono)' }}>
+                    {isWorkerOnline ? 'Terminal' : 'Cloud Output'}
+                  </span>
+                  {metrics && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 8, paddingLeft: 8, borderLeft: '1px solid rgba(0,212,255,0.1)' }}>
+                      <span style={{ fontSize: 9, fontWeight: 700, color: '#00D4FF', textTransform: 'uppercase', letterSpacing: '0.12em', fontFamily: 'var(--font-mono)' }}>
+                        {metrics.sandbox?.replace('docker-', '')}
+                      </span>
+                      <span style={{ fontSize: 9, fontWeight: 600, color: 'rgba(221,226,241,0.3)', fontFamily: 'var(--font-mono)' }}>
+                        {metrics.durationMs}ms
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(221,226,241,0.25)', fontFamily: 'var(--font-body)' }}>{runStatus}</div>
+              </div>
+              
+              <div className="flex-1 overflow-hidden p-2 md:p-5 bg-black/40 relative">
+                <div ref={terminalRef} className="h-full w-full" />
+                
+                {!isWorkerOnline && busy && (
+                  <div className="absolute top-4 left-4 right-4 z-10">
+                    <div className="text-[10px] font-bold text-amber-500/50 uppercase tracking-widest bg-amber-500/5 p-2 rounded-lg border border-amber-500/10 backdrop-blur-md">
+                       ⚠️ Cloud Sandbox - Interactivity limited. Run API locally for full stdin.
+                    </div>
+                  </div>
+                )}
+              </div>
+  
+              <div className="flex h-8 md:h-10 shrink-0 items-center justify-between px-4 md:px-6" style={{ borderTop: '1px solid rgba(0,212,255,0.06)', background: 'rgba(8,14,24,0.4)' }}>
+                <span style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(0,212,255,0.3)', fontFamily: 'var(--font-body)' }}>SAM-RUNTIME</span>
+                <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(221,226,241,0.2)', fontFamily: 'var(--font-mono)' }}>{languageConfigs[activeLangId]?.name}</span>
+              </div>
             </div>
-          </div>
-        </section>
-      </main>
+          </section>
+        </main>
+      </div>
 
       <footer className="relative z-20 flex h-10 shrink-0 items-center justify-between px-4 md:px-6 sam-glass border-x-0 border-b-0 border-t border-[#00D4FF]/10 mt-2" style={{ background: 'rgba(14,19,30,0.9)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>

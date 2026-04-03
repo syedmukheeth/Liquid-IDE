@@ -198,7 +198,6 @@ async function getQueueStatus() {
         try {
           workerStats = JSON.parse(heartbeat);
         } catch (e) {
-          // Compatibility with old timestamp-based heartbeat
           workerStats = { timestamp: heartbeat };
         }
       }
@@ -207,13 +206,18 @@ async function getQueueStatus() {
     }
   }
 
+  const isSandbox = !redis;
+  if (isSandbox) {
+    workerOnline = true; // In sandbox mode, the API node itself is the worker (Piston fallback)
+  }
+
   const isCloud = !!process.env.RENDER;
 
   return {
     online: true, 
     workerOnline,
-    workerStats,
-    version: "1.0.0-ENTERPRISE",
+    workerStats: workerStats || { status: isSandbox ? "sandbox-mode" : "idle", activeJobs: 0 },
+    version: "2.1.0-ENTERPRISE",
     mode: isVercel ? "cloud-native" : "hybrid-distributed",
     regions: [
       { id: "us-east-1", name: "US East (N. Virginia)", status: "online", latency: "24ms" },

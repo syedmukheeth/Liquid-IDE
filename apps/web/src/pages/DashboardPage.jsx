@@ -8,6 +8,8 @@ import {
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
+import ENDPOINTS from "../services/endpoints";
+
 const COLORS = ["#00D4FF", "#8B5CF6", "#22c55e", "#f59e0b", "#f43f5e", "#3cd7ff"];
 
 export default function DashboardPage() {
@@ -19,8 +21,8 @@ export default function DashboardPage() {
   const fetchData = async () => {
     try {
       const [statsRes, queueRes] = await Promise.all([
-        fetch("/api/runs/health/stats"),
-        fetch("/api/runs/health/queue")
+        fetch(`${ENDPOINTS.API_BASE_URL}/api/runs/health/stats`),
+        fetch(`${ENDPOINTS.API_BASE_URL}/api/runs/health/queue`)
       ]);
       if (statsRes.ok) setStats(await statsRes.json());
       if (queueRes.ok) setQueueStatus(await queueRes.json());
@@ -57,7 +59,8 @@ export default function DashboardPage() {
     );
   }
 
-  const overallSuccessRate = stats?.executionStats?.reduce((acc, curr) => acc + curr.successRate, 0) / (stats?.executionStats?.length || 1);
+  const rateRaw = stats?.executionStats?.reduce((acc, curr) => acc + curr.successRate, 0) / (stats?.executionStats?.length || 1);
+  const overallSuccessRate = isNaN(rateRaw) ? 0 : rateRaw;
 
   return (
     <div className="relative min-h-screen w-full p-4 md:p-8 font-sans text-white overflow-hidden selection:bg-[#00D4FF]/30" style={{ background: 'var(--sam-bg)' }}>
@@ -99,7 +102,7 @@ export default function DashboardPage() {
         <KpiCard 
           icon={<Zap className="text-emerald-400" />} 
           title="Success Rate" 
-          value={`${overallSuccessRate?.toFixed(1) || 0}%`} 
+          value={`${(overallSuccessRate || 0).toFixed(1)}%`} 
           subtext="Last 24 hours"
           color="emerald"
         />
@@ -264,8 +267,8 @@ export default function DashboardPage() {
               <div className="flex flex-col gap-4">
                  <HealthItem 
                    status={queueStatus?.online ? "success" : "error"} 
-                   label="API Proxy Gateway" 
-                   desc="Vercel Function / Node.js API"
+                   label="Edge Gateway" 
+                   desc="Enterprise Edge / SSL Proxy"
                  />
                  <HealthItem 
                    status={queueStatus?.workerOnline ? "success" : "warning"} 
