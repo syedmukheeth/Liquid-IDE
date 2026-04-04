@@ -49,8 +49,8 @@ export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin }) {
           marginBottom: 28,
           padding: 4,
           borderRadius: 10,
-          background: "rgba(0,212,255,0.04)",
-          border: "1px solid rgba(0,212,255,0.1)",
+          background: "rgba(255,255,255,0.04)",
+          border: "1px solid rgba(255,255,255,0.1)",
         }}>
           {["Sign In", "Create Account"].map((tab, i) => {
             const active = i === 0 ? isLoginTab : !isLoginTab;
@@ -71,10 +71,10 @@ export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin }) {
                   cursor: "pointer",
                   transition: "all 0.25s",
                   background: active
-                    ? "linear-gradient(135deg, #00D4FF, #8B5CF6)"
+                    ? "linear-gradient(135deg, #FFFFFF 0%, #A3A3A3 100%)"
                     : "transparent",
-                  color: active ? "#001f27" : "rgba(221,226,241,0.4)",
-                  boxShadow: active ? "0 0 16px rgba(0,212,255,0.4)" : "none",
+                  color: active ? "#000000" : "rgba(221,226,241,0.4)",
+                  boxShadow: active ? "0 0 16px rgba(255,255,255,0.1)" : "none",
                   fontFamily: "var(--font-body)",
                 }}
               >
@@ -89,9 +89,9 @@ export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin }) {
             marginBottom: 20,
             padding: "12px 16px",
             borderRadius: 8,
-            border: "1px solid rgba(244,63,94,0.3)",
-            background: "rgba(244,63,94,0.08)",
-            color: "#f43f5e",
+            border: "1px solid rgba(255,255,255,0.2)",
+            background: "rgba(255,255,255,0.05)",
+            color: "#FFFFFF",
             fontSize: 12,
             fontWeight: 600,
           }}>
@@ -158,9 +158,9 @@ export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin }) {
 
         {/* Divider */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-          <div style={{ flex: 1, height: 1, background: "rgba(0,212,255,0.1)" }} />
+          <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
           <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(221,226,241,0.2)", textTransform: "uppercase", letterSpacing: "0.12em" }}>or with email</span>
-          <div style={{ flex: 1, height: 1, background: "rgba(0,212,255,0.1)" }} />
+          <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
         </div>
 
         {/* Form */}
@@ -221,15 +221,15 @@ export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin }) {
               padding: "14px 0",
               borderRadius: 10,
               border: "none",
-              background: "linear-gradient(135deg, #00D4FF 0%, #8B5CF6 100%)",
-              color: "#001f27",
+              background: "linear-gradient(135deg, #FFFFFF 0%, #A3A3A3 100%)",
+              color: "#000000",
               fontSize: 12,
               fontWeight: 800,
               textTransform: "uppercase",
               letterSpacing: "0.15em",
               cursor: isLoading ? "not-allowed" : "pointer",
               opacity: isLoading ? 0.7 : 1,
-              boxShadow: "0 0 20px rgba(0,212,255,0.45)",
+              boxShadow: "0 0 20px rgba(255,255,255,0.15)",
               transition: "all 0.3s",
               display: "flex",
               alignItems: "center",
@@ -254,7 +254,7 @@ export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin }) {
           <button
             type="button"
             onClick={() => { setIsLoginTab(!isLoginTab); setError(null); }}
-            style={{ color: "#00D4FF", background: "none", border: "none", cursor: "pointer", fontWeight: 700, textDecoration: "underline" }}
+            style={{ color: "#FFFFFF", background: "none", border: "none", cursor: "pointer", fontWeight: 700, textDecoration: "underline" }}
           >
             {isLoginTab ? "Create free account" : "Sign in here"}
           </button>

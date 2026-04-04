@@ -23,10 +23,10 @@
   --sam-accent-dim:    #E0E0E0;
   --sam-accent-muted:  rgba(255,255,255,0.1);
   
-  /* Status Indicators (Minimalist) */
-  --sam-green:         #22c55e;
-  --sam-red:           #f43f5e;
-  --sam-amber:         #f59e0b;
+  /* Status Indicators (Absolute Monochrome) */
+  --sam-green:         var(--sam-accent);
+  --sam-red:           var(--sam-text-muted);
+  --sam-amber:         var(--sam-text-dim);
 
   --sam-glass-bg:      rgba(10,10,10,0.7);
   --sam-glass-border:  rgba(255,255,255,0.06);

@@ -10,7 +10,7 @@ import { Link } from "react-router-dom";
 
 import ENDPOINTS from "../services/endpoints";
 
-const COLORS = ["#00D4FF", "#8B5CF6", "#22c55e", "#f59e0b", "#f43f5e", "#3cd7ff"];
+const COLORS = ["#FFFFFF", "#D4D4D4", "#A3A3A3", "#737373", "#525252", "#404040"];
 
 export default function DashboardPage() {
   const [stats, setStats] = useState(null);
@@ -83,9 +83,9 @@ export default function DashboardPage() {
         </div>
         
         <div className="flex items-center gap-3">
-           <div className="flex h-10 items-center gap-2 rounded-xl px-4" style={{ border: '1px solid rgba(0,212,255,0.12)', background: 'rgba(0,212,255,0.05)' }}>
-             <ShieldCheck className="h-4 w-4" style={{ color: '#00D4FF' }} />
-             <span style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(0,212,255,0.7)', fontFamily: 'var(--font-body)' }}>SAM Engine v1.0</span>
+           <div className="flex h-10 items-center gap-2 rounded-xl px-4" style={{ border: '1px solid var(--sam-glass-border)', background: 'rgba(255,255,255,0.05)' }}>
+             <ShieldCheck className="h-4 w-4 text-[var(--sam-accent)]" />
+             <span style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'rgba(255,255,255,0.7)', fontFamily: 'var(--font-body)' }}>SAM Engine v1.0</span>
            </div>
         </div>
       </header>
@@ -93,32 +93,32 @@ export default function DashboardPage() {
       {/* KPI Section */}
       <div className="relative z-20 mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard 
-          icon={<Activity className="text-blue-400" />} 
+          icon={<Activity className="text-white" />} 
           title="Availability" 
           value={queueStatus?.workerOnline ? "100%" : "Degraded"} 
           subtext={queueStatus?.workerOnline ? "Worker node active" : "Cloud fallback active"}
-          color="blue"
+          color="white"
         />
         <KpiCard 
-          icon={<Zap className="text-emerald-400" />} 
+          icon={<Zap className="text-white" />} 
           title="Success Rate" 
           value={`${(overallSuccessRate || 0).toFixed(1)}%`} 
           subtext="Last 24 hours"
-          color="emerald"
+          color="white"
         />
         <KpiCard 
-          icon={<Clock className="text-purple-400" />} 
+          icon={<Clock className="text-white/60" />} 
           title="Avg Latency" 
           value={`${(stats?.executionStats?.[0]?.avgDurationMs || 0).toFixed(0)} ms`} 
           subtext="Across all runtimes"
-          color="purple"
+          color="white"
         />
         <KpiCard 
-          icon={<Database className="text-amber-400" />} 
+          icon={<Database className="text-white/60" />} 
           title="Throughput" 
           value={stats?.executionStats?.reduce((a, b) => a + b.count, 0) || 0} 
           subtext="Runs in last 24h"
-          color="amber"
+          color="white"
         />
       </div>
 
@@ -135,8 +135,8 @@ export default function DashboardPage() {
                   <AreaChart data={stats?.throughput}>
                     <defs>
                       <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#FFFFFF" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="#FFFFFF" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
@@ -146,7 +146,7 @@ export default function DashboardPage() {
                       contentStyle={{ backgroundColor: "#111", border: "1px solid #ffffff10", borderRadius: "12px", fontSize: "12px" }} 
                       itemStyle={{ color: "#fff" }}
                     />
-                    <Area type="monotone" dataKey="count" stroke="#00D4FF" strokeWidth={3} fillOpacity={1} fill="url(#colorCount)" />
+                    <Area type="monotone" dataKey="count" stroke="#FFFFFF" strokeWidth={3} fillOpacity={1} fill="url(#colorCount)" />
                   </AreaChart>
                 </ResponsiveContainer>
              </div>
@@ -165,7 +165,7 @@ export default function DashboardPage() {
                 {queueStatus?.regions?.map((reg) => (
                   <div key={reg.id} className="group relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.02] p-4 transition-all hover:bg-white/[0.05] hover:border-white/10">
                      <div className="mb-3 flex items-center justify-between">
-                        <span className={`h-1.5 w-1.5 rounded-full ${reg.status === "online" ? "bg-emerald-500 shadow-[0_0_8px_#10b981]" : "bg-amber-500 animate-pulse shadow-[0_0_8px_#f59e0b]"}`} />
+                        <span className={`h-1.5 w-1.5 rounded-full ${reg.status === "online" ? "bg-white shadow-[0_0_8px_white]" : "bg-white/20 animate-pulse"}`} />
                         <span className="text-[10px] font-black tabular-nums text-white/20 uppercase tracking-widest">{reg.latency}</span>
                      </div>
                      <div className="text-[10px] font-black text-white uppercase tracking-widest mb-1">{reg.name}</div>
@@ -254,7 +254,7 @@ export default function DashboardPage() {
                 <div className="mt-4 flex flex-col gap-2 rounded-xl bg-white/[0.03] p-4 border border-white/5">
                   <div className="flex items-center justify-between">
                      <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Active Jobs</span>
-                     <span className="text-lg font-black text-blue-400">{queueStatus?.workerStats?.activeJobs || 0}</span>
+                     <span className="text-lg font-black text-white">{queueStatus?.workerStats?.activeJobs || 0}</span>
                   </div>
                   <div className="text-[10px] text-white/20 italic">Currently being processed by multiSandbox.js</div>
                 </div>
@@ -307,10 +307,8 @@ export default function DashboardPage() {
 
 function KpiCard({ icon, title, value, subtext, color }) {
   const colorMap = {
-    blue: "text-blue-400",
-    emerald: "text-emerald-400",
-    purple: "text-purple-400",
-    amber: "text-amber-400"
+    white: "text-white",
+    gray: "text-white/40"
   };
   
   return (
@@ -335,7 +333,7 @@ function KpiCard({ icon, title, value, subtext, color }) {
 
 function LoadMeter({ label, value, max, formattedValue, sub }) {
   const percentage = Math.min(100, (value / (max || 1)) * 100);
-  const colorClass = percentage > 80 ? "bg-rose-500 shadow-[0_0_10px_#f43f5e]" : percentage > 50 ? "bg-amber-500 shadow-[0_0_10px_#f59e0b]" : "bg-blue-500 shadow-[0_0_10px_#3b82f6]";
+  const colorClass = percentage > 80 ? "bg-white shadow-[0_0_10px_white]" : percentage > 50 ? "bg-white/60 shadow-[0_0_10px_rgba(255,255,255,0.3)]" : "bg-white/30";
 
   return (
     <div className="flex flex-col gap-2">

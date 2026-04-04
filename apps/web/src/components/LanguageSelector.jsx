@@ -33,18 +33,18 @@ export default function LanguageSelector({ activeLanguage, onLanguageChange }) {
           gap: 8,
           padding: "6px 12px",
           borderRadius: 8,
-          border: "1px solid rgba(0,212,255,0.15)",
-          background: "rgba(0,212,255,0.04)",
+          border: "1px solid rgba(255,255,255,0.15)",
+          background: "rgba(255,255,255,0.04)",
           transition: "all 0.25s",
           cursor: "pointer",
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = "rgba(0,212,255,0.09)";
-          e.currentTarget.style.borderColor = "rgba(0,212,255,0.35)";
+          e.currentTarget.style.background = "rgba(255,255,255,0.09)";
+          e.currentTarget.style.borderColor = "rgba(255,255,255,0.35)";
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.background = "rgba(0,212,255,0.04)";
-          e.currentTarget.style.borderColor = "rgba(0,212,255,0.15)";
+          e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+          e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
         }}
       >
         <img
@@ -64,7 +64,7 @@ export default function LanguageSelector({ activeLanguage, onLanguageChange }) {
         <ChevronDown
           size={12}
           style={{
-            color: "#00D4FF",
+            color: "#FFFFFF",
             transform: isOpen ? "rotate(180deg)" : "none",
             transition: "transform 0.25s",
           }}
@@ -79,10 +79,10 @@ export default function LanguageSelector({ activeLanguage, onLanguageChange }) {
             left: 0,
             minWidth: 180,
             borderRadius: 12,
-            border: "1px solid rgba(0,212,255,0.18)",
+            border: "1px solid rgba(255,255,255,0.18)",
             background: "rgba(14,19,30,0.95)",
             backdropFilter: "blur(20px)",
-            boxShadow: "0 20px 50px rgba(0,0,0,0.6), 0 0 30px rgba(0,212,255,0.06)",
+            boxShadow: "0 20px 50px rgba(0,0,0,0.6), 0 0 30px rgba(255,255,255,0.05)",
             zIndex: 60,
             padding: 6,
             animation: "fadeInDown 0.18s ease",
@@ -103,8 +103,8 @@ export default function LanguageSelector({ activeLanguage, onLanguageChange }) {
                   padding: "8px 10px",
                   borderRadius: 8,
                   border: "none",
-                  background: isActive ? "rgba(0,212,255,0.10)" : "transparent",
-                  color: isActive ? "#00D4FF" : "rgba(221,226,241,0.5)",
+                  background: isActive ? "rgba(255,255,255,0.10)" : "transparent",
+                  color: isActive ? "#FFFFFF" : "rgba(221,226,241,0.5)",
                   cursor: "pointer",
                   transition: "all 0.2s",
                   textAlign: "left",
@@ -112,7 +112,7 @@ export default function LanguageSelector({ activeLanguage, onLanguageChange }) {
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive) {
-                    e.currentTarget.style.background = "rgba(0,212,255,0.06)";
+                    e.currentTarget.style.background = "rgba(255,255,255,0.06)";
                     e.currentTarget.style.color = "#dde2f1";
                   }
                 }}
@@ -131,8 +131,8 @@ export default function LanguageSelector({ activeLanguage, onLanguageChange }) {
                     width: 6,
                     height: 6,
                     borderRadius: "50%",
-                    background: "#00D4FF",
-                    boxShadow: "0 0 8px #00D4FF",
+                    background: "#FFFFFF",
+                    boxShadow: "0 0 8px white",
                   }} />
                 )}
               </button>

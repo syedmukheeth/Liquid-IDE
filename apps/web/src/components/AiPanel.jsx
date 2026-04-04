@@ -116,11 +116,11 @@ export default function AiPanel({
       if (!inline && match) {
         return (
           <div className="group relative my-6">
-            <div className="absolute -top-3 left-4 px-2 py-0.5 bg-[#00D4FF] text-[#0e131e] text-[9px] font-black uppercase tracking-tighter rounded-md z-10">
+            <div className="absolute -top-3 left-4 px-2 py-0.5 bg-[var(--sam-accent)] text-[var(--sam-bg)] text-[9px] font-black uppercase tracking-tighter rounded-md z-10">
               {match[1]}
             </div>
             <div className="rounded-2xl bg-black/60 border border-white/5 overflow-hidden shadow-2xl backdrop-blur-xl">
-              <pre className="p-5 font-mono text-[12px] leading-relaxed text-emerald-400 overflow-x-auto scrollbar-hide">
+              <pre className="p-5 font-mono text-[12px] leading-relaxed text-white/80 overflow-x-auto scrollbar-hide">
                 <code className={className} {...props}>
                   {children}
                 </code>
@@ -134,7 +134,7 @@ export default function AiPanel({
                 </button>
                 <button 
                   onClick={() => onApplyRefactor(codeStr)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#00D4FF]/10 text-[10px] font-bold text-[#00D4FF] hover:bg-[#00D4FF]/20 hover:text-white transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-[10px] font-bold text-white hover:bg-white hover:text-black transition-all"
                 >
                   <Zap size={12} fill="currentColor" /> Apply
                 </button>
@@ -145,7 +145,7 @@ export default function AiPanel({
       }
 
       return (
-        <code className="bg-white/10 px-1.5 py-0.5 rounded-md font-mono text-cyan-400" {...props}>
+        <code className="bg-white/10 px-1.5 py-0.5 rounded-md font-mono text-white" {...props}>
           {children}
         </code>
       );
@@ -154,7 +154,7 @@ export default function AiPanel({
     ul: ({ children }) => <ul className="mb-4 space-y-2 list-none">{children}</ul>,
     li: ({ children }) => (
       <li className="flex gap-3">
-        <span className="mt-1.5 h-1.5 w-1.5 flex-none rounded-full bg-[#00D4FF] shadow-[0_0_8px_rgba(0,212,255,0.6)]" />
+        <span className="mt-1.5 h-1.5 w-1.5 flex-none rounded-full bg-white/40 shadow-[0_0_8px_rgba(255,255,255,0.2)]" />
         <span>{children}</span>
       </li>
     ),
@@ -163,7 +163,7 @@ export default function AiPanel({
         href={href} 
         target="_blank" 
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1 text-[#00D4FF] hover:underline hover:text-[#8B5CF6] transition-colors"
+        className="inline-flex items-center gap-1 text-white hover:underline hover:opacity-100 transition-colors"
       >
         {children} <ExternalLink size={10} />
       </a>
@@ -192,25 +192,24 @@ export default function AiPanel({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: "100%", opacity: 0.5 }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 z-[65] h-screen w-full border-l border-[#00D4FF]/20 bg-[#0e131e]/90 shadow-[-20px_0_50px_rgba(0,0,0,0.5)] backdrop-blur-3xl md:w-[450px] lg:w-[500px]"
+            className="fixed right-0 top-0 z-[65] h-screen w-full border-l border-white/5 bg-black shadow-[-20px_0_50px_rgba(0,0,0,0.5)] backdrop-blur-3xl md:w-[450px] lg:w-[500px]"
           >
             {/* Ambient Background Glow */}
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
-               <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[#00D4FF]/10 blur-[80px]" />
-               <div className="absolute -bottom-32 -left-20 h-80 w-80 rounded-full bg-[#8B5CF6]/10 blur-[100px]" />
+               <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/5 blur-[80px]" />
             </div>
 
             <div className="relative flex h-full flex-col z-10">
               {/* Header */}
-              <div className="flex h-20 items-center justify-between border-b border-[#00D4FF]/10 px-8">
+              <div className="flex h-20 items-center justify-between border-b border-white/5 px-8">
                 <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[#00D4FF] to-[#8B5CF6] text-[#0e131e] shadow-lg shadow-[#00D4FF]/30">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-black shadow-lg shadow-white/10">
                     <Sparkles className="h-5 w-5" />
                   </div>
                   <div>
                     <h2 className="text-base font-black tracking-tight text-white sam-headline">Sam AI</h2>
-                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#00D4FF] uppercase tracking-widest opacity-90 text-label">
-                       <div className="h-1.5 w-1.5 rounded-full bg-[#00D4FF] shadow-[0_0_8px_rgba(0,212,255,0.8)] animate-pulse" />
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-white/40 uppercase tracking-widest opacity-90 text-label">
+                       <div className="h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)] animate-pulse" />
                        Intelligence Active
                     </div>
                   </div>
@@ -232,8 +231,8 @@ export default function AiPanel({
                     >
                       <div className={`max-w-[95%] rounded-3xl px-5 py-4 text-[13px] leading-[1.6] shadow-xl ${
                         msg.role === "user" 
-                          ? "bg-[#00D4FF]/10 text-white border border-[#00D4FF]/30 rounded-tr-none shadow-[0_0_15px_rgba(0,212,255,0.1)]" 
-                          : "bg-white/[0.03] text-white/90 border border-[#8B5CF6]/20 backdrop-blur-xl rounded-tl-none"
+                          ? "bg-white/10 text-white border border-white/10 rounded-tr-none shadow-2xl" 
+                          : "bg-white/5 text-white/90 border border-white/5 backdrop-blur-xl rounded-tl-none"
                       }`}>
                         <ReactMarkdown 
                           remarkPlugins={[remarkGfm]}
@@ -245,35 +244,35 @@ export default function AiPanel({
                     </motion.div>
                   ))}
                   {loading && (
-                    <div className="flex items-center gap-3 text-[#00D4FF]/70 ml-2">
-                       <span className="sam-dot sam-dot-cyan"></span>
-                       <span className="text-label ml-1 opacity-70 text-[#00D4FF]">Sam AI is thinking</span>
+                    <div className="flex items-center gap-3 text-white/40 ml-2">
+                       <div className="h-1.5 w-1.5 rounded-full bg-white/40 animate-pulse" />
+                       <span className="text-[10px] font-bold uppercase tracking-widest ml-1 opacity-70">Sam AI is thinking</span>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Input Area */}
-              <div className="border-t border-[#00D4FF]/10 p-8 bg-[rgba(8,14,24,0.6)] backdrop-blur-md">
+              <div className="border-t border-white/5 p-8 bg-black/40 backdrop-blur-md">
                 <div className="mb-5 flex flex-wrap gap-2.5">
                   <ChatQuickAction icon={<Zap />} label="Optimize" onClick={handleRefactor} />
                   <ChatQuickAction icon={<Check />} label="Fix Bugs" onClick={() => setInput("Identify and fix potential issues in this code.")} />
                   <ChatQuickAction icon={<Terminal />} label="Explain" onClick={() => setInput("Explain the logic used here in simple terms.")} />
                 </div>
                 <form onSubmit={handleSendMessage} className="relative group">
-                  <div className="absolute -inset-0.5 rounded-[24px] bg-gradient-to-r from-[#00D4FF]/30 to-[#8B5CF6]/30 opacity-0 blur transition duration-500 group-focus-within:opacity-100" />
+                  <div className="absolute -inset-0.5 rounded-[24px] bg-white/10 opacity-0 blur transition duration-500 group-focus-within:opacity-100" />
                   <textarea
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Ask Sam AI anything..."
-                    className="relative h-28 w-full resize-none rounded-[22px] border border-[#00D4FF]/20 bg-[rgba(0,0,0,0.4)] p-5 text-sm text-white placeholder:text-[#dde2f1]/30 focus:border-[#00D4FF]/50 focus:outline-none transition-all scrollbar-hide shadow-2xl backdrop-blur-sm"
+                    className="relative h-28 w-full resize-none rounded-[22px] border border-white/10 bg-black/40 p-5 text-sm text-white placeholder:text-white/20 focus:border-white/30 focus:outline-none transition-all scrollbar-hide shadow-2xl backdrop-blur-sm"
                     onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), handleSendMessage())}
                   />
                   <button 
                     disabled={!input.trim() || loading}
-                    className="absolute bottom-4 right-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[#00D4FF] to-[#8B5CF6] text-[#0e131e] transition-all hover:scale-110 hover:brightness-110 active:scale-90 disabled:opacity-20 disabled:grayscale shadow-lg shadow-[#00D4FF]/40"
+                    className="absolute bottom-4 right-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-black transition-all hover:scale-110 hover:brightness-110 active:scale-90 disabled:opacity-20 disabled:grayscale shadow-lg shadow-white/40"
                   >
-                    {loading ? <RefreshCw className="h-4 w-4 animate-spin text-[#0e131e]" /> : <Send className="h-4 w-4" />}
+                    {loading ? <RefreshCw className="h-4 w-4 animate-spin text-black" /> : <Send className="h-4 w-4" />}
                   </button>
                 </form>
               </div>
@@ -289,9 +288,9 @@ function ChatQuickAction({ icon, label, onClick }) {
   return (
     <button 
       onClick={onClick}
-      className="flex items-center gap-2.5 rounded-xl border border-[#00D4FF]/10 bg-[#00D4FF]/5 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-[#dde2f1]/60 transition-all hover:bg-[#00D4FF]/10 hover:text-white hover:border-[#00D4FF]/40 active:scale-95"
+      className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-white/40 transition-all hover:bg-white/10 hover:text-white hover:border-white/20 active:scale-95"
     >
-      {React.cloneElement(icon, { size: 13, className: "opacity-70 text-[#00D4FF]" })}
+      {React.cloneElement(icon, { size: 13, className: "opacity-70 text-white" })}
       {label}
     </button>
   );

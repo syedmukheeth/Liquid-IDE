@@ -22,8 +22,8 @@ export default function SettingsModal({ isOpen, onClose, isDarkMode, settings, o
           gap: 4,
           padding: 4,
           borderRadius: 10,
-          background: "rgba(0,212,255,0.04)",
-          border: "1px solid rgba(0,212,255,0.1)",
+          background: "rgba(255,255,255,0.04)",
+          border: "1px solid rgba(255,255,255,0.1)",
         }}>
           {tabs.map(({ id, label, Icon }) => {
             const active = activeTab === id;
@@ -47,9 +47,9 @@ export default function SettingsModal({ isOpen, onClose, isDarkMode, settings, o
                   textTransform: "uppercase",
                   cursor: "pointer",
                   transition: "all 0.25s",
-                  background: active ? "rgba(0,212,255,0.12)" : "transparent",
-                  color: active ? "#00D4FF" : "rgba(221,226,241,0.3)",
-                  boxShadow: active ? "0 0 12px rgba(0,212,255,0.2)" : "none",
+                  background: active ? "rgba(255,255,255,0.1)" : "transparent",
+                  color: active ? "#FFFFFF" : "rgba(221,226,241,0.3)",
+                  boxShadow: active ? "0 0 12px rgba(255,255,255,0.05)" : "none",
                   fontFamily: "var(--font-body)",
                 }}
               >
@@ -81,9 +81,9 @@ export default function SettingsModal({ isOpen, onClose, isDarkMode, settings, o
                     style={{
                       width: 32, height: 32,
                       borderRadius: 8,
-                      border: "1px solid rgba(0,212,255,0.15)",
-                      background: "rgba(0,212,255,0.05)",
-                      color: "#00D4FF",
+                      border: "1px solid rgba(255,255,255,0.15)",
+                      background: "rgba(255,255,255,0.05)",
+                      color: "#FFFFFF",
                       cursor: "pointer",
                       fontSize: 16,
                       fontWeight: 700,
@@ -92,7 +92,7 @@ export default function SettingsModal({ isOpen, onClose, isDarkMode, settings, o
                     }}
                   >{op}</button>
                 ))}
-                <span style={{ fontSize: 16, fontWeight: 800, color: "#00D4FF", minWidth: 28, textAlign: "center", fontFamily: "var(--font-mono)" }}>
+                <span style={{ fontSize: 16, fontWeight: 800, color: "#FFFFFF", minWidth: 28, textAlign: "center", fontFamily: "var(--font-mono)" }}>
                   {settings.fontSize || 14}
                 </span>
               </div>
@@ -106,7 +106,7 @@ export default function SettingsModal({ isOpen, onClose, isDarkMode, settings, o
                 <p style={{ fontSize: 12, fontWeight: 700, color: "#dde2f1", fontFamily: "var(--font-body)", marginBottom: 4 }}>Tab Size</p>
                 <p style={{ fontSize: 10, color: "rgba(221,226,241,0.3)", fontFamily: "var(--font-body)" }}>Spaces per indentation level</p>
               </div>
-              <div style={{ display: "flex", gap: 6, padding: 4, borderRadius: 8, background: "rgba(0,212,255,0.04)", border: "1px solid rgba(0,212,255,0.1)" }}>
+              <div style={{ display: "flex", gap: 6, padding: 4, borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
                 {[2, 4, 8].map(size => (
                   <button
                     key={size}
@@ -120,9 +120,9 @@ export default function SettingsModal({ isOpen, onClose, isDarkMode, settings, o
                       fontWeight: 700,
                       cursor: "pointer",
                       transition: "all 0.2s",
-                      background: settings.tabSize === size ? "rgba(0,212,255,0.15)" : "transparent",
-                      color: settings.tabSize === size ? "#00D4FF" : "rgba(221,226,241,0.3)",
-                      boxShadow: settings.tabSize === size ? "0 0 10px rgba(0,212,255,0.2)" : "none",
+                      background: settings.tabSize === size ? "rgba(255,255,255,0.15)" : "transparent",
+                      color: settings.tabSize === size ? "#FFFFFF" : "rgba(221,226,241,0.3)",
+                      boxShadow: settings.tabSize === size ? "0 0 10px rgba(255,255,255,0.1)" : "none",
                       fontFamily: "var(--font-mono)",
                     }}
                   >{size}</button>
@@ -138,10 +138,10 @@ export default function SettingsModal({ isOpen, onClose, isDarkMode, settings, o
             <div style={{
               width: 80, height: 80,
               borderRadius: 20,
-              background: "linear-gradient(135deg, #00D4FF, #8B5CF6)",
+              background: "linear-gradient(135deg, #FFFFFF, #737373)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 0 30px rgba(0,212,255,0.35)",
-              fontSize: 32, fontWeight: 900, color: "#001f27",
+              boxShadow: "0 0 30px rgba(255,255,255,0.1)",
+              fontSize: 32, fontWeight: 900, color: "#000000",
               fontFamily: "var(--font-display)",
             }}>S</div>
             <div style={{ textAlign: "center" }}>
@@ -152,10 +152,10 @@ export default function SettingsModal({ isOpen, onClose, isDarkMode, settings, o
                 display: "inline-block",
                 padding: "4px 14px",
                 borderRadius: 20,
-                background: "rgba(0,212,255,0.08)",
-                border: "1px solid rgba(0,212,255,0.2)",
+                background: "rgba(255,255,255,0.08)",
+                border: "1px solid rgba(255,255,255,0.2)",
                 fontSize: 10, fontWeight: 700,
-                color: "#00D4FF",
+                color: "#FFFFFF",
                 textTransform: "uppercase",
                 letterSpacing: "0.1em",
                 fontFamily: "var(--font-body)",
@@ -165,13 +165,13 @@ export default function SettingsModal({ isOpen, onClose, isDarkMode, settings, o
               padding: "12px 32px",
               borderRadius: 10,
               border: "none",
-              background: "linear-gradient(135deg, #00D4FF, #8B5CF6)",
-              color: "#001f27",
+              background: "linear-gradient(135deg, #FFFFFF, #737373)",
+              color: "#000000",
               fontSize: 11, fontWeight: 800,
               textTransform: "uppercase",
               letterSpacing: "0.15em",
               cursor: "pointer",
-              boxShadow: "0 0 18px rgba(0,212,255,0.4)",
+              boxShadow: "0 0 18px rgba(255,255,255,0.2)",
               fontFamily: "var(--font-body)",
             }}>
               Upgrade to SAM Pro
@@ -185,12 +185,12 @@ export default function SettingsModal({ isOpen, onClose, isDarkMode, settings, o
             <div style={{
               padding: 20,
               borderRadius: 12,
-              background: "rgba(0,212,255,0.04)",
-              border: "1px solid rgba(0,212,255,0.12)",
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.12)",
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 10px #22c55e", animation: "sam-pulse 2s infinite" }} />
-                <span style={{ fontSize: 11, fontWeight: 800, color: "#00D4FF", textTransform: "uppercase", letterSpacing: "0.2em", fontFamily: "var(--font-body)" }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#FFFFFF", boxShadow: "0 0 10px #FFFFFF", animation: "sam-pulse 2s infinite" }} />
+                <span style={{ fontSize: 11, fontWeight: 800, color: "#FFFFFF", textTransform: "uppercase", letterSpacing: "0.2em", fontFamily: "var(--font-body)" }}>
                   SAM Engine v1.0
                 </span>
               </div>

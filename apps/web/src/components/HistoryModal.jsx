@@ -57,12 +57,12 @@ export default function HistoryModal({ isOpen, onClose, onRestore }) {
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative w-full max-w-2xl overflow-hidden rounded-[28px] border border-[#00D4FF]/20 bg-[#0e131e]/90 shadow-2xl backdrop-blur-2xl"
+            className="relative w-full max-w-2xl overflow-hidden rounded-[28px] border border-white/10 bg-[#0e131e]/90 shadow-2xl backdrop-blur-2xl"
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-[#00D4FF]/10 p-6 md:p-8">
+            <div className="flex items-center justify-between border-b border-white/5 p-6 md:p-8">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#00D4FF]/10 text-[#00D4FF]">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/5 text-white">
                   <History className="h-6 w-6" />
                 </div>
                 <div>
@@ -82,8 +82,8 @@ export default function HistoryModal({ isOpen, onClose, onRestore }) {
             <div className="max-h-[60vh] overflow-y-auto p-4 md:p-8 scrollbar-hide">
               {loading ? (
                 <div className="flex h-40 flex-col items-center justify-center gap-4">
-                   <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#00D4FF]/20 border-t-[#00D4FF]" />
-                   <span className="text-[10px] font-bold uppercase tracking-widest text-[#00D4FF]/40">Fetching records...</span>
+                   <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-white" />
+                   <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Fetching records...</span>
                 </div>
               ) : history.length === 0 ? (
                 <div className="flex h-40 flex-col items-center justify-center gap-4">
@@ -98,10 +98,10 @@ export default function HistoryModal({ isOpen, onClose, onRestore }) {
                   {history.map((run) => (
                     <div 
                       key={run._id}
-                      className="group relative flex items-center justify-between gap-4 rounded-2xl border border-white/5 bg-white/[0.02] p-4 transition-all hover:bg-white/[0.05] hover:border-[#00D4FF]/20"
+                      className="group relative flex items-center justify-between gap-4 rounded-2xl border border-white/5 bg-white/[0.02] p-4 transition-all hover:bg-white/[0.05] hover:border-white/20"
                     >
                       <div className="flex items-center gap-4 overflow-hidden">
-                        <div className={`flex h-10 w-10 flex-none items-center justify-center rounded-xl ${run.status === 'succeeded' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                        <div className={`flex h-10 w-10 flex-none items-center justify-center rounded-xl ${run.status === 'succeeded' ? 'bg-white/10 text-white' : 'bg-white/5 text-white/30'}`}>
                            {run.status === 'succeeded' ? <CheckCircle2 className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
                         </div>
                         <div className="overflow-hidden">
@@ -122,7 +122,7 @@ export default function HistoryModal({ isOpen, onClose, onRestore }) {
                           onRestore(code, run.runtime || run.language);
                           onClose();
                         }}
-                        className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-[#00D4FF]/10 text-[#00D4FF] opacity-0 transition-all hover:bg-[#00D4FF] hover:text-[#0e131e] group-hover:opacity-100 shadow-lg shadow-[#00D4FF]/20"
+                        className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-white/10 text-white opacity-0 transition-all hover:bg-white hover:text-black group-hover:opacity-100 shadow-lg shadow-white/5"
                         title="Restore Code"
                       >
                         <ChevronRight className="h-5 w-5" />
@@ -134,7 +134,7 @@ export default function HistoryModal({ isOpen, onClose, onRestore }) {
             </div>
 
             {/* Footer */}
-            <div className="border-t border-[#00D4FF]/10 bg-white/[0.02] p-6 text-center">
+            <div className="border-t border-white/5 bg-white/[0.02] p-6 text-center">
                <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-white/20">SAM Compiler Persistent Storage v2.1</p>
             </div>
           </motion.div>

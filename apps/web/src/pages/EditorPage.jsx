@@ -266,11 +266,11 @@ export default function EditorPage() {
     const isDark = theme === "dark";
     const term = new XTerm({
       theme: {
-        background: 'transparent',
+        background: isDark ? '#000000' : '#FFFFFF',
         foreground: isDark ? '#FFFFFF' : '#000000',
         cursor: isDark ? '#FFFFFF' : '#000000',
         cursorAccent: isDark ? '#000000' : '#FFFFFF',
-        selectionBackground: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+        selectionBackground: isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.15)',
         black: '#000000',
         red: '#737373',
         green: '#A3A3A3',
@@ -838,15 +838,15 @@ builtins.input = input_shim
         </main>
       </div>
 
-      <footer className="relative z-20 flex h-10 shrink-0 items-center justify-between px-4 md:px-6 sam-glass border-x-0 border-b-0 border-t border-[#00D4FF]/10 mt-2" style={{ background: 'rgba(14,19,30,0.9)' }}>
+      <footer className="relative z-20 flex h-10 shrink-0 items-center justify-between px-4 md:px-6 sam-glass border-x-0 border-b-0 border-t border-[var(--sam-glass-border)] mt-2" style={{ background: 'rgba(10,10,10,0.8)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{
               width: 6, height: 6, borderRadius: '50%',
-              background: isApiOnline ? '#22c55e' : '#f43f5e',
-              boxShadow: isApiOnline ? '0 0 8px #22c55e' : '0 0 8px #f43f5e',
+              background: isApiOnline ? 'var(--sam-green)' : 'var(--sam-red)',
+              boxShadow: isApiOnline ? '0 0 8px var(--sam-green)' : '0 0 8px var(--sam-red)',
             }} />
-            <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: isApiOnline ? 'rgba(34,197,94,0.7)' : 'rgba(244,63,94,0.7)', fontFamily: 'var(--font-body)' }}>
+            <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: isApiOnline ? 'var(--sam-text)' : 'var(--sam-text-dim)', fontFamily: 'var(--font-body)' }}>
               {isApiOnline ? 'Online' : 'Offline'}
             </span>
           </div>
