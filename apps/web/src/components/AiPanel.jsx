@@ -16,7 +16,7 @@ export default function AiPanel({
   onApplyRefactor 
 }) {
   const [messages, setMessages] = useState([
-    { role: "model", content: "I am Sam AI, your elite coding partner. How can I accelerate your development today?" }
+    { role: "model", content: "I am Sam AI, your elite coding partner. How can I assist with your code today?" }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
