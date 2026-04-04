@@ -57,31 +57,31 @@ const languageConfigs = {
   cpp: {
     name: "main.cpp",
     icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg",
-    template: "#include <iostream>\n\nint main() {\n    std::cout << \"Hello from SAM Compiler!\" << std::endl;\n    return 0;\n}",
+    template: "#include <iostream>\n\nint main() {\n    std::cout << \"// 🚀 SAM Compiler: Syntax Analysis Machine\\n\";\n    std::cout << \"Hello from the future of cloud IDEs!\" << std::endl;\n    return 0;\n}",
     lang: "cpp"
   },
   c: {
     name: "main.c",
     icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/c/c-original.svg",
-    template: "#include <stdio.h>\n\nint main() {\n    printf(\"Hello from SAM Compiler!\\n\");\n    return 0;\n}",
+    template: "#include <stdio.h>\n\nint main() {\n    printf(\"// 🚀 SAM Compiler: Syntax Analysis Machine\\n\");\n    printf(\"Hello from the secure sandbox!\\n\");\n    return 0;\n}",
     lang: "c"
   },
   python: {
     name: "main.py",
     icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg",
-    template: "print(\"Hello from SAM Compiler!\")",
+    template: "print(\"// 🚀 SAM Compiler: Syntax Analysis Machine\")\nprint(\"Hello from the lightning-fast Python runner!\")",
     lang: "python"
   },
   javascript: {
     name: "main.js",
     icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg",
-    template: "console.log(\"Hello from SAM Compiler!\");",
+    template: "console.log(\"// 🚀 SAM Compiler: Syntax Analysis Machine\");\nconsole.log(\"Hello from the high-scale Node.js engine!\");",
     lang: "javascript"
   },
   java: {
     name: "Main.java",
     icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg",
-    template: "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello from SAM Compiler!\");\n    }\n}",
+    template: "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"// 🚀 SAM Compiler: Syntax Analysis Machine\");\n        System.out.println(\"Hello from the enterprise-grade Java sandbox!\");\n    }\n}",
     lang: "java"
   }
 };
@@ -320,8 +320,21 @@ builtins.input = input_shim
     const code = buffers[activeLangId] ?? "";
     const language = activeConfig.lang;
 
+    if (busy) return;
     setBusy(true);
-    xtermRef.current.clear();
+
+    // ULTIMATE SYNC FIX: Explicitly unsubscribe from old job and reset terminal
+    const socket = getSocket();
+    if (runRef.current.jobId) {
+      socket.emit("unsubscribe", { jobId: runRef.current.jobId });
+      socket.off("exec:log"); // Wipe all previous log listeners
+    }
+
+    if (xtermRef.current) {
+      xtermRef.current.reset();
+      xtermRef.current.write("\x1b[2J\x1b[0;0H"); // Clear screen and move cursor to 0,0
+    }
+
     setRunStatus("Running");
     setMetrics(null);
 
@@ -331,7 +344,7 @@ builtins.input = input_shim
         setBusy(false);
         return;
       } catch (err) {
-        xtermRef.current.write(err.message + "\r\n");
+        xtermRef.current.write("\x1b[1;31m" + err.message + "\x1b[0m\r\n");
         setRunStatus("Failed");
         setBusy(false);
         return;
@@ -339,12 +352,10 @@ builtins.input = input_shim
     }
 
     try {
-      if (xtermRef.current) xtermRef.current.reset();
       const { jobId } = await submitRun({ language, code });
       runRef.current.jobId = jobId;
 
       // Ensure socket is connected before subscribing
-      const socket = getSocket();
       const sendSubscription = () => socket.emit("subscribe", { jobId });
       
       if (!socket.connected) {
@@ -357,8 +368,10 @@ builtins.input = input_shim
       const onLog = (evt) => {
         if (!evt || runRef.current.jobId !== jobId) return;
         if (xtermRef.current) {
-           if (evt.type === "stdout" || evt.type === "stderr") {
+           if (evt.type === "stdout") {
              xtermRef.current.write(evt.chunk);
+           } else if (evt.type === "stderr") {
+             xtermRef.current.write(`\x1b[31m${evt.chunk}\x1b[0m`); // Color stderr red
            }
         }
         if (evt.type === "end") {
@@ -377,9 +390,11 @@ builtins.input = input_shim
 
       await pollUntilDone(jobId, {
         onUpdate: (s) => {
+          if (runRef.current.jobId !== jobId) return;
           setRunStatus(s.status.charAt(0).toUpperCase() + s.status.slice(1));
           
           const sock = getSocket();
+          // Fallback if socket isn't connected
           if (!sock.connected && xtermRef.current) {
             if (s.stdout && s.stdout.length > lastSeenStdout) {
               const newPart = s.stdout.slice(lastSeenStdout);
@@ -388,18 +403,21 @@ builtins.input = input_shim
             }
             if (s.stderr && s.stderr.length > lastSeenStderr) {
               const newPart = s.stderr.slice(lastSeenStderr);
-              xtermRef.current.write(newPart);
+              xtermRef.current.write(`\x1b[31m${newPart}\x1b[0m`);
               lastSeenStderr = s.stderr.length;
             }
           }
         }
       });
 
+      // Cleanup
       socket.off("exec:log", onLog);
       socket.emit("unsubscribe", { jobId });
     } catch (e) {
       setRunStatus("Failed");
-      xtermRef.current.write((e?.message || String(e)) + "\r\n");
+      if (xtermRef.current) {
+        xtermRef.current.write(`\x1b[1;31mError: ${e?.message || String(e)}\x1b[0m\r\n`);
+      }
     } finally {
       setBusy(false);
     }

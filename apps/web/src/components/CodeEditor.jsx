@@ -43,24 +43,30 @@ export default function CodeEditor({
   const handleMount = useCallback((editor, monaco) => {
     editorRef.current = editor;
 
-    // Define Monolith Dark Theme
+    // Define Monolith Dark Theme (Professional High-Scale Aesthetic)
     monaco.editor.defineTheme('monolith-dark', {
       base: 'vs-dark',
       inherit: true,
       rules: [
-        { token: '', foreground: 'FFFFFF', background: '000000' },
+        { token: '', foreground: 'dde2f1', background: '000000' },
         { token: 'comment', foreground: '555555', fontStyle: 'italic' },
-        { token: 'keyword', foreground: 'FFFFFF', fontStyle: 'bold' },
-        { token: 'string', foreground: 'AAAAAA' },
+        { token: 'keyword', foreground: '00D4FF', fontStyle: 'bold' },
+        { token: 'string', foreground: '22c55e' },
+        { token: 'number', foreground: 'f59e0b' },
+        { token: 'type', foreground: '0ea5e9' },
+        { token: 'operator', foreground: '00D4FF' },
+        { token: 'delimiter', foreground: 'dde2f1' },
+        { token: 'function', foreground: '8b5cf6' },
+        { token: 'identifier', foreground: 'dde2f1' },
       ],
       colors: {
         'editor.background': '#000000',
-        'editor.foreground': '#FFFFFF',
-        'editorLineNumber.foreground': '#333333',
-        'editorLineNumber.activeForeground': '#FFFFFF',
+        'editor.foreground': '#dde2f1',
+        'editorLineNumber.foreground': '#222222',
+        'editorLineNumber.activeForeground': '#00D4FF',
         'editorIndentGuide.background': '#111111',
-        'editor.selectionBackground': '#222222',
-        'editorCursor.foreground': '#FFFFFF',
+        'editor.selectionBackground': '#00D4FF22',
+        'editorCursor.foreground': '#00D4FF',
       }
     });
 

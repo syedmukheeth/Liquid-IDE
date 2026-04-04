@@ -30,10 +30,7 @@ async function executeViaPiston(run, onLog) { // Keeping name for compatibility
     throw new Error(`Judge0 does not support runtime: ${runtime}`);
   }
 
-  if (onLog) {
-    onLog(jobId, "stdout", `📡 \x1b[1;36mConnecting to SAM Compiler Cloud Sandbox (Judge0)...\x1b[0m\n\r`);
-    onLog(jobId, "stdout", `🔨 \x1b[1;33mCompiling & Preparing Environment...\x1b[0m\n\r`);
-  }
+  // Status logs removed as requested by user
 
   let finalCode = code;
   if (runtime === "java") {
@@ -64,9 +61,7 @@ async function executeViaPiston(run, onLog) { // Keeping name for compatibility
         try {
           const result = JSON.parse(data);
           
-          if (onLog) {
-            onLog(jobId, "stdout", `🚀 \x1b[1;32mExecution Started\x1b[0m\n\r\n`);
-          }
+          // Execution start log removed
 
           let stdout = result.stdout || "";
           let stderr = result.stderr || result.compile_output || "";
