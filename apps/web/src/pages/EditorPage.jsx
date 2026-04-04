@@ -21,26 +21,11 @@ import ENDPOINTS from "../services/endpoints";
 // Inline SAM logo SVG — no image file dependency
 function SamNavLogo() {
   return (
-    <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-white shadow-sm transition-transform hover:scale-110">
-      <svg width="28" height="28" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        {/* Eye Outer Brackets */}
-        <path d="M12 18L4 24L12 30" stroke="black" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M36 18L44 24L36 30" stroke="black" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-        
-        {/* Central Bolt (S/7 Shape) */}
-        <path d="M28 14L20 24H28L20 34" stroke="black" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-        
-        {/* Circuit Accents Top */}
-        <circle cx="21" cy="7" r="2" fill="black" />
-        <circle cx="31" cy="7" r="2" fill="black" />
-        
-        {/* Circuit Accents Sides */}
-        <circle cx="5" cy="24" r="2" fill="black" />
-        <circle cx="43" cy="24" r="2" fill="black" />
-
-        {/* Circuit Accents Bottom */}
-        <circle cx="21" cy="41" r="2" fill="black" />
-        <circle cx="31" cy="41" r="2" fill="black" />
+    <div className="relative flex h-8 w-8 items-center justify-center transition-transform hover:scale-110">
+      <svg width="40" height="40" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 18L4 24L12 30" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M36 18L44 24L36 30" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M28 14L20 24H28L20 34" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </div>
   );
@@ -590,29 +575,12 @@ builtins.input = input_shim
             <div className="flex items-center gap-3 transition-all hover:scale-105">
               <SamNavLogo />
               <div className="flex flex-col leading-none">
-                <span className="font-black tracking-[0.2em] text-[13px] text-white uppercase italic" style={{ fontFamily: 'var(--font-mono)' }}>SAM</span>
-                <span className="text-[9px] font-bold text-white/40 uppercase tracking-[0.4em] mt-0.5">Compiler</span>
+                <span className="font-black tracking-[0.2em] text-[13px] uppercase italic" style={{ fontFamily: 'var(--font-mono)', color: 'var(--sam-text)' }}>SAM</span>
+                <span className="text-[9px] font-bold uppercase tracking-[0.4em] mt-0.5" style={{ color: 'var(--sam-text-dim)' }}>Compiler</span>
               </div>
             </div>
 
-            <div className="h-8 w-[1px] bg-white/5 hidden lg:block" />
 
-            {/* LinkedIn Style Author Badge */}
-            <a 
-              href="https://linkedin.com/in/syedmukheeth" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="hidden lg:flex items-center gap-3 group px-4 py-2 rounded-xl transition-all duration-500 border border-transparent hover:border-white/10 hover:bg-white/[0.02]"
-            >
-              <div className="flex flex-col items-start leading-none gap-0.5">
-                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/30 group-hover:text-white/60 transition-colors">Built by</span>
-                <span className="text-[11px] font-black tracking-tight text-white/70 group-hover:text-white transition-colors">Syed Mukheeth</span>
-              </div>
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/5 group-hover:bg-[#0077b5] group-hover:shadow-[0_0_15px_rgba(0,119,181,0.3)] transition-all duration-500">
-                {/* LinkedIn SVG */}
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-white group-hover:scale-110 transition-transform"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-              </div>
-            </a>
           </div>
           
           <nav className="hidden xl:flex items-center gap-8">
@@ -699,10 +667,13 @@ builtins.input = input_shim
               onClick={() => setActiveModal('auth')}
               className="sam-button-primary"
               style={{
-                padding: '7px 16px', borderRadius: 6,
+                padding: '7px 18px', borderRadius: 4,
                 fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em',
                 cursor: 'pointer', transition: 'all 0.25s',
                 fontFamily: 'var(--font-body)',
+                background: 'var(--sam-accent)',
+                color: 'var(--sam-bg)',
+                border: 'none'
               }}
             >Sign In</button>
           )}
@@ -768,7 +739,7 @@ builtins.input = input_shim
           style={{
             fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em',
             color: activeMobileTab === 'editor' ? 'var(--sam-accent)' : 'var(--sam-text-dim)',
-            background: activeMobileTab === 'editor' ? 'var(--sam-accent-muted)' : 'transparent',
+            background: 'transparent',
             border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)',
           }}
         >
@@ -1000,22 +971,7 @@ builtins.input = input_shim
 
         {/* Dashboard Quick Controls */}
         <div className="flex items-center gap-4 md:gap-8">
-          <div className="hidden md:flex items-center gap-2">
-             <button 
-               onClick={onClear} 
-               title="Clear Terminal"
-               className={`p-2 rounded-lg transition-all hover:scale-110 active:scale-90 ${theme === 'dark' ? 'text-white/30 hover:bg-white/5 hover:text-white' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-900'}`}
-             >
-               <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-             </button>
-             <button 
-               onClick={handleCodeReset} 
-               title="Reset Code"
-               className={`p-2 rounded-lg transition-all hover:scale-110 active:scale-90 ${theme === 'dark' ? 'text-white/30 hover:bg-white/5 hover:text-white' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-900'}`}
-             >
-               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8M3 3v5h5" /></svg>
-             </button>
-          </div>
+
 
           <a 
             href="https://linkedin.com/in/syedmukheeth" 
