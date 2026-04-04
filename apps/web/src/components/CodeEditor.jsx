@@ -126,15 +126,33 @@ export default function CodeEditor({
       onCursorChange?.({ lineNumber: pos.lineNumber, column: pos.column });
     });
 
-    // ULTIMATE FIX: Only insert initial value if the document is brand new/empty.
-    // Sync isolation via sessionId (lang-specific) handles the rest.
+    // Metadata Gating: Use a shared flag to ensure single initialization across all clients
+    const meta = ydoc.getMap('metadata');
+    
     provider.on('sync', (isSynced) => {
       if (isSynced !== false && !hasInitializedRef.current && value) {
         hasInitializedRef.current = true;
         
         ydoc.transact(() => {
-          if (ytext.toString().trim() === "") {
+          const currentText = ytext.toString().trim();
+          
+          // 1. SELF-HEALING: If the document is corrupted with repeated copies of the boilerplate
+          // (a common sync race condition artifact), deduplicate it.
+          const escapedVal = value.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const repeatedRegex = new RegExp(`(${escapedVal}\\s*\\n*){2,}`, 'g');
+          
+          if (repeatedRegex.test(currentText)) {
+            const cleaned = currentText.replace(repeatedRegex, value + "\n");
+            ytext.delete(0, ytext.length);
+            ytext.insert(0, cleaned);
+            meta.set('initialized', true);
+            return;
+          }
+
+          // 2. DETERMINISTIC INITIALIZATION: Only insert if room has NEVER been initialized
+          if (currentText === "" && !meta.get('initialized')) {
             ytext.insert(0, value);
+            meta.set('initialized', true);
           }
         });
       }

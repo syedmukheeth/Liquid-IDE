@@ -700,13 +700,13 @@ builtins.input = input_shim
               
               <div className="flex-1 overflow-hidden relative">
                 <CodeEditor
-                  key={`${sessionId}-${activeLangId}`}
+                  key={sessionId}
                   language={activeLangId}
                   value={buffers[activeLangId]}
                   onChange={onCodeChange}
-                  sessionId={`${sessionId}-${activeLangId}`}
+                  sessionId={sessionId}
                   userName={user?.name}
-                  theme="monolith-dark"
+                  theme={theme}
                   options={{
                     fontSize: settings.fontSize,
                     tabSize: settings.tabSize,
