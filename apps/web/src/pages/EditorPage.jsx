@@ -542,11 +542,9 @@ builtins.input = input_shim
                     key={tab}
                     to="/dashboard"
                     className="group relative flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all"
-                    style={{ color: 'rgba(221,226,241,0.4)' }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--sam-accent)'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(221,226,241,0.4)'}
+                    style={{ color: 'var(--sam-text-dim)' }}
                   >
-                    <div className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--sam-accent-dim)' }} />
+                    <div className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--sam-accent)' }} />
                     Dashboard
                   </Link>
                 );
@@ -639,8 +637,8 @@ builtins.input = input_shim
                   boxShadow: theme === 'light' ? '0 1px 3px rgba(0,0,0,0.05)' : 'none'
                 }}
               >
-                <History className={`h-4 w-4 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`} />
-                <span className={`text-[10px] font-black uppercase tracking-widest ${theme === 'light' ? 'text-slate-600' : 'text-white/60'}`}>History</span>
+                <History className={`h-4 w-4 ${theme === 'light' ? 'text-slate-500' : 'text-white/60'}`} />
+                <span className={`text-[10px] font-black uppercase tracking-widest ${theme === 'light' ? 'text-slate-600' : 'text-white/80'}`}>History</span>
               </button>
             )}
             
@@ -654,7 +652,7 @@ builtins.input = input_shim
               }}
               title="Keyboard Shortcuts"
             >
-              <Keyboard className={`h-5 w-5 transition-colors ${theme === 'light' ? 'text-slate-400 group-hover:text-slate-900' : 'text-white/20 group-hover:text-white'}`} />
+              <Keyboard className={`h-5 w-5 transition-colors ${theme === 'light' ? 'text-slate-400 group-hover:text-slate-900' : 'text-white/50 group-hover:text-white'}`} />
             </button>
 
             <button 
@@ -667,7 +665,7 @@ builtins.input = input_shim
                 boxShadow: theme === 'light' ? '0 1px 3px rgba(0,0,0,0.05)' : 'none'
               }}
             >
-              <Sparkles className={`h-4 w-4 ${showAiPanel ? 'animate-pulse' : (theme === 'light' ? 'text-slate-400' : 'text-white/40')}`} />
+              <Sparkles className={`h-4 w-4 ${showAiPanel ? 'animate-pulse' : (theme === 'light' ? 'text-slate-400' : 'text-white/60')}`} />
               <span className="text-[10px] font-black uppercase tracking-widest text-inherit">Sam AI</span>
             </button>
           </div>
@@ -861,19 +859,19 @@ builtins.input = input_shim
               {isApiOnline ? 'Online' : 'Offline'}
             </span>
           </div>
-          <span style={{ fontSize: 9, fontWeight: 600, color: 'rgba(0,212,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--sam-text-muted)', textTransform: 'uppercase', letterSpacing: '0.12em', fontFamily: 'var(--font-mono)' }}>
             {activeLangId}
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <span className="hidden sm:inline" style={{ fontSize: 9, fontWeight: 600, color: 'rgba(221,226,241,0.2)', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'var(--font-body)' }}>
+          <span className="hidden sm:inline" style={{ fontSize: 9, fontWeight: 700, color: 'var(--sam-text-dim)', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'var(--font-body)' }}>
             Built by{' '}
-            <a href="https://linkedin.com/in/syedmukheeth" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(0,212,255,0.5)', textDecoration: 'none' }}
-              onMouseEnter={(e) => e.currentTarget.style.color = '#00D4FF'}
-              onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(0,212,255,0.5)'}
+            <a href="https://linkedin.com/in/syedmukheeth" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--sam-text-muted)', textDecoration: 'none' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--sam-text)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--sam-text-muted)'}
             >Syed Mukheeth</a>
           </span>
-          <span style={{ fontSize: 9, fontWeight: 600, color: 'rgba(221,226,241,0.15)', fontFamily: 'var(--font-body)' }}>SAM © 2026</span>
+          <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--sam-text-dim)', fontFamily: 'var(--font-body)' }}>SAM © 2026</span>
         </div>
       </footer>
 
@@ -918,7 +916,7 @@ builtins.input = input_shim
               className="relative w-full max-w-sm rounded-3xl border border-white/10 bg-[#0e131e] p-8 shadow-2xl"
             >
               <h3 className="mb-6 flex items-center gap-3 text-lg font-black uppercase tracking-[0.2em] text-white">
-                 <Keyboard className="h-5 w-5 text-[#00D4FF]" />
+                 <Keyboard className="h-5 w-5 text-white" />
                  Shortcuts
               </h3>
               <div className="flex flex-col gap-4">

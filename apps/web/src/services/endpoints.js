@@ -17,7 +17,7 @@ export const ENDPOINTS = {
 
   // SOCKET_OPTIONS: WebSocket first for max performance on Render container
   SOCKET_OPTIONS: {
-     transports: ["websocket", "polling"], // Standard upgrade sequence
+     transports: ["polling", "websocket"], // Safer initial handshake for Render/Heroku
      reconnection: true,
      reconnectionAttempts: 50,
      timeout: 30000
