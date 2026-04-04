@@ -946,21 +946,7 @@ builtins.input = input_shim
   );
 }
 
-function SamNavLogo() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="21" cy="7" r="2.5" fill="var(--sam-accent)" />
-      <circle cx="31" cy="7" r="2.5" fill="var(--sam-accent)" />
-      <circle cx="5" cy="24" r="2.5" fill="var(--sam-accent)" />
-      <circle cx="43" cy="24" r="2.5" fill="var(--sam-accent)" />
-      <circle cx="21" cy="41" r="2.5" fill="var(--sam-accent)" />
-      <circle cx="31" cy="41" r="2.5" fill="var(--sam-accent)" />
-      <path d="M12 18L4 24L12 30" stroke="var(--sam-accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
-      <path d="M36 18L44 24L36 30" stroke="var(--sam-accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
-      <path d="M28 14L20 24H28L20 34" stroke="var(--sam-accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
-    </svg>
-  );
-}
+
 
 function ShortcutItem({ keys, label }) {
   return (
