@@ -173,6 +173,8 @@ export default function EditorPage() {
   const containerRef = useRef(null);
   const terminalRef = useRef(null);
   const xtermRef = useRef(null);
+  const fitAddonRef = useRef(null);
+  const runRef = useRef({ jobId: null });
 
   const startResizing = useCallback(() => {
     setIsResizing(true);
@@ -429,7 +431,6 @@ export default function EditorPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [user]); // user is a dependency for history shortcut
 
-  const runRef = useRef({ jobId: null });
   const activeConfig = languageConfigs[activeLangId];
 
   function onCodeChange(value) {
