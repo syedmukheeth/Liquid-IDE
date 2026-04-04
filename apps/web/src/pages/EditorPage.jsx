@@ -264,7 +264,9 @@ export default function EditorPage() {
     // Sync Favicon with Theme
     const fav = document.getElementById("favicon");
     if (fav) {
-      fav.setAttribute("href", theme === 'light' ? "/favicon-light.svg" : "/favicon.svg");
+      const whiteBolt = `data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='21' cy='7' r='2.5' fill='white'/%3E%3Ccircle cx='31' cy='7' r='2.5' fill='white'/%3E%3Ccircle cx='5' cy='24' r='2.5' fill='white'/%3E%3Ccircle cx='43' cy='24' r='2.5' fill='white'/%3E%3Ccircle cx='21' cy='41' r='2.5' fill='white'/%3E%3Ccircle cx='31' cy='41' r='2.5' fill='white'/%3E%3Cpath d='M12 18L4 24L12 30' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M36 18L44 24L36 30' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M28 14L20 24H28L20 34' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M18 12L20 8' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M28 12L30 8' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M10 24H6' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M38 24H42' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M18 36L20 40' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M28 36L30 40' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E`;
+      const blackBolt = `data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='21' cy='7' r='2.5' fill='black'/%3E%3Ccircle cx='31' cy='7' r='2.5' fill='black'/%3E%3Ccircle cx='5' cy='24' r='2.5' fill='black'/%3E%3Ccircle cx='43' cy='24' r='2.5' fill='black'/%3E%3Ccircle cx='21' cy='41' r='2.5' fill='black'/%3E%3Ccircle cx='31' cy='41' r='2.5' fill='black'/%3E%3Cpath d='M12 18L4 24L12 30' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M36 18L44 24L36 30' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M28 14L20 24H28L20 34' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M18 12L20 8' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M28 12L30 8' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M10 24H6' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M38 24H42' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M18 36L20 40' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M28 36L30 40' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E`;
+      fav.setAttribute("href", theme === 'light' ? blackBolt : whiteBolt);
     }
   }, [theme]);
 
@@ -898,7 +900,7 @@ builtins.input = input_shim
           }
           setBuffers(prev => ({ ...prev, [lang || activeLangId]: code }));
           toast.success("Code restored from history", {
-            style: { background: '#0e131e', color: '#fff', border: '1px solid rgba(0,212,255,0.2)', fontSize: '10px' }
+            style: { background: 'var(--sam-surface)', color: 'var(--sam-text)', border: '1px solid var(--sam-glass-border)', fontSize: '10px' }
           });
         }}
       />
@@ -943,6 +945,22 @@ builtins.input = input_shim
       
       <Toaster position="bottom-right" reverseOrder={false} />
     </div>
+  );
+}
+
+function SamNavLogo() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="21" cy="7" r="2.5" fill="var(--sam-accent)" />
+      <circle cx="31" cy="7" r="2.5" fill="var(--sam-accent)" />
+      <circle cx="5" cy="24" r="2.5" fill="var(--sam-accent)" />
+      <circle cx="43" cy="24" r="2.5" fill="var(--sam-accent)" />
+      <circle cx="21" cy="41" r="2.5" fill="var(--sam-accent)" />
+      <circle cx="31" cy="41" r="2.5" fill="var(--sam-accent)" />
+      <path d="M12 18L4 24L12 30" stroke="var(--sam-accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M36 18L44 24L36 30" stroke="var(--sam-accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M28 14L20 24H28L20 34" stroke="var(--sam-accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
   );
 }
 
