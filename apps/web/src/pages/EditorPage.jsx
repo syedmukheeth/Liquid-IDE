@@ -57,31 +57,31 @@ const languageConfigs = {
   cpp: {
     name: "main.cpp",
     icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg",
-    template: "#include <iostream>\n\nint main() {\n    std::cout << \"Welcome to SAM Compiler!\" << std::endl;\n    return 0;\n}",
+    template: "#include <iostream>\n\nint main() {\n    std::cout << \"Welcome to SAM Compiler!\" << std::endl;\n    return 0;\n}\n",
     lang: "cpp"
   },
   c: {
     name: "main.c",
     icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/c/c-original.svg",
-    template: "#include <stdio.h>\n\nint main() {\n    printf(\"Welcome to SAM Compiler!\\n\");\n    return 0;\n}",
+    template: "#include <stdio.h>\n\nint main() {\n    printf(\"Welcome to SAM Compiler!\\n\");\n    return 0;\n}\n",
     lang: "c"
   },
   python: {
     name: "main.py",
     icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg",
-    template: "print(\"Welcome to SAM Compiler!\")",
+    template: "print(\"Welcome to SAM Compiler!\")\n",
     lang: "python"
   },
   javascript: {
     name: "main.js",
     icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg",
-    template: "console.log(\"Welcome to SAM Compiler!\");",
+    template: "console.log(\"Welcome to SAM Compiler!\");\n",
     lang: "javascript"
   },
   java: {
     name: "Main.java",
     icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg",
-    template: "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Welcome to SAM Compiler!\");\n    }\n}",
+    template: "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Welcome to SAM Compiler!\");\n    }\n}\n",
     lang: "java"
   }
 };
@@ -148,12 +148,9 @@ export default function EditorPage() {
   const [metrics, setMetrics] = useState(null);
   
   const [searchParams] = useSearchParams();
-  const rawSessionId = searchParams.get("session") || "default";
+  const sessionId = searchParams.get("session") || "default";
   
-  // FIX: Isolate sessions by language to prevent cross-language code duplication
-  const sessionId = `${rawSessionId}_${activeLangId}`;
-
-  const [theme, setTheme] = useState(localStorage.getItem("sam_theme") || "dark");
+  const [theme, setTheme] = useState(localStorage.getItem("sam-theme") || "dark");
   
   const [showAiPanel, setShowAiPanel] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -210,7 +207,7 @@ export default function EditorPage() {
     } else {
       document.documentElement.classList.remove("light");
     }
-    localStorage.setItem("sam_theme", theme);
+    localStorage.setItem("sam-theme", theme);
     
     const timer = setInterval(checkStatus, 15000);
     return () => clearInterval(timer);
@@ -737,7 +734,6 @@ builtins.input = input_shim
               
               <div className="flex-1 overflow-hidden relative">
                 <CodeEditor
-                  key={sessionId}
                   language={activeLangId}
                   value={buffers[activeLangId]}
                   onChange={onCodeChange}
