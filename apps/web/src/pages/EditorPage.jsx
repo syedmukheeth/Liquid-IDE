@@ -171,6 +171,8 @@ export default function EditorPage() {
   const [leftPanelWidth, setLeftPanelWidth] = useState(60); // Percentage
   const [isResizing, setIsResizing] = useState(false);
   const containerRef = useRef(null);
+  const terminalRef = useRef(null);
+  const xtermRef = useRef(null);
 
   const startResizing = useCallback(() => {
     setIsResizing(true);
