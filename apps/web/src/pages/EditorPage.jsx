@@ -1183,22 +1183,28 @@ builtins.input = input_shim
             />
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-              className="relative w-full max-w-sm rounded-[32px] border border-white/5 bg-black/95 p-8 shadow-2xl backdrop-blur-2xl"
+              className={`relative w-full max-w-sm rounded-[32px] border p-8 shadow-2xl backdrop-blur-2xl ${
+                theme === 'dark' ? 'border-white/5 bg-black/95' : 'border-slate-200 bg-white/95'
+              }`}
             >
-              <h3 className="mb-8 flex items-center gap-3 text-sm font-black uppercase tracking-[0.25em] text-white opacity-90">
-                 <Keyboard className="h-5 w-5 text-white" strokeWidth={3} />
+              <h3 className={`mb-8 flex items-center gap-3 text-sm font-black uppercase tracking-[0.25em] opacity-90 ${
+                theme === 'dark' ? 'text-white' : 'text-slate-900'
+              }`}>
+                 <Keyboard className={`h-5 w-5 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`} strokeWidth={3} />
                  Terminal Shortcuts
               </h3>
               <div className="flex flex-col gap-5">
-                 <ShortcutItem keys={["CTRL", "ENTER"]} label="Run Code" />
-                 <ShortcutItem keys={["CTRL", "S"]} label="Save Locally" />
-                 <ShortcutItem keys={["CTRL", "L"]} label="Clear Output" />
-                 <ShortcutItem keys={["CTRL", "/"]} label="Toggle Sam AI" />
+                 <ShortcutItem keys={["CTRL", "ENTER"]} label="Run Code" theme={theme} />
+                 <ShortcutItem keys={["CTRL", "S"]} label="Save Locally" theme={theme} />
+                 <ShortcutItem keys={["CTRL", "L"]} label="Clear Output" theme={theme} />
+                 <ShortcutItem keys={["CTRL", "/"]} label="Toggle Sam AI" theme={theme} />
 
               </div>
               <button 
                 onClick={() => setShowShortcutsHelp(false)}
-                className="mt-10 w-full rounded-2xl bg-white/10 p-4 text-[10px] font-black uppercase tracking-[0.2em] text-white hover:bg-white/20 transition-all active:scale-95"
+                className={`mt-10 w-full rounded-2xl p-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all active:scale-95 ${
+                  theme === 'dark' ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'
+                }`}
               >
                 Close Guidelines
               </button>
@@ -1225,13 +1231,15 @@ builtins.input = input_shim
 
 
 
-function ShortcutItem({ keys, label }) {
+function ShortcutItem({ keys, label, theme }) {
   return (
     <div className="flex items-center justify-between">
-       <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">{label}</span>
+       <span className={`text-[10px] font-bold uppercase tracking-widest ${theme === 'dark' ? 'text-white/40' : 'text-slate-500'}`}>{label}</span>
        <div className="flex gap-1">
           {keys.map(k => (
-            <kbd key={k} className="flex h-5 items-center justify-center rounded bg-white/10 px-1.5 text-[9px] font-black text-white/80">{k}</kbd>
+            <kbd key={k} className={`flex h-5 items-center justify-center rounded px-1.5 text-[9px] font-black ${
+               theme === 'dark' ? 'bg-white/10 text-white/80' : 'bg-slate-200 text-slate-700'
+            }`}>{k}</kbd>
           ))}
        </div>
     </div>
