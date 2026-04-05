@@ -985,16 +985,16 @@ builtins.input = input_shim
           ? 'bg-black/90 border-white/5' 
           : 'bg-white/95 border-slate-200 shadow-[0_-4px_24px_-10px_rgba(0,0,0,0.05)]'
       }`}>
-        {/* Top Accent Bar — Restored Animated Red Glow */}
+        {/* Top Accent Bar — Restored Animated Branded Lights */}
         <div 
-          className={`absolute top-[-1px] left-0 right-0 h-[3px] sam-pulse-glow-red ${
+          className={`absolute top-[-1px] left-0 right-0 h-[3px] ${
             theme === 'dark' 
-              ? 'bg-gradient-to-r from-transparent via-[#ff3b3b] to-transparent shadow-[0_0_20px_rgba(255,59,59,0.8)]' 
-              : 'bg-gradient-to-r from-transparent via-blue-500 to-transparent'
+              ? 'sam-pulse-glow-red bg-gradient-to-r from-transparent via-[#ff3b3b] to-transparent shadow-[0_0_20px_rgba(255,59,59,0.8)]' 
+              : 'sam-pulse-glow-blue bg-gradient-to-r from-transparent via-[#3b82f6] to-transparent shadow-[0_0_15px_rgba(59,130,246,0.5)]'
           }`}
           style={{ 
             zIndex: 10,
-            opacity: theme === 'dark' ? 1 : 0.6
+            opacity: theme === 'dark' ? 1 : 1
           }} 
         />
 

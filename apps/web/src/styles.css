@@ -230,8 +230,17 @@ body {
   50%       { opacity: 1; transform: scaleX(1); filter: blur(6px) brightness(1.2); }
 }
 
+@keyframes sam-pulse-glow-blue {
+  0%, 100% { opacity: 0.6; transform: scaleX(0.98); filter: blur(3px) brightness(1); }
+  50%       { opacity: 0.9; transform: scaleX(1); filter: blur(5px) brightness(1.3); }
+}
+
 .sam-pulse-glow-red {
   animation: sam-pulse-glow-red 3s ease-in-out infinite;
+}
+
+.sam-pulse-glow-blue {
+  animation: sam-pulse-glow-blue 4s ease-in-out infinite;
 }
 
 .sam-dot {
