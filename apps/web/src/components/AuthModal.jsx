@@ -49,8 +49,8 @@ export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin }) {
           marginBottom: 28,
           padding: 4,
           borderRadius: 10,
-          background: "rgba(255,255,255,0.04)",
-          border: "1px solid rgba(255,255,255,0.1)",
+          background: "var(--sam-surface-low)",
+          border: "1px solid var(--sam-glass-border)",
         }}>
           {["Sign In", "Create Account"].map((tab, i) => {
             const active = i === 0 ? isLoginTab : !isLoginTab;
@@ -70,11 +70,9 @@ export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin }) {
                   textTransform: "uppercase",
                   cursor: "pointer",
                   transition: "all 0.25s",
-                  background: active
-                    ? "linear-gradient(135deg, #FFFFFF 0%, #A3A3A3 100%)"
-                    : "transparent",
-                  color: active ? "#000000" : "rgba(221,226,241,0.4)",
-                  boxShadow: active ? "0 0 16px rgba(255,255,255,0.1)" : "none",
+                  background: active ? "var(--sam-accent)" : "transparent",
+                  color: active ? "var(--sam-bg)" : "var(--sam-text-dim)",
+                  boxShadow: active ? "var(--sam-glow-bloom)" : "none",
                   fontFamily: "var(--font-body)",
                 }}
               >
@@ -89,9 +87,9 @@ export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin }) {
             marginBottom: 20,
             padding: "12px 16px",
             borderRadius: 8,
-            border: "1px solid rgba(255,255,255,0.2)",
-            background: "rgba(255,255,255,0.05)",
-            color: "#FFFFFF",
+            border: "1px solid rgba(255,59,59,0.3)",
+            background: "rgba(255,59,59,0.1)",
+            color: "#FF3B3B",
             fontSize: 12,
             fontWeight: 600,
           }}>
@@ -106,23 +104,16 @@ export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin }) {
             type="button"
             onClick={() => handleSocialLogin("github")}
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 10,
-              padding: "13px 0",
-              borderRadius: 10,
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "rgba(255,255,255,0.06)",
-              color: "#dde2f1",
-              fontSize: 12,
-              fontWeight: 700,
-              cursor: "pointer",
-              transition: "all 0.25s",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+              padding: "13px 0", borderRadius: 10,
+              border: "1px solid var(--sam-glass-border)",
+              background: "var(--sam-surface)",
+              color: "var(--sam-text)",
+              fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.25s",
               fontFamily: "var(--font-body)",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--sam-surface-low)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "var(--sam-surface)"; }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.167 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.342-3.369-1.342-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.645.35-1.087.636-1.337-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.682-.103-.253-.446-1.27.098-2.647 0 0 .84-.268 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.026 2.747-1.026.546 1.377.202 2.394.1 2.647.64.698 1.028 1.591 1.028 2.682 0 3.841-2.337 4.687-4.565 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
             Continue with GitHub
@@ -133,23 +124,16 @@ export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin }) {
             type="button"
             onClick={() => handleSocialLogin("google")}
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 10,
-              padding: "13px 0",
-              borderRadius: 10,
-              border: "1px solid rgba(255,255,255,0.08)",
-              background: "rgba(255,255,255,0.03)",
-              color: "rgba(221,226,241,0.6)",
-              fontSize: 12,
-              fontWeight: 700,
-              cursor: "pointer",
-              transition: "all 0.25s",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+              padding: "13px 0", borderRadius: 10,
+              border: "1px solid var(--sam-glass-border)",
+              background: "var(--sam-surface)",
+              color: "var(--sam-text)",
+              fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.25s",
               fontFamily: "var(--font-body)",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--sam-surface-low)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "var(--sam-surface)"; }}
           >
             <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg" alt="Google" style={{ width: 18, height: 18 }} />
             Continue with Google
@@ -158,16 +142,16 @@ export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin }) {
 
         {/* Divider */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-          <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
-          <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(221,226,241,0.2)", textTransform: "uppercase", letterSpacing: "0.12em" }}>or with email</span>
-          <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+          <div style={{ flex: 1, height: 1, background: "var(--sam-glass-border)" }} />
+          <span style={{ fontSize: 10, fontWeight: 700, color: "var(--sam-text-dim)", textTransform: "uppercase", letterSpacing: "0.12em" }}>or with email</span>
+          <div style={{ flex: 1, height: 1, background: "var(--sam-glass-border)" }} />
         </div>
 
         {/* Form */}
         <form onSubmit={handleAuth} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           {!isLoginTab && (
             <div>
-              <label style={{ display: "block", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(221,226,241,0.35)", marginBottom: 8, fontFamily: "var(--font-body)" }}>
+              <label style={{ display: "block", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--sam-text-dim)", marginBottom: 8, fontFamily: "var(--font-body)" }}>
                 Full Name
               </label>
               <input
@@ -183,7 +167,7 @@ export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin }) {
           )}
 
           <div>
-            <label style={{ display: "block", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(221,226,241,0.35)", marginBottom: 8, fontFamily: "var(--font-body)" }}>
+            <label style={{ display: "block", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--sam-text-dim)", marginBottom: 8, fontFamily: "var(--font-body)" }}>
               Email Address
             </label>
             <input
@@ -198,7 +182,7 @@ export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin }) {
           </div>
 
           <div>
-            <label style={{ display: "block", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(221,226,241,0.35)", marginBottom: 8, fontFamily: "var(--font-body)" }}>
+            <label style={{ display: "block", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--sam-text-dim)", marginBottom: 8, fontFamily: "var(--font-body)" }}>
               Password
             </label>
             <input
@@ -217,24 +201,15 @@ export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin }) {
             type="submit"
             disabled={!!isLoading}
             style={{
-              width: "100%",
-              padding: "14px 0",
-              borderRadius: 10,
-              border: "none",
-              background: "linear-gradient(135deg, #FFFFFF 0%, #A3A3A3 100%)",
-              color: "#000000",
-              fontSize: 12,
-              fontWeight: 800,
-              textTransform: "uppercase",
-              letterSpacing: "0.15em",
+              width: "100%", padding: "14px 0", borderRadius: 10, border: "none",
+              background: "var(--sam-accent)",
+              color: "var(--sam-bg)",
+              fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.15em",
               cursor: isLoading ? "not-allowed" : "pointer",
               opacity: isLoading ? 0.7 : 1,
-              boxShadow: "0 0 20px rgba(255,255,255,0.15)",
+              boxShadow: "var(--sam-glow-bloom)",
               transition: "all 0.3s",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
               fontFamily: "var(--font-body)",
             }}
           >
@@ -249,12 +224,12 @@ export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin }) {
           </button>
         </form>
 
-        <p style={{ textAlign: "center", fontSize: 12, color: "rgba(221,226,241,0.3)", marginTop: 20, fontFamily: "var(--font-body)" }}>
+        <p style={{ textAlign: "center", fontSize: 12, color: "var(--sam-text-dim)", marginTop: 20, fontFamily: "var(--font-body)" }}>
           {isLoginTab ? "New to SAM Compiler? " : "Already have an account? "}
           <button
             type="button"
             onClick={() => { setIsLoginTab(!isLoginTab); setError(null); }}
-            style={{ color: "#FFFFFF", background: "none", border: "none", cursor: "pointer", fontWeight: 700, textDecoration: "underline" }}
+            style={{ color: "var(--sam-text)", background: "none", border: "none", cursor: "pointer", fontWeight: 700, textDecoration: "underline" }}
           >
             {isLoginTab ? "Create free account" : "Sign in here"}
           </button>
