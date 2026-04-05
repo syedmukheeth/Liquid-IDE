@@ -119,15 +119,18 @@ function createApp() {
 
 
   // Serve Static Frontend Assets (Monolith Mode)
-  const distPath = path.join(__dirname, "../../../web/dist");
+  // __dirname is apps/api/src, so we need to go up 3 levels to reach apps/
+  const distPath = path.resolve(__dirname, "../../..", "apps/web/dist");
   app.use(express.static(distPath));
 
   // Catch-all: Route anything else to index.html for React Router support (SPA)
   app.get("*", (req, res) => {
     // Skip if it's an API request that 404'd
     if (req.url.startsWith("/api/")) return res.status(404).json({ message: "API endpoint not found" });
-    res.sendFile(path.join(distPath, "index.html"));
+    const indexPath = path.join(distPath, "index.html");
+    res.sendFile(indexPath);
   });
+
 
   // Global Error Handler
   // eslint-disable-next-line no-unused-vars
