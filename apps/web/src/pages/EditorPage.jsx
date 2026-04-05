@@ -667,7 +667,7 @@ builtins.input = input_shim
               <div className="scale-90 sm:scale-100 origin-left">
                 <SamNavLogo theme={theme} />
               </div>
-              <div className="hidden sm:flex flex-col leading-[0.9] mt-1 relative">
+              <div className="flex flex-col leading-[0.9] mt-1 relative scale-75 sm:scale-100 origin-left -ml-1 sm:ml-0">
                 <span className="font-black tracking-tight text-[18px] uppercase italic" style={{ fontFamily: 'var(--font-display)', color: 'var(--sam-text)' }}>SAM</span>
                 <span className="text-[10px] font-black uppercase tracking-[0.35em] opacity-40 ml-0.5" style={{ color: 'var(--sam-text)' }}>Compiler</span>
               </div>
