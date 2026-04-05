@@ -6,13 +6,18 @@ const User = require("../modules/auth/user.model");
 
 // Helper to ensure the callback URL is correct for the production monolith
 const getCallbackURL = (provider) => {
-  let base = env.CALLBACK_URL_BASE || `https://sam-compiler.onrender.com/api/auth`;
-  // Auto-correct legacy subdomains if they sneak in via env
+  // 1. Priority: Fixed Production monolith (to ensure Google/GitHub always match dashboard)
+  // 2. Fallback: Environmental base
+  let base = env.CALLBACK_URL_BASE || "https://sam-compiler.onrender.com/api/auth";
+  
+  // Hard-enforce the new domain to prevent 404s from Render proxies
   if (base.includes("sam-compiler-api.onrender.com")) {
     base = base.replace("sam-compiler-api.onrender.com", "sam-compiler.onrender.com");
   }
+  
   return `${base.replace(/\/+$/, "")}/${provider}/callback`;
 };
+
 
 passport.use(
   new GitHubStrategy(
