@@ -1,7 +1,7 @@
 const { logger } = require("../../config/logger");
 const { YSocketIO } = require("y-socket.io/dist/server");
 const Y = require("yjs");
-const { ProjectStateModel } = require("../projects/project.model");
+const { ProjectStateModel } = require("./project.model");
 
 let io = null;
 let redisSubscriber = null;
