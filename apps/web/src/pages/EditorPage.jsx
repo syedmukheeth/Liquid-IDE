@@ -20,16 +20,17 @@ import ENDPOINTS from "../services/endpoints";
 
 // Inline SAM logo SVG — no image file dependency
 function SamNavLogo({ theme }) {
+  const strokeColor = theme === 'light' ? '#000000' : '#FFFFFF';
   return (
-    <div className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-500 hover:scale-110 ${theme === 'light' ? 'bg-white shadow-sm border border-slate-100' : ''}`}>
+    <div className="relative flex h-10 w-10 items-center justify-center transition-all duration-500 hover:scale-110">
       <svg width="42" height="42" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         {/* Bolt Center */}
-        <path d="M21 12L15 24H23L17 36" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M21 12L15 24H23L17 36" stroke={strokeColor} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
         {/* Brackets */}
-        <path d="M12 18L4 24L12 30" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M36 18L44 24L36 30" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M12 18L4 24L12 30" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M36 18L44 24L36 30" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
         {/* Circuit Accents */}
-        <path d="M19 12V8M29 12V8M19 36V40M29 36V40" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M19 12V8M29 12V8M19 36V40M29 36V40" stroke={strokeColor} strokeWidth="2.5" strokeLinecap="round" />
       </svg>
     </div>
   );
@@ -138,6 +139,44 @@ export default function EditorPage() {
   const [theme, setTheme] = useState(localStorage.getItem("sam-theme") || "dark");
   
   const [showAiPanel, setShowAiPanel] = useState(false);
+  const [aiPanelWidth, setAiPanelWidth] = useState(() => {
+    const saved = localStorage.getItem('sam-ai-width');
+    return saved ? parseInt(saved) : 500;
+  });
+  const [isResizingAi, setIsResizingAi] = useState(false);
+
+  const startResizingAi = useCallback((e) => {
+    e.preventDefault();
+    setIsResizingAi(true);
+  }, []);
+
+  const stopResizingAi = useCallback(() => {
+    setIsResizingAi(false);
+  }, []);
+
+  const resizeAi = useCallback((e) => {
+    if (!isResizingAi) return;
+    const newWidth = window.innerWidth - e.clientX;
+    if (newWidth > 320 && newWidth < window.innerWidth * 0.8) {
+      setAiPanelWidth(newWidth);
+      localStorage.setItem('sam-ai-width', newWidth.toString());
+    }
+  }, [isResizingAi]);
+
+  useEffect(() => {
+    if (isResizingAi) {
+      window.addEventListener('mousemove', resizeAi);
+      window.addEventListener('mouseup', stopResizingAi);
+    } else {
+      window.removeEventListener('mousemove', resizeAi);
+      window.removeEventListener('mouseup', stopResizingAi);
+    }
+    return () => {
+      window.removeEventListener('mousemove', resizeAi);
+      window.removeEventListener('mouseup', stopResizingAi);
+    };
+  }, [isResizingAi, resizeAi, stopResizingAi]);
+
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
 
@@ -311,7 +350,7 @@ export default function EditorPage() {
     const fav = document.getElementById("favicon");
     if (fav) {
       const highFidelityWhite = `data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='21' cy='7' r='2.5' fill='white'/%3E%3Ccircle cx='31' cy='7' r='2.5' fill='white'/%3E%3Ccircle cx='5' cy='24' r='2.5' fill='white'/%3E%3Ccircle cx='43' cy='24' r='2.5' fill='white'/%3E%3Ccircle cx='21' cy='41' r='2.5' fill='white'/%3E%3Ccircle cx='31' cy='41' r='2.5' fill='white'/%3E%3Cpath d='M12 18L4 24L12 30' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M36 18L44 24L36 30' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M28 14L20 24H28L20 34' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M18 12L20 8' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M28 12L30 8' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M10 24H6' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M38 24H42' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M18 36L20 40' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M28 36L30 40' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E`;
-      const highFidelityBlack = `data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='21' cy='7' r='2.5' fill='black'/%3E%3Ccircle cx='31' cy='7' r='2.5' fill='black'/%3E%3Ccircle cx='5' cy='24' r='2.5' fill='black'/%3E%3Ccircle cx='43' cy='24' r='2.5' fill='black'/%3E%3Ccircle cx='21' cy='41' r='2.5' fill='black'/%3E%3Ccircle cx='31' cy='41' r='2.5' fill='black'/%3E%3Cpath d='M12 18L4 24L12 30' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M36 18L44 24L36 30' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M28 14L20 24H28L20 34' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M18 12L20 8' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M28 12L30 8' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M10 24H6' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M38 24H42' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M18 36L20 40' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M28 36L30 40' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E`;
+      const highFidelityBlack = `data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='24' cy='24' r='23' fill='white'/%3E%3Ccircle cx='21' cy='7' r='2.5' fill='black'/%3E%3Ccircle cx='31' cy='7' r='2.5' fill='black'/%3E%3Ccircle cx='5' cy='24' r='2.5' fill='black'/%3E%3Ccircle cx='43' cy='24' r='2.5' fill='black'/%3E%3Ccircle cx='21' cy='41' r='2.5' fill='black'/%3E%3Ccircle cx='31' cy='41' r='2.5' fill='black'/%3E%3Cpath d='M12 18L4 24L12 30' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M36 18L44 24L36 30' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M28 14L20 24H28L20 34' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M18 12L20 8' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M28 12L30 8' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M10 24H6' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M38 24H42' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M18 36L20 40' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M28 36L30 40' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E`;
       fav.setAttribute("href", theme === 'light' ? highFidelityBlack : highFidelityWhite);
     }
   }, [theme]);
@@ -775,7 +814,8 @@ builtins.input = input_shim
 
       <div 
         ref={containerRef}
-        className={`flex flex-1 overflow-hidden transition-all duration-500 ease-in-out ${showAiPanel ? 'md:pr-[450px] lg:pr-[500px]' : ''}`}
+        className={`flex flex-1 overflow-hidden transition-all duration-500 ease-in-out ${showAiPanel ? '' : ''}`}
+        style={showAiPanel && window.innerWidth >= 768 ? { paddingRight: aiPanelWidth } : {}}
       >
         <main className="relative z-10 flex flex-1 flex-col md:flex-row overflow-hidden p-3 md:p-6 pb-20 md:pb-24 gap-0 transition-all duration-500">
           {/* EDITOR SECTION */}
@@ -927,6 +967,19 @@ builtins.input = input_shim
               </div>
             </div>
           </section>
+          {/* AI PANEL RESIZER */}
+          {showAiPanel && (
+            <div 
+              onMouseDown={startResizingAi}
+              className={`fixed top-0 bottom-0 z-[70] w-1.5 cursor-col-resize transition-all hover:bg-white/10 hidden md:block`}
+              style={{ right: aiPanelWidth }}
+            >
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-10 w-4 rounded-full bg-black/80 border border-white/5 flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
+                <div className="w-[1px] h-4 bg-white/20" />
+                <div className="w-[1px] h-4 bg-white/20" />
+              </div>
+            </div>
+          )}
         </main>
       </div>
 
@@ -1020,7 +1073,14 @@ builtins.input = input_shim
         currentCode={buffers[activeLangId]}
         metrics={metrics}
         theme={theme}
+        width={aiPanelWidth}
         onApplyRefactor={(newCode) => {
+          // DISPATCH FORCE SYNC EVENT for collaborative editor
+          const event = new CustomEvent('sam-editor-reset', { 
+            detail: { template: newCode } 
+          });
+          window.dispatchEvent(event);
+          
           setBuffers(prev => ({ ...prev, [activeLangId]: newCode }));
           setShowAiPanel(false);
           toast.success("AI refactor applied", {

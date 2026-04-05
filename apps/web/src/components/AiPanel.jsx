@@ -14,7 +14,8 @@ export default function AiPanel({
   language, 
   metrics,
   onApplyRefactor,
-  theme
+  theme,
+  width = 500
 }) {
   const [messages, setMessages] = useState([
     { role: "model", content: "I am Sam AI, your elite coding partner. How can I assist with your code today?" }
@@ -211,9 +212,10 @@ export default function AiPanel({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: "100%", opacity: 0.5 }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className={`fixed right-0 top-0 z-[65] h-screen w-full border-l shadow-[-20px_0_50px_rgba(0,0,0,0.1)] backdrop-blur-3xl md:w-[450px] lg:w-[500px] ${
+            className={`fixed right-0 top-0 z-[65] h-screen border-l shadow-[-20px_0_50px_rgba(0,0,0,0.1)] backdrop-blur-3xl overflow-hidden ${
               theme === 'dark' ? 'bg-black border-white/5 text-white' : 'bg-white border-slate-200 text-slate-900'
             }`}
+            style={{ width: window.innerWidth < 768 ? '100vw' : width }}
           >
             {/* Ambient Background Glow */}
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
