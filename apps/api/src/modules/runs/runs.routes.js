@@ -35,6 +35,15 @@ runsRouter.post("/", optionalAuth, async (req, res, next) => {
   }
 });
 
+runsRouter.get("/history", authMiddleware, async (req, res, next) => {
+  try {
+    const history = await getUserHistory(req.user.id);
+    res.json(history);
+  } catch (err) {
+    next(err);
+  }
+});
+
 runsRouter.get("/:runId", async (req, res, next) => {
   try {
     const run = await getRun(req.params.runId);
@@ -53,14 +62,6 @@ runsRouter.get("/:runId", async (req, res, next) => {
   }
 });
 
-runsRouter.get("/history", authMiddleware, async (req, res, next) => {
-  try {
-    const history = await getUserHistory(req.user.id);
-    res.json(history);
-  } catch (err) {
-    next(err);
-  }
-});
 
 runsRouter.get("/health/queue", async (req, res, next) => {
   try {
