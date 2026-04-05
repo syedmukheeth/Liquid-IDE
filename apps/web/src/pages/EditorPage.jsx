@@ -127,20 +127,23 @@ export default function EditorPage() {
   const [runStatus, setRunStatus] = useState("Ready");
   const [metrics, setMetrics] = useState(null);
   
-  const [sessionId, setSessionId] = useState(() => {
-    return searchParams.get("session") || "default";
-  });
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // High-fidelity session derivation
+  const sessionId = useMemo(() => {
+    const s = searchParams.get("session");
+    const raw = (s && s !== "default") ? s : "default";
+    return `${raw}_${activeLangId}`;
+  }, [searchParams, activeLangId]);
 
   useEffect(() => {
-    const existingSession = searchParams.get("session");
-    if (!existingSession || existingSession === "default") {
-      const freshSession = Math.random().toString(36).substring(2, 9);
-      setSearchParams({ session: freshSession }, { replace: true });
-      setSessionId(`${freshSession}_${activeLangId}`);
-    } else {
-      setSessionId(`${existingSession}_${activeLangId}`);
+    const current = searchParams.get("session");
+    if (!current || current === "default") {
+      const fresh = Math.random().toString(36).substring(2, 9);
+      setSearchParams({ session: fresh }, { replace: true });
     }
-  }, [searchParams, setSearchParams, activeLangId]);
+  }, [searchParams, setSearchParams]);
+
 
   const [theme, setTheme] = useState(localStorage.getItem("sam-theme") || "dark");
   
@@ -1115,8 +1118,6 @@ builtins.input = input_shim
           });
         }}
       />
-
-
 
       <AnimatePresence>
         {showShortcutsHelp && (
