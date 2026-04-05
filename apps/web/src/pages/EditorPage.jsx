@@ -128,8 +128,16 @@ export default function EditorPage() {
   const [runStatus, setRunStatus] = useState("Ready");
   const [metrics, setMetrics] = useState(null);
   
-  const [searchParams] = useSearchParams();
-  const rawSessionId = searchParams.get("session") || "default";
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawSessionId = useMemo(() => {
+    const existingSession = searchParams.get("session");
+    if (existingSession && existingSession !== "default") return existingSession;
+    
+    // Auto-generate fresh boilerplate room to prevent public session collision
+    const freshSession = Math.random().toString(36).substring(2, 9);
+    setTimeout(() => setSearchParams({ session: freshSession }, { replace: true }), 0);
+    return freshSession;
+  }, [searchParams, setSearchParams]);
   
   // FIX: Isolate sessions by language to prevent cross-language code duplication
   const sessionId = `${rawSessionId}_${activeLangId}`;
@@ -629,7 +637,7 @@ builtins.input = input_shim
           <div className="flex items-center gap-5 shrink-0">
             <div className="flex items-center gap-3 transition-all hover:scale-105">
               <SamNavLogo theme={theme} />
-            <div className="flex flex-col leading-[0.9] mt-1 relative">
+            <div className="hidden sm:flex flex-col leading-[0.9] mt-1 relative">
                 <span className="font-black tracking-tight text-[18px] uppercase italic" style={{ fontFamily: 'var(--font-display)', color: 'var(--sam-text)' }}>SAM</span>
                 <span className="text-[10px] font-black uppercase tracking-[0.35em] opacity-40 ml-0.5" style={{ color: 'var(--sam-text)' }}>Compiler</span>
               </div>
