@@ -127,19 +127,20 @@ export default function EditorPage() {
   const [runStatus, setRunStatus] = useState("Ready");
   const [metrics, setMetrics] = useState(null);
   
-  const [searchParams, setSearchParams] = useSearchParams();
-  const rawSessionId = useMemo(() => {
+  const [sessionId, setSessionId] = useState(() => {
+    return searchParams.get("session") || "default";
+  });
+
+  useEffect(() => {
     const existingSession = searchParams.get("session");
-    if (existingSession && existingSession !== "default") return existingSession;
-    
-    // Auto-generate fresh boilerplate room to prevent public session collision
-    const freshSession = Math.random().toString(36).substring(2, 9);
-    setTimeout(() => setSearchParams({ session: freshSession }, { replace: true }), 0);
-    return freshSession;
-  }, [searchParams, setSearchParams]);
-  
-  // FIX: Isolate sessions by language to prevent cross-language code duplication
-  const sessionId = `${rawSessionId}_${activeLangId}`;
+    if (!existingSession || existingSession === "default") {
+      const freshSession = Math.random().toString(36).substring(2, 9);
+      setSearchParams({ session: freshSession }, { replace: true });
+      setSessionId(`${freshSession}_${activeLangId}`);
+    } else {
+      setSessionId(`${existingSession}_${activeLangId}`);
+    }
+  }, [searchParams, setSearchParams, activeLangId]);
 
   const [theme, setTheme] = useState(localStorage.getItem("sam-theme") || "dark");
   
@@ -466,11 +467,7 @@ export default function EditorPage() {
         e.preventDefault();
         setShowAiPanel(prev => !prev);
       }
-      // CMD/CTRL + H = TOGGLE HISTORY
-      if ((e.metaKey || e.ctrlKey) && e.key === "h" && user) {
-        e.preventDefault();
-        setShowHistoryModal(prev => !prev);
-      }
+
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -748,21 +745,7 @@ builtins.input = input_shim
 
           {/* Navigation & Actions */}
           <div className="flex items-center gap-1.5 md:gap-3 shrink-0">
-            {user && (
-              <button 
-                onClick={() => setShowHistoryModal(true)}
-                className="hidden md:flex h-10 items-center justify-center gap-2 rounded-xl border px-3 transition-all duration-300 hover:scale-105 active:scale-95 group"
-                style={{ 
-                  background: 'var(--sam-surface-low)',
-                  borderColor: 'var(--sam-glass-border)',
-                  boxShadow: 'var(--sam-glow-bloom)'
-                }}
-                title="Compilation History"
-              >
-                <History className="h-4 w-4 text-dim group-hover:text-label transition-colors" style={{ color: 'var(--sam-text-dim)' }} />
-                <span className="hidden md:inline text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--sam-text)' }}>History</span>
-              </button>
-            )}
+
             
             <button 
               onClick={() => setShowShortcutsHelp(true)}
@@ -1133,19 +1116,7 @@ builtins.input = input_shim
         }}
       />
 
-      <HistoryModal 
-        isOpen={showHistoryModal} 
-        onClose={() => setShowHistoryModal(false)}
-        onRestore={(code, lang) => {
-          if (languageConfigs[lang]) {
-            setActiveLangId(lang);
-          }
-          setBuffers(prev => ({ ...prev, [lang || activeLangId]: code }));
-          toast.success("Code restored from history", {
-            style: { background: 'var(--sam-surface)', color: 'var(--sam-text)', border: '1px solid var(--sam-glass-border)', fontSize: '10px' }
-          });
-        }}
-      />
+
 
       <AnimatePresence>
         {showShortcutsHelp && (
@@ -1168,7 +1139,7 @@ builtins.input = input_shim
                  <ShortcutItem keys={["CTRL", "S"]} label="Save Locally" />
                  <ShortcutItem keys={["CTRL", "L"]} label="Clear Output" />
                  <ShortcutItem keys={["CTRL", "/"]} label="Toggle Sam AI" />
-                 <ShortcutItem keys={["CTRL", "H"]} label="History Overlay" />
+
               </div>
               <button 
                 onClick={() => setShowShortcutsHelp(false)}
