@@ -41,9 +41,16 @@ Underneath the glassmorphism and slate accents lies a powerhouse of **distribute
 *   **Session Isolation**: Automatic, randomized room generation ensures your private code stays private.
 *   **OAuth Lifecycle**: Secure "Continue with Google/GitHub" integration via Passport.js.
 
+### 🧩 Technical Highlights & Innovative Solutions
+*   **Path-Agnostic Proxy Routing**: Engineered a dual-mount routing system to resolve complex header-stripping issues common in distributed proxy environments (Render/Vercel).
+*   **Atomic Session Persistence**: Implemented a localized state-recovery model for Yjs CRDTs, ensuring collaborative sessions persist across server restarts via MongoDB Atlas.
+*   **Zero-Lag Synchronization**: Optimized binary CRDT updates over WebSockets for a sub-50ms latency editing experience.
+*   **Sandboxed Multi-Tenancy**: Secured user logic using gVisor-hardened Docker kernels, preventing untrusted code from accessing host system resources.
+
 ### 📱 Edge Responsiveness
 *   **Mobile-First Design**: A complete mobile UI overhaul with adaptive headers and touch-optimized editor controls.
 *   **Zero-Install**: Fully functional in any modern browser, from desktop workstations to mobile devices.
+
 
 ---
 
