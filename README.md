@@ -1,14 +1,14 @@
 <div align="center">
   <img alt="SAM Compiler Logo" src="https://raw.githubusercontent.com/syedmukheeth/SAM-Compiler/main/apps/web/public/favicon.svg" width="120">
   <br>
-  <h1>SAM Compiler — The Obsidian Monolith</h1>
+  <h1>🌑 SAM Compiler 3.0: The Obsidian Monolith</h1>
   <p><b>High-Performance, Multi-Language Cloud IDE with AI Synthesis</b></p>
 
   <p>
     <img src="https://img.shields.io/badge/Version-3.0.0-black?style=for-the-badge" alt="Version">
-    <img src="https://img.shields.io/badge/Design-Obsidian--Monolith-black?style=for-the-badge" alt="Design">
+    <img src="https://img.shields.io/badge/FrontEnd-Vercel-black?style=for-the-badge&logo=vercel" alt="Vercel">
+    <img src="https://img.shields.io/badge/BackEnd-Render-black?style=for-the-badge&logo=render" alt="Render">
     <img src="https://img.shields.io/badge/Security-gVisor--Hardened-black?style=for-the-badge&logo=docker" alt="Security">
-    <img src="https://img.shields.io/badge/AI-Gemini--Pro--Integrated-black?style=for-the-badge&logo=google-cloud" alt="AI">
   </p>
 
   <i>A precision-engineered development engine featuring zero-lag collaboration, hardened sandboxing, and a high-fidelity monochromatic aesthetic.</i>
@@ -18,15 +18,11 @@
 
 ## 🌑 The SAM Identity
 
-**SAM Compiler** is a precision-engineered development engine. It utilizes a high-performance distributed architecture to ensure stability, low-latency synchronization, and professional-grade security.
+**SAM Compiler** is a precision-engineered development engine. It utilizes a high-fidelity distributed architecture designed for maximal stability, low-latency synchronization, and professional-grade security.
 
 ### 🏁 **Official Production Links**
-- **Official Website (Vercel)**: [https://sam-compiler-web.vercel.app/](https://sam-compiler-web.vercel.app/)
-- **Production API (Render Monolith)**: [https://sam-compiler.onrender.com](https://sam-compiler.onrender.com)
-
-Underneath the obsidian glassmorphism lies a powerhouse of **distributed systems**: from **CRDT-based synchronization** to **gVisor-hardened execution kernels**, SAM is built for scale and speed.
-
-
+- **Official Interface (Vercel)**: [https://sam-compiler-web.vercel.app/](https://sam-compiler-web.vercel.app/)
+- **Hardened API (Render)**: [https://sam-compiler.onrender.com](https://sam-compiler.onrender.com)
 
 ---
 
@@ -38,25 +34,14 @@ Underneath the obsidian glassmorphism lies a powerhouse of **distributed systems
 *   **Real-time Multi-player**: Conflict-free collaborative editing powered by **Yjs CRDTs** and WebSockets.
 *   **Integrated Terminal**: High-fidelity XTerm.js integration for real-time output streaming.
 
-### 🧠 SAM AI Synthesis
-*   **Gemini Pro Powered**: Built-in AI assistant for complex refactoring, bug hunting, and logic explanation.
-*   **Context-Aware**: One-click "Apply Code" to instantly merge AI-suggested improvements into your workspace.
-
 ### 🛡️ Enterprise-Grade Security
 *   **Hardened Sandboxing**: Every execution run is isolated using **gVisor** (Google's container sandbox) and Docker.
-*   **Session Isolation**: Automatic, randomized room generation ensures your private code stays private.
-*   **OAuth Lifecycle**: Secure "Continue with Google/GitHub" integration via Passport.js.
+*   **OAuth Lifecycle**: Secure "Continue with Google/GitHub" integration with automatic string-trimming and domain auto-correction.
 
 ### 🧩 Technical Highlights & Innovative Solutions
-*   **Path-Agnostic Proxy Routing**: Engineered a dual-mount routing system to resolve complex header-stripping issues common in distributed proxy environments (Render/Vercel).
-*   **Atomic Session Persistence**: Implemented a localized state-recovery model for Yjs CRDTs, ensuring collaborative sessions persist across server restarts via MongoDB Atlas.
+*   **Path-Agnostic Proxy Routing**: Engineered a dual-mount routing system to resolve complex header-stripping issues common in distributed proxy environments.
+*   **Dynamic Domain Guard**: Implemented backend logic to auto-correct legacy subdomains in OAuth handshakes, ensuring zero-friction login.
 *   **Zero-Lag Synchronization**: Optimized binary CRDT updates over WebSockets for a sub-50ms latency editing experience.
-*   **Sandboxed Multi-Tenancy**: Secured user logic using gVisor-hardened Docker kernels, preventing untrusted code from accessing host system resources.
-
-### 📱 Edge Responsiveness
-*   **Mobile-First Design**: A complete mobile UI overhaul with adaptive headers and touch-optimized editor controls.
-*   **Zero-Install**: Fully functional in any modern browser, from desktop workstations to mobile devices.
-
 
 ---
 
@@ -66,12 +51,12 @@ SAM utilizes a distributed control plane to manage isolation and high-frequency 
 
 ```mermaid
 graph TD
-    subgraph "Client Layer (Obsidian UI)"
+    subgraph "Client Layer (Vercel Interface)"
         UI[React / Monaco] -->|Sync State| CRDT[Yjs CRDT Engine]
         UI -->|Streaming| Term[XTerm.js Output]
     end
 
-    subgraph "Control Plane (Orchestration)"
+    subgraph "Control Plane (Render Monolith)"
         Socket[Socket.io Gateway] -->|Auth| OAuth[Google / GitHub OAuth]
         Socket -->|Job Dispatch| Queue[BullMQ / Redis Stack]
         CRDT -->|Persistence| Mongo[(MongoDB Atlas)]
@@ -99,40 +84,29 @@ graph TD
 
 ---
 
-## 🚀 Quick Start
+## 🚀 "Zero-Error" Sync Checklist
 
-### 1. Prerequisities
--   **Node.js** (v18+)
--   **Docker** (for secure Cloud execution)
--   **Redis & MongoDB** (Local or Cloud instances)
+To ensure your deployment is perfectly stabilized, follow this domain synchronization checklist:
 
-### 2. Monorepo Installation
-```bash
-# Clone the repository
-git clone https://github.com/syedmukheeth/SAM-Compiler.git
-cd SAM-Compiler
+### 1. GitHub Dashboard Settings
+*   **Homepage URL**: `https://sam-compiler-web.vercel.app`
+*   **Authorization callback URL**: `https://sam-compiler.onrender.com/api/auth/github/callback`
 
-# Install all workspace dependencies
-npm install
+### 2. Google OAuth Credentials
+*   **Authorized JavaScript origins**: `https://sam-compiler-web.vercel.app`
+*   **Authorized redirect URIs**: `https://sam-compiler.onrender.com/api/auth/google/callback`
 
-# Launch Development Environment (All Apps)
-npm run dev
-```
+### 3. Production Environment Variables
+*   **WEB_ORIGIN**: `https://sam-compiler-web.vercel.app`
+*   **CALLBACK_URL_BASE**: `https://sam-compiler.onrender.com/api/auth`
 
-### 3. Environment Secrets
-Create `.env` files in `apps/api` and `apps/web`.
+---
 
-**Required `apps/api/.env`:**
-```env
-PORT=8080
-MONGO_URI=mongodb+srv://...
-REDIS_URL=rediss://...
-GITHUB_CLIENT_ID=...
-GITHUB_CLIENT_SECRET=...
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
-GEMINI_API_KEY=...
-```
+## ⚕️ Troubleshooting: Frequent Issues
+
+- **404: NOT_FOUND on login**: Ensure your backend `auth.routes.js` redirects to the frontend root (`/`) and not a legacy `/login` path.
+- **redirect_uri_mismatch**: Verify that the URL in your GitHub/Google dashboard exactly matches the Render monolithic domain (`https://sam-compiler.onrender.com`).
+- **Invalid Client Secret**: Our `env.js` automatically trims secrets, but ensure you haven't copy-pasted partial keys.
 
 ---
 
