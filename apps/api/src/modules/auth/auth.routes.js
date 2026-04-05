@@ -7,6 +7,7 @@ const router = express.Router();
 
 // Social Auth Redirects
 router.get("/github", (req, res, next) => {
+  console.log("[AUTH-INIT] GitHub Login Process Started");
   if (!env.GITHUB_CLIENT_ID || env.GITHUB_CLIENT_ID === "placeholder") {
     return res.status(400).json({ 
       message: "GitHub Integration is not configured. Please add GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET to your environment variables." 
@@ -14,6 +15,7 @@ router.get("/github", (req, res, next) => {
   }
   passport.authenticate("github", { scope: ["user:email", "repo"], session: false })(req, res, next);
 });
+
 
 router.get("/google", (req, res, next) => {
   if (!env.GOOGLE_CLIENT_ID || env.GOOGLE_CLIENT_ID === "placeholder") {
@@ -23,27 +25,45 @@ router.get("/google", (req, res, next) => {
 });
 
 // Social Auth Callbacks
-router.get("/github/callback", 
-  passport.authenticate("github", { failureRedirect: "/login", session: false }),
-  (req, res) => {
-    const token = generateToken(req.user);
-    const frontendUrl = process.env.NODE_ENV === "production" 
+router.get("/github/callback", (req, res, next) => {
+  console.log("[AUTH-CALLBACK] GitHub Callback Received");
+  const frontendUrl = process.env.NODE_ENV === "production" 
       ? "https://sam-compiler-web.vercel.app" 
       : env.WEB_ORIGIN;
+      
+  passport.authenticate("github", { 
+    failureRedirect: `${frontendUrl}/login`, 
+    session: false 
+  }, (err, user) => {
+    if (err || !user) {
+      console.error("[AUTH-CALLBACK-FAILURE] GitHub Auth Failed:", err);
+      return res.redirect(`${frontendUrl}/login?error=auth_failed`);
+    }
+    const token = generateToken(user);
     res.redirect(`${frontendUrl}/?token=${token}`);
-  }
-);
+  })(req, res, next);
+});
 
-router.get("/google/callback",
-  passport.authenticate("google", { failureRedirect: "/login", session: false }),
-  (req, res) => {
-    const token = generateToken(req.user);
-    const frontendUrl = process.env.NODE_ENV === "production" 
+
+router.get("/google/callback", (req, res, next) => {
+  console.log("[AUTH-CALLBACK] Google Callback Received");
+  const frontendUrl = process.env.NODE_ENV === "production" 
       ? "https://sam-compiler-web.vercel.app" 
       : env.WEB_ORIGIN;
+
+  passport.authenticate("google", { 
+    failureRedirect: `${frontendUrl}/login`, 
+    session: false 
+  }, (err, user) => {
+    if (err || !user) {
+      console.error("[AUTH-CALLBACK-FAILURE] Google Auth Failed:", err);
+      return res.redirect(`${frontendUrl}/login?error=auth_failed`);
+    }
+    const token = generateToken(user);
     res.redirect(`${frontendUrl}/?token=${token}`);
-  }
-);
+  })(req, res, next);
+});
+
 
 router.get("/me", authMiddleware, async (req, res) => {
   try {
