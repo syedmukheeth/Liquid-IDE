@@ -3,7 +3,7 @@ import Modal from "./Modal";
 import { login, register } from "../services/authApi";
 import { Mail, Loader2 } from "lucide-react";
 
-export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin }) {
+export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin, theme }) {
   const [isLoginTab, setIsLoginTab] = useState(true);
   const [isLoading, setIsLoading] = useState(null);
   const [error, setError] = useState(null);
@@ -40,6 +40,7 @@ export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin }) {
       onClose={onClose}
       title={isLoginTab ? "Sign in to SAM" : "Create SAM Account"}
       isDarkMode={isDarkMode}
+      theme={theme}
     >
       <div style={{ animation: "fadeIn 0.3s ease" }}>
         {/* Tab Switcher */}

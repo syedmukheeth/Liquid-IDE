@@ -1,16 +1,18 @@
 import React, { useEffect } from "react";
 import favicon from "../assets/favicon.svg";
+import faviconLight from "../assets/favicon-light.svg";
 
 // Real SAM logo for modal header
-function SamLogoSmall() {
+function SamLogoSmall({ theme }) {
+  const src = theme === 'light' ? faviconLight : favicon;
   return (
     <div className="flex h-8 w-8 items-center justify-center">
-      <img src={favicon} alt="SAM" style={{ width: 28, height: 28 }} />
+      <img src={src} alt="SAM" style={{ width: 28, height: 28 }} />
     </div>
   );
 }
 
-export default function Modal({ isOpen, onClose, title, children }) {
+export default function Modal({ isOpen, onClose, title, children, theme }) {
   useEffect(() => {
     const handleEsc = (e) => { if (e.key === "Escape") onClose(); };
     if (isOpen) window.addEventListener("keydown", handleEsc);
@@ -74,7 +76,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
           borderBottom: "1px solid var(--sam-glass-border)",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <SamLogoSmall />
+            <SamLogoSmall theme={theme} />
             <span style={{
               fontSize: 10,
               fontWeight: 900,
