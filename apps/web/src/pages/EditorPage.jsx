@@ -1000,21 +1000,21 @@ builtins.input = input_shim
           ? 'bg-black/90' 
           : 'bg-white/95 shadow-[0_-4px_24px_-10px_rgba(0,0,0,0.05)]'
       }`}>
-        {/* Top Accent Bar — Professional Centered Beam (Sole Separator) */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[240px] h-[2px] z-10 overflow-visible">
+        {/* Top Accent Bar — Full-Width Intense Glow Horizon */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] z-10 overflow-visible">
           <div 
             className={`w-full h-full ${
               theme === 'dark' 
-                ? 'sam-pulse-glow-red bg-gradient-to-r from-transparent via-[#ff3b3b] to-transparent shadow-[0_0_25px_rgba(255,59,59,0.9)]' 
-                : 'sam-pulse-glow-blue bg-gradient-to-r from-transparent via-[#3b82f6] to-transparent shadow-[0_0_20px_rgba(59,130,246,0.6)]'
+                ? 'sam-pulse-glow-red bg-[#ff3b3b] shadow-[0_0_20px_rgba(255,59,59,0.8)]' 
+                : 'sam-pulse-glow-blue bg-[#3b82f6] shadow-[0_0_15px_rgba(59,130,246,0.6)]'
             }`}
           />
-          {/* Intense Core Beam — Pure Hairline */}
+          {/* Intense Core — 1px Sharp Blade */}
           <div 
-            className={`absolute top-0 left-1/2 -translate-x-1/2 w-[100px] h-[1px] ${
-              theme === 'dark' ? 'bg-white' : 'bg-blue-500'
+            className={`absolute top-0 left-0 right-0 h-[1px] ${
+              theme === 'dark' ? 'bg-white' : 'bg-blue-400'
             }`}
-            style={{ opacity: 0.9, filter: 'blur(0.2px)' }}
+            style={{ opacity: 0.9 }}
           />
         </div>
 
