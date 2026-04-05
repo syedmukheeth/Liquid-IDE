@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Modal from "./Modal";
 import { login, register } from "../services/authApi";
 import { Mail, Loader2 } from "lucide-react";
+import { ENDPOINTS } from "../services/endpoints";
 
 export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin, theme }) {
   const [isLoginTab, setIsLoginTab] = useState(true);
@@ -10,9 +11,11 @@ export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin, theme 
   const [formData, setFormData] = useState({ name: "", email: "", password: "" });
 
   const handleSocialLogin = (provider) => {
-    const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
-    window.location.href = `${API_URL}/auth/${provider}`;
+    // HARDENED: Definitively targets the monolithic Render backend
+    const API_URL = (ENDPOINTS.API_BASE_URL || "/api") + "/auth";
+    window.location.href = `${API_URL}/${provider}`;
   };
+
 
   const handleAuth = async (e) => {
     e.preventDefault();

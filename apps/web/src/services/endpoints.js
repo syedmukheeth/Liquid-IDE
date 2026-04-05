@@ -1,23 +1,25 @@
 /**
- * Centralized endpoint configuration for SAM Compiler
+ * 🌑 Centralized endpoint configuration for SAM Compiler
  * Ensures that API and WebSocket traffic are routed correctly
- * between Vercel (REST) and Render (WebSockets).
+ * to the monolithic Render backend.
  */
+
+// HARDENED: Definitively targets the monolithic Render domain as the source of truth
+const RENDER_BASE = "https://sam-compiler.onrender.com";
 
 const isProduction = import.meta.env.PROD;
 const isVercel = window.location.hostname.includes("vercel.app");
 
 export const ENDPOINTS = {
-  // REST API Endpoint
-  // ALIGNMENT: Uses VITE_API_URL if provided (for separate Vercel deployments), else defaults to origin.
-  API_BASE_URL: (import.meta.env.VITE_API_URL || "").replace(/\/+$/, ""),
+  // REST API Endpoint: Prioritizes environment variables, falls back to the production monolith
+  API_BASE_URL: (import.meta.env.VITE_API_URL || RENDER_BASE).replace(/\/+$/, ""),
 
-  // WebSocket Endpoint 
-  WS_ENDPOINT: (import.meta.env.VITE_WS_URL || import.meta.env.VITE_API_URL || (isProduction ? "" : window.location.protocol + "//" + window.location.hostname + ":8080")).replace(/\/+$/, ""),
+  // WebSocket Endpoint: Essential for real-time collaborative synchronization
+  WS_ENDPOINT: (import.meta.env.VITE_WS_URL || import.meta.env.VITE_API_URL || RENDER_BASE).replace(/\/+$/, ""),
 
-  // SOCKET_OPTIONS: WebSocket first for max performance on Render container
+  // SOCKET_OPTIONS: Optimized for Render's container handshake
   SOCKET_OPTIONS: {
-     transports: ["polling", "websocket"], // Safer initial handshake for Render/Heroku
+     transports: ["polling", "websocket"],
      reconnection: true,
      reconnectionAttempts: 50,
      timeout: 30000
