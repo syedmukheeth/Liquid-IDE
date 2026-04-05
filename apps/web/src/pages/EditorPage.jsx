@@ -661,11 +661,13 @@ builtins.input = input_shim
       <div className="noise-overlay" />
 
       <header className="relative z-20 flex h-14 md:h-16 shrink-0 items-center justify-between px-4 md:px-8 border-b-0 sam-glass" style={{ borderBottom: '1px solid var(--sam-glass-border)', background: 'var(--sam-glass-bg)', backdropFilter: 'blur(30px)' }}>
-        <div className="flex items-center gap-4 md:gap-14">
-          <div className="flex items-center gap-5 shrink-0">
-            <div className="flex items-center gap-3 transition-all hover:scale-105">
-              <SamNavLogo theme={theme} />
-            <div className="hidden sm:flex flex-col leading-[0.9] mt-1 relative">
+        <div className="flex items-center gap-2 md:gap-14 shrink-0 overflow-hidden">
+          <div className="flex items-center gap-2 sm:gap-5 shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 transition-all hover:scale-105">
+              <div className="scale-90 sm:scale-100 origin-left">
+                <SamNavLogo theme={theme} />
+              </div>
+              <div className="hidden sm:flex flex-col leading-[0.9] mt-1 relative">
                 <span className="font-black tracking-tight text-[18px] uppercase italic" style={{ fontFamily: 'var(--font-display)', color: 'var(--sam-text)' }}>SAM</span>
                 <span className="text-[10px] font-black uppercase tracking-[0.35em] opacity-40 ml-0.5" style={{ color: 'var(--sam-text)' }}>Compiler</span>
               </div>
@@ -720,15 +722,17 @@ builtins.input = input_shim
         <motion.div 
           animate={{ x: (showAiPanel && window.innerWidth >= 768) ? -440 : 0 }}
           transition={{ type: "spring", damping: 30, stiffness: 300 }}
-          className="flex items-center gap-2 md:gap-5 shrink-0"
+          className="flex items-center gap-1 sm:gap-2 md:gap-5 shrink-0"
         >
-          <ThemeToggle theme={theme} toggle={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')} />
+          <div className="scale-75 sm:scale-100 origin-right">
+            <ThemeToggle theme={theme} toggle={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')} />
+          </div>
           
           {user ? (
-            <div className="flex items-center gap-2 md:gap-3 shrink-0">
+            <div className="flex items-center gap-1 sm:gap-2 md:gap-3 shrink-0">
               <div style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '4px 8px 4px 12px',
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '2px 4px 2px 8px',
                 borderRadius: 20,
                 border: '1px solid var(--sam-glass-border)',
                 background: 'var(--sam-accent-muted)',
@@ -739,7 +743,7 @@ builtins.input = input_shim
                 <img
                   src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=000000&color=FFFFFF`}
                   alt="Avatar"
-                  style={{ width: 26, height: 26, borderRadius: '50%', border: '1px solid var(--sam-glass-border)', objectFit: 'cover' }}
+                  style={{ width: 24, height: 24, borderRadius: '50%', border: '1px solid var(--sam-glass-border)', objectFit: 'cover' }}
                 />
               </div>
               <button
@@ -764,22 +768,23 @@ builtins.input = input_shim
               onClick={() => setActiveModal('auth')}
               className="sam-button-primary shrink-0"
               style={{
-                padding: window.innerWidth < 768 ? '6px 12px' : '7px 18px', 
+                padding: window.innerWidth < 768 ? '5px 10px' : '7px 18px', 
                 borderRadius: 4,
-                fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em',
+                fontSize: window.innerWidth < 768 ? 9 : 10, 
+                fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em',
                 cursor: 'pointer', transition: 'all 0.25s',
                 fontFamily: 'var(--font-body)',
                 background: 'var(--sam-accent)',
                 color: 'var(--sam-bg)',
-                border: 'none'
+                border: 'none',
+                whiteSpace: 'nowrap'
               }}
             >Sign In</button>
           )}
 
           {/* Navigation & Actions */}
-          <div className="flex items-center gap-1.5 md:gap-3 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-1.5 md:gap-3 shrink-0">
 
-            
             <button 
               onClick={() => setShowShortcutsHelp(true)}
               className="group hidden md:flex h-10 w-10 items-center justify-center rounded-xl border transition-all duration-300"
@@ -795,15 +800,16 @@ builtins.input = input_shim
 
             <button 
               onClick={() => setShowAiPanel(!showAiPanel)}
-              className="group flex h-9 w-9 md:h-10 md:w-auto md:px-4 items-center justify-center gap-2 rounded-xl border transition-all duration-300 shrink-0"
+              className="group flex h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-auto md:px-4 items-center justify-center gap-2 rounded-xl border transition-all duration-300 shrink-0"
               style={{ 
                 background: showAiPanel ? 'var(--sam-accent-muted)' : 'var(--sam-surface-low)',
                 borderColor: showAiPanel ? 'var(--sam-accent)' : 'var(--sam-glass-border)',
                 color: showAiPanel ? 'var(--sam-accent)' : 'var(--sam-text-dim)',
                 boxShadow: 'var(--sam-glow-bloom)'
               }}
+              title="AI Assistant"
             >
-              <Sparkles className={`h-4 w-4 ${showAiPanel ? 'animate-pulse' : ''}`} />
+              <Sparkles className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${showAiPanel ? 'animate-pulse' : ''}`} />
             </button>
 
             {/* History Button */}
@@ -812,7 +818,7 @@ builtins.input = input_shim
                 if (!token) { setActiveModal('auth'); return; }
                 setShowHistory(prev => !prev);
               }}
-              className="group flex h-9 w-9 md:h-10 md:w-auto md:px-4 items-center justify-center gap-2 rounded-xl border transition-all duration-300 shrink-0"
+              className="group flex h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-auto md:px-4 items-center justify-center gap-2 rounded-xl border transition-all duration-300 shrink-0"
               style={{ 
                 background: showHistory ? 'var(--sam-accent-muted)' : 'var(--sam-surface-low)',
                 borderColor: showHistory ? 'var(--sam-accent)' : 'var(--sam-glass-border)',
@@ -821,16 +827,16 @@ builtins.input = input_shim
               }}
               title="Run History"
             >
-              <Clock className="h-4 w-4" />
+              <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span className="hidden md:inline" style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', fontFamily: 'var(--font-body)' }}>History</span>
             </button>
 
             <button 
               onClick={() => setActiveModal('settings')} 
-              className="md:hidden flex items-center justify-center h-9 w-9 shrink-0"
-              style={{ background: 'none', border: 'none', color: 'var(--sam-text-dim)', cursor: 'pointer', opacity: 0.5 }}
+              className="flex items-center justify-center h-8 w-8 sm:h-9 sm:w-9 shrink-0 md:hidden"
+              style={{ background: 'none', border: 'none', color: 'var(--sam-text-dim)', cursor: 'pointer', opacity: 0.7 }}
             >
-              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
             </button>
           </div>
         </motion.div>
