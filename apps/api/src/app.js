@@ -98,14 +98,21 @@ function createApp() {
   });
   
   // Direct Mounting Fix: Absolute paths catch redirects regardless of proxy interference
+  app.get(["/api/ping", "/ping"], (req, res) => res.json({ status: "alive" }));
+  app.get(["/api/health-check", "/health-check"], (req, res) => res.json({ 
+    status: "healthy", 
+    uptime: process.uptime()
+  }));
+
   app.use(["/api/runs", "/runs"], runLimiter, runsRouter);
   app.use(["/api/github", "/github"], githubRouter);
   app.use(["/api/auth", "/auth"], authRouter);
   app.use(["/api/ai", "/ai"], aiRouter);
 
-  // Remaining generic routes (e.g. health checks)
+  // Remaining generic routes
   app.use("/api", routes);
   app.use("/", routes);
+
 
 
 
