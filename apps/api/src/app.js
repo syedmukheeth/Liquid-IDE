@@ -58,12 +58,18 @@ function createApp() {
 
   app.use(
     cors({
-      origin: true,
+      origin: [
+        "https://sam-compiler-web.vercel.app",
+        "https://sam-compiler.onrender.com",
+        "http://localhost:3000",
+        "http://localhost:8080"
+      ],
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
       credentials: true,
       allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
     })
   );
+
   app.use(express.json({ limit: "2mb" }));
   app.use(passport.initialize());
 

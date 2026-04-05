@@ -26,7 +26,8 @@ router.get("/google", (req, res, next) => {
 
 // Social Auth Callbacks
 router.get("/github/callback", (req, res, next) => {
-  const frontendUrl = env.WEB_ORIGIN || "https://sam-compiler-web.vercel.app";
+  // PRIME MODE: Absolute hard-enforcement of the Vercel production origin
+  const frontendUrl = "https://sam-compiler-web.vercel.app";
       
   passport.authenticate("github", { 
     failureRedirect: `${frontendUrl}/?error=auth_failed`, 
@@ -43,7 +44,9 @@ router.get("/github/callback", (req, res, next) => {
 
 
 router.get("/google/callback", (req, res, next) => {
-  const frontendUrl = env.WEB_ORIGIN || "https://sam-compiler-web.vercel.app";
+  // PRIME MODE: Absolute hard-enforcement of the Vercel production origin
+  const frontendUrl = "https://sam-compiler-web.vercel.app";
+
 
   passport.authenticate("google", { 
     failureRedirect: `${frontendUrl}/?error=auth_failed`, 

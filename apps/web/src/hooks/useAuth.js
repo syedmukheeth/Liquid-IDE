@@ -36,16 +36,23 @@ export function useAuth() {
   }, [logoutUser]);
 
   useEffect(() => {
-    // Capture OAuth token from redirect URL (e.g., ?token=xyz)
-    const params = new URLSearchParams(window.location.search);
-    const oauthToken = params.get("token");
+    // PRIME MODE: Immediate OAuth token detection from URL
+    const searchParams = new URLSearchParams(window.location.search);
+    const oauthToken = searchParams.get("token");
+    
     if (oauthToken) {
+      // 1. Immediately persist to state and storage
       setToken(oauthToken);
       localStorage.setItem("sam_token", oauthToken);
-      // Clean the URL
-      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      // 2. High-Fidelity URL Cleaning: Remove ONLY the token, leave other params (like session)
+      searchParams.delete("token");
+      const newSearch = searchParams.toString();
+      const newRelativePathQuery = window.location.pathname + (newSearch ? `?${newSearch}` : "");
+      window.history.replaceState({}, document.title, newRelativePathQuery);
     }
   }, []);
+
 
   useEffect(() => {
     if (token) {
