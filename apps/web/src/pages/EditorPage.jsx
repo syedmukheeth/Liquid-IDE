@@ -990,13 +990,13 @@ builtins.input = input_shim
       </div>
 
       {/* Fixed Terminal Dashboard Footer */}
-      <footer className={`fixed bottom-0 left-0 right-0 z-50 flex h-12 items-center justify-between px-6 transition-all duration-300 border-t backdrop-blur-md ${
+      <footer className={`fixed bottom-0 left-0 right-0 z-50 flex h-12 items-center justify-between px-6 transition-all duration-300 backdrop-blur-md ${
         theme === 'dark' 
-          ? 'bg-black/90 border-white/5' 
-          : 'bg-white/95 border-slate-200 shadow-[0_-4px_24px_-10px_rgba(0,0,0,0.05)]'
+          ? 'bg-black/90' 
+          : 'bg-white/95 shadow-[0_-4px_24px_-10px_rgba(0,0,0,0.05)]'
       }`}>
-        {/* Top Accent Bar — Professional Centered Beam */}
-        <div className="absolute top-[-1px] left-1/2 -translate-x-1/2 w-[300px] h-[2px] z-10 overflow-visible">
+        {/* Top Accent Bar — Professional Centered Beam (Sole Separator) */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[240px] h-[2px] z-10 overflow-visible">
           <div 
             className={`w-full h-full ${
               theme === 'dark' 
@@ -1004,12 +1004,12 @@ builtins.input = input_shim
                 : 'sam-pulse-glow-blue bg-gradient-to-r from-transparent via-[#3b82f6] to-transparent shadow-[0_0_20px_rgba(59,130,246,0.6)]'
             }`}
           />
-          {/* Intense Core Beam */}
+          {/* Intense Core Beam — Pure Hairline */}
           <div 
-            className={`absolute top-0 left-1/2 -translate-x-1/2 w-[120px] h-[1px] ${
-              theme === 'dark' ? 'bg-white' : 'bg-blue-400'
+            className={`absolute top-0 left-1/2 -translate-x-1/2 w-[100px] h-[1px] ${
+              theme === 'dark' ? 'bg-white' : 'bg-blue-500'
             }`}
-            style={{ opacity: 0.8, filter: 'blur(0.5px)' }}
+            style={{ opacity: 0.9, filter: 'blur(0.2px)' }}
           />
         </div>
 
