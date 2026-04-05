@@ -1000,21 +1000,22 @@ builtins.input = input_shim
           ? 'bg-black/90' 
           : 'bg-white/95 shadow-[0_-4px_24px_-10px_rgba(0,0,0,0.05)]'
       }`}>
-        {/* Top Accent Bar — Full-Width Intense Glow Horizon */}
+        {/* Top Accent Bar — Full-Width Fading Glow Horizon */}
         <div className="absolute top-0 left-0 right-0 h-[2px] z-10 overflow-visible">
           <div 
             className={`w-full h-full ${
               theme === 'dark' 
-                ? 'sam-pulse-glow-red bg-[#ff3b3b] shadow-[0_0_20px_rgba(255,59,59,0.8)]' 
-                : 'sam-pulse-glow-blue bg-[#3b82f6] shadow-[0_0_15px_rgba(59,130,246,0.6)]'
+                ? 'sam-pulse-glow-red bg-gradient-to-r from-transparent via-[#ff3b3b] to-transparent shadow-[0_0_20px_rgba(255,59,59,0.5)]' 
+                : 'sam-pulse-glow-blue bg-gradient-to-r from-transparent via-[#3b82f6] to-transparent shadow-[0_0_15px_rgba(59,130,246,0.3)]'
             }`}
           />
-          {/* Intense Core — 1px Sharp Blade */}
+          {/* Intense Core — Fading Blade */}
           <div 
             className={`absolute top-0 left-0 right-0 h-[1px] ${
-              theme === 'dark' ? 'bg-white' : 'bg-blue-400'
+              theme === 'dark' 
+                ? 'bg-gradient-to-r from-transparent via-white/90 to-transparent' 
+                : 'bg-gradient-to-r from-transparent via-blue-400/90 to-transparent'
             }`}
-            style={{ opacity: 0.9 }}
           />
         </div>
 
