@@ -12,11 +12,11 @@
 
   <p>
     <a href="https://sam-compiler-web.vercel.app/" target="_blank">
-      <img src="https://img.shields.io/badge/Live%20App-OBSIDIAN-black?style=for-the-badge&logo=vercel&logoColor=white" alt="Live App">
+      <img src="https://img.shields.io/badge/Live_App-OBSIDIAN-black?style=for-the-badge&logo=vercel&logoColor=white" alt="Live App">
     </a>
-    <img src="https://img.shields.io/badge/Architecture-Distributed%20Core-black?style=for-the-badge" alt="Architecture">
-    <img src="https://img.shields.io/badge/Security-gVisor%20Hardened-black?style=for-the-badge&logo=docker&logoColor=white" alt="Security">
-    <img src="https://img.shields.io/badge/AI-Gemini%20Pro-black?style=for-the-badge&logo=google&logoColor=white" alt="AI">
+    <img src="https://img.shields.io/badge/Architecture-Distributed_Core-black?style=for-the-badge" alt="Architecture">
+    <img src="https://img.shields.io/badge/Security-gVisor_Hardened-black?style=for-the-badge&logo=docker&logoColor=white" alt="Security">
+    <img src="https://img.shields.io/badge/AI-Gemini_Pro-black?style=for-the-badge&logo=google&logoColor=white" alt="AI">
   </p>
 
   <br>
@@ -171,12 +171,12 @@ npm install && npm run dev
   <b>Engineered with uncompromising standards by</b>
   <br><br>
   <a href="https://linkedin.com/in/syedmukheeth">
-    <img src="https://img.shields.io/badge/Syed_Mukheeth-000000?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn">
+    <img src="https://img.shields.io/badge/SYED_MUKHEETH-black?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn">
   </a>
   <br><br>
-  <img src="https://img.shields.io/badge/License-MIT-000000?style=for-the-badge" alt="License">
+  <img src="https://img.shields.io/badge/License_MIT-black?style=for-the-badge" alt="License">
   <a href="./DEPLOYMENT.md">
-    <img src="https://img.shields.io/badge/Deployment-Guide-000000?style=for-the-badge" alt="Deployment Guide">
+    <img src="https://img.shields.io/badge/Deployment_Guide-black?style=for-the-badge" alt="Deployment Guide">
   </a>
   <br><br>
   <sub>v3.0.0-OBSIDIAN | Peak Performance Architecture</sub>
