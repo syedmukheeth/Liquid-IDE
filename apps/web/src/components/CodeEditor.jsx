@@ -157,21 +157,17 @@ export default function CodeEditor({
     // 1. Setup Reset Listener (Absolute Wipe Transaction)
     const handleResetEvent = (e) => {
       const { template } = e.detail;
-      if (template !== undefined && ydocRef.current && ytextRef.current) {
-        ydocRef.current.transact(() => {
-          // PRO DELETION: Use exact Yjs array length for absolute destruction
-          const exactLength = ytextRef.current.length;
-          if (exactLength > 0) {
-            ytextRef.current.delete(0, exactLength);
-          }
-          ytextRef.current.insert(0, template);
-        }, 'sam-core-system-reset'); // Named origin to suppress loops
-
-        toast.success("Workspace Sanitized & Redeployed", {
-          style: { background: 'var(--sam-surface)', color: 'var(--sam-text)', border: '1px solid var(--sam-glass-border)', fontSize: '11px', fontWeight: 900 },
-          icon: '✨'
-        });
-      }
+        if (editorRef.current) {
+          // PRO DELETION: Use Monaco's native state-engine to guarantee zero visual artifacts.
+          // y-monaco will automatically intercept this and broadcast the delta to Yjs correctly.
+          editorRef.current.setValue(template);
+          
+          // Re-trigger the toast message properly so the user knows it's complete
+          toast.success("Workspace Sanitized & Redeployed", {
+            style: { background: 'var(--sam-surface)', color: 'var(--sam-text)', border: '1px solid var(--sam-glass-border)', fontSize: '11px', fontWeight: 900 },
+            icon: '✨'
+          });
+        }
     };
     window.addEventListener('sam-editor-reset', handleResetEvent);
 
