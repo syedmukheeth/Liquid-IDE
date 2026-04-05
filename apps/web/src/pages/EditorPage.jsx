@@ -138,11 +138,16 @@ export default function EditorPage() {
 
   useEffect(() => {
     const current = searchParams.get("session");
+    const token = searchParams.get("token");
     if (!current || current === "default") {
       const fresh = Math.random().toString(36).substring(2, 9);
-      setSearchParams({ session: fresh }, { replace: true });
+      // Preserve existing token if present
+      const newParams = { session: fresh };
+      if (token) newParams.token = token;
+      setSearchParams(newParams, { replace: true });
     }
   }, [searchParams, setSearchParams]);
+
 
 
   const [theme, setTheme] = useState(localStorage.getItem("sam-theme") || "dark");
