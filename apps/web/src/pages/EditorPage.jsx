@@ -407,17 +407,22 @@ export default function EditorPage() {
   }, [theme]);
 
   const handleCodeReset = useCallback(() => {
+    const template = languageConfigs[activeLangId]?.template || "";
     if (window.confirm(`⚠️ RESET ALERT: Restore ${activeLangId} to original template? Current changes will be lost.`)) {
+      // Dispatch custom event for the Yjs-bound CodeEditor
+      window.dispatchEvent(new CustomEvent('sam-editor-reset', { detail: { template } }));
+
       setBuffers(prev => ({ 
         ...prev, 
-        [activeLangId]: languageConfigs[activeLangId]?.template || "" 
+        [activeLangId]: template 
       }));
+
       toast.success("Boilerplate Restored", {
         icon: '🔄',
         style: { background: 'var(--sam-surface)', color: 'var(--sam-text)', border: '1px solid var(--sam-glass-border)', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase' }
       });
     }
-  }, [activeLangId]);
+  }, [activeLangId, languageConfigs]);
 
   // Keyboard Shortcuts
   useEffect(() => {

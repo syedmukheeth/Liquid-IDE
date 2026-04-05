@@ -140,18 +140,22 @@ export default function CodeEditor({
     // BROWSER SANITATION GUARD (The Final Hammer)
     provider.on('sync', (isSynced) => {
       if (isSynced !== false && !hasInitializedRef.current) {
-        hasInitializedRef.current = true;
-        
         const currentYtext = ytextRef.current;
-        if (currentYtext) {
-          const content = currentYtext.toString();
-          // ONLY insert if the channel is empty (prevents double/append bugs)
-          if (!content || content.trim().length === 0) {
-            if (value) {
-              currentYtext.insert(0, value);
-            }
+        if (!currentYtext) return;
+
+        // Standard Yjs Initialization Pattern:
+        // Only the first user to arrive in a session should initialize the boilerplate.
+        // We detect this by checking if we are the only peer and the doc is empty.
+        const peerCount = provider.awareness.getStates().size;
+        const currentContent = currentYtext.toString();
+
+        if (peerCount <= 1 && (!currentContent || currentContent.trim().length === 0)) {
+          if (value) {
+            currentYtext.insert(0, value);
           }
         }
+        
+        hasInitializedRef.current = true;
       }
     });
     
