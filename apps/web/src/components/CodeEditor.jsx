@@ -159,17 +159,17 @@ export default function CodeEditor({
       const { template } = e.detail;
       if (template !== undefined && ydocRef.current && ytextRef.current) {
         ydocRef.current.transact(() => {
-          // Senior Dev Wipe: Absolute destruction of all characters in the doc
-          const currentLength = ytextRef.current.toString().length;
-          if (currentLength > 0) {
-            ytextRef.current.delete(0, currentLength);
+          // PRO DELETION: Use exact Yjs array length for absolute destruction
+          const exactLength = ytextRef.current.length;
+          if (exactLength > 0) {
+            ytextRef.current.delete(0, exactLength);
           }
           ytextRef.current.insert(0, template);
-        }, 'sam-hard-reset'); // Named origin to ignore loops
+        }, 'sam-core-system-reset'); // Named origin to suppress loops
 
-        toast.success("Boilerplate Synchronized", {
+        toast.success("Workspace Sanitized & Redeployed", {
           style: { background: 'var(--sam-surface)', color: 'var(--sam-text)', border: '1px solid var(--sam-glass-border)', fontSize: '11px', fontWeight: 900 },
-          icon: '🔄'
+          icon: '✨'
         });
       }
     };

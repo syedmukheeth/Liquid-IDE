@@ -379,6 +379,7 @@ export default function EditorPage() {
       cursorBlink: true,
       cursorStyle: 'block',
       allowTransparency: true,
+      convertEol: true, // Fixes the stair-step missing \r bug in raw compiler logs
     });
 
     const fitAddon = new FitAddon();
@@ -408,7 +409,7 @@ export default function EditorPage() {
 
   const handleCodeReset = useCallback(() => {
     const template = languageConfigs[activeLangId]?.template || "";
-    if (window.confirm(`⚠️ RESET ALERT: Restore ${activeLangId} to original template? Current changes will be lost.`)) {
+    if (window.confirm(`[SYSTEM OVERRIDE]\n\nAre you sure you want to sanitize the ${activeLangId.toUpperCase()} workspace?\nAll unsaved changes will be permanently purged to restore factory templates.`)) {
       // Dispatch custom event for the Yjs-bound CodeEditor
       window.dispatchEvent(new CustomEvent('sam-editor-reset', { detail: { template } }));
 
@@ -416,11 +417,8 @@ export default function EditorPage() {
         ...prev, 
         [activeLangId]: template 
       }));
-
-      toast.success("Boilerplate Restored", {
-        icon: '🔄',
-        style: { background: 'var(--sam-surface)', color: 'var(--sam-text)', border: '1px solid var(--sam-glass-border)', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase' }
-      });
+      // Note: The success toast is handled centrally inside CodeEditor.jsx
+      // to ensure it only fires when the network transaction actually completes.
     }
   }, [activeLangId, languageConfigs]);
 
