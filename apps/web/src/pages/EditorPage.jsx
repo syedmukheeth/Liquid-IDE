@@ -246,10 +246,13 @@ export default function EditorPage() {
     };
   }, [isResizing, onResize, stopResizing]);
 
-  // Sycn Monaco Layout on Resize
+  // Sync Monaco & Terminal Layout on Resize
   useEffect(() => {
     const timer = setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
+      if (fitAddonRef.current) {
+        fitAddonRef.current.fit();
+      }
     }, 100);
     return () => clearTimeout(timer);
   }, [leftPanelWidth, showAiPanel]);
@@ -362,13 +365,13 @@ export default function EditorPage() {
         cursorAccent: isDark ? '#000000' : '#FFFFFF',
         selectionBackground: isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(15, 23, 42, 0.15)',
         black: isDark ? '#1A1A1A' : '#000000',
-        red: isDark ? '#F5F5F5' : '#7F1D1D',
-        green: isDark ? '#FFFFFF' : '#064E3B',
-        yellow: isDark ? '#E5E5E5' : '#713F12',
-        blue: isDark ? '#D4D4D4' : '#1E3A8A',
-        magenta: isDark ? '#A3A3A3' : '#581C87',
-        cyan: isDark ? '#FFFFFF' : '#164E63',
-        white: isDark ? '#FFFFFF' : '#FFFFFF',
+        red: isDark ? '#FF3B3B' : '#DC2626', // Toxic Red for errors
+        green: isDark ? '#10B981' : '#059669',
+        yellow: isDark ? '#FACC15' : '#D97706',
+        blue: isDark ? '#3B82F6' : '#2563EB',
+        magenta: isDark ? '#D946EF' : '#C026D3',
+        cyan: isDark ? '#06B6D4' : '#0891B2',
+        white: isDark ? '#FFFFFF' : '#0F172A',
       },
       fontFamily: 'var(--font-mono)',
       fontSize: 14,
@@ -921,15 +924,15 @@ builtins.input = input_shim
                   >
                     <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                   </button>
-                  <div style={{
-                    width: 7, height: 7, borderRadius: '50%',
-                    background: runStatus === 'Succeeded' ? 'var(--sam-text)' : runStatus === 'Failed' ? 'var(--sam-text-dim)' : busy ? 'var(--sam-accent)' : 'var(--sam-glass-border)',
-                    boxShadow: runStatus === 'Succeeded' ? '0 0 10px var(--sam-text)' : busy ? '0 0 10px var(--sam-accent)' : 'none',
+                  <div className={runStatus === 'Failed' ? 'sam-pulse-glow-red' : ''} style={{
+                    width: 8, height: 8, borderRadius: '50%',
+                    background: runStatus === 'Succeeded' ? '#10B981' : runStatus === 'Failed' ? '#FF3B3B' : busy ? 'var(--sam-accent)' : 'var(--sam-glass-border)',
+                    boxShadow: runStatus === 'Succeeded' ? '0 0 10px rgba(16,185,129,0.4)' : runStatus === 'Failed' ? '0 0 20px rgba(255,59,59,0.8)' : busy ? '0 0 10px var(--sam-accent)' : 'none',
                     animation: busy ? 'sam-pulse 1s infinite' : 'none',
                     transition: 'all 0.5s',
                   }} />
                   <span style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.25em', color: 'var(--sam-text)', fontFamily: 'var(--font-mono)' }}>
-                    {isWorkerOnline ? 'Terminal' : 'Cloud Output'}
+                    {isWorkerOnline ? 'SAM RUNTIME' : 'CLOUD OUTPUT'}
                   </span>
                   {metrics && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 8, paddingLeft: 8, borderLeft: '1px solid var(--sam-glass-border)' }}>
@@ -942,11 +945,18 @@ builtins.input = input_shim
                     </div>
                   )}
                 </div>
-                <div style={{ fontSize: 9, fontWeight: 950, textTransform: 'uppercase', letterSpacing: '0.25em', color: runStatus === 'Failed' ? 'var(--sam-text)' : 'var(--sam-text-muted)', fontFamily: 'var(--font-body)' }}>{runStatus}</div>
+                <div style={{ 
+                  fontSize: 10, fontWeight: 950, textTransform: 'uppercase', letterSpacing: '0.25em', 
+                  color: runStatus === 'Failed' ? '#FF3B3B' : 'var(--sam-text-muted)', 
+                  fontFamily: 'var(--font-body)',
+                  textShadow: runStatus === 'Failed' ? '0 0 12px rgba(255,59,59,0.3)' : 'none'
+                }}>{runStatus}</div>
               </div>
               
-              <div className={`flex-1 overflow-hidden p-2 md:p-5 relative ${theme === 'light' ? 'bg-[#F1F5F9]' : 'bg-[#000000]'}`}>
-                <div ref={terminalRef} className="h-full w-full overflow-hidden" />
+              <div className={`flex-1 overflow-hidden relative ${theme === 'light' ? 'bg-[#F1F5F9]' : 'bg-[#000000]'}`}>
+                <div ref={terminalRef} className="h-full w-full overflow-hidden" 
+                  style={{ padding: '20px' }} 
+                />
                 
                 {!isWorkerOnline && busy && (
                   <div className="absolute top-4 left-4 right-4 z-10">
