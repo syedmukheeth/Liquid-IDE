@@ -49,34 +49,30 @@ function initSocket(server) {
         Y.applyUpdate(doc, state.binaryState);
         logger.info({ sessionId }, "Yjs document loaded from MongoDB");
         
-        // MANDATORY SERVER-SIDE SANITATION (The Database Healer)
-        // If the loaded room contains 'Code Soup' (duplicated boilerplate),
-        // we clean it on the server before ANY client connects.
-        const ytext = doc.getText("monaco");
+        // SERVER-SIDE HEALER: Detects and cures 'Code Soup'
+        const langId = sessionId.split('-').pop(); // Updated to dash separator
+        const templates = {
+          cpp: '#include <iostream>\n\nint main() {\n    std::cout << "Welcome to SAM Compiler!" << std::endl;\n    return 0;\n}\n',
+          c: '#include <stdio.h>\n\nint main() {\n    printf("Welcome to SAM Compiler!\\n");\n    return 0;\n}\n',
+          python: 'print("Welcome to SAM Compiler!")\n',
+          javascript: 'console.log("Welcome to SAM Compiler!");\n',
+          java: 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Welcome to SAM Compiler!");\n    }\n}\n'
+        };
+
+        const ytext = doc.getText(langId); // Strict isolated node targeting
         const text = ytext.toString();
         const identifier = "Welcome to SAM Compiler!";
         const occurrences = (text.match(new RegExp(identifier, "g")) || []).length;
         
-        if (occurrences > 1) {
-          const langId = sessionId.split('_').pop();
-          const templates = {
-            cpp: '#include <iostream>\n\nint main() {\n    std::cout << "Welcome to SAM Compiler!" << std::endl;\n    return 0;\n}\n',
-            c: '#include <stdio.h>\n\nint main() {\n    printf("Welcome to SAM Compiler!\\n");\n    return 0;\n}\n',
-            python: 'print("Welcome to SAM Compiler!")\n',
-            javascript: 'console.log("Welcome to SAM Compiler!");\n',
-            java: 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Welcome to SAM Compiler!");\n    }\n}\n'
-          };
-          
-          if (templates[langId]) {
-            ytext.delete(0, ytext.length);
-            ytext.insert(0, templates[langId]);
-            logger.info({ sessionId, occurrences }, "Server-side sanitation fixed duplicated room in MongoDB");
-          }
+        // If we find repeating templates in the DB, nuke them and restore balance.
+        if (occurrences > 1 && templates[langId]) {
+          ytext.delete(0, ytext.length);
+          ytext.insert(0, templates[langId]);
+          logger.info({ sessionId, occurrences }, "Server-side healer fixed corrupted room in MongoDB");
         }
       } else {
-        // DEFINITIVE BACKEND INITIALIZATION (The One True Source)
-        // If room is brand new (no state in DB), populate it with the template.
-        const langId = sessionId.split('_').pop();
+        // DEFINITIVE INITIALIZATION (The One True Source)
+        const langId = sessionId.split('-').pop(); // Updated to dash separator
         const templates = {
           cpp: '#include <iostream>\n\nint main() {\n    std::cout << "Welcome to SAM Compiler!" << std::endl;\n    return 0;\n}\n',
           c: '#include <stdio.h>\n\nint main() {\n    printf("Welcome to SAM Compiler!\\n");\n    return 0;\n}\n',
@@ -87,10 +83,10 @@ function initSocket(server) {
         
         const template = templates[langId];
         if (template) {
-          const ytext = doc.getText("monaco");
+          const ytext = doc.getText(langId); // Initialize the strict node
           if (ytext.length === 0) {
             ytext.insert(0, template);
-            logger.info({ sessionId, langId }, "Yjs room initialized by backend source of truth");
+            logger.info({ sessionId, langId }, "Yjs room perfectly initialized by backend");
           }
         }
       }

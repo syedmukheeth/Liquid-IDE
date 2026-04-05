@@ -140,22 +140,9 @@ export default function CodeEditor({
       onCursorChange?.({ lineNumber: pos.lineNumber, column: pos.column });
     });
 
-    // ROBUST FIRST-SYNC: Stop code repetition at the source
+    // ROBUST SYNC: Client simply listens. Backend handles initialization.
     provider.on('sync', (isSynced) => {
       if (isSynced !== false && !hasInitializedRef.current) {
-        const currentYtext = ytextRef.current;
-        if (!currentYtext) return;
-
-        const peerCount = provider.awareness.getStates().size;
-        const currentContent = currentYtext.toString().trim();
-
-        // Only initialize if Room is Brand New and Content is Blank
-        if (peerCount <= 1 && currentContent.length === 0) {
-          if (value) {
-            currentYtext.insert(0, value);
-          }
-        }
-        
         hasInitializedRef.current = true;
       }
     });
