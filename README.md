@@ -4,7 +4,7 @@
     <img alt="SAM Compiler Logo" src="https://raw.githubusercontent.com/syedmukheeth/SAM-Compiler/main/apps/web/public/favicon.svg" width="130">
   </a>
   
-  <h1><b>SAM COMPILER</b></h1>
+  <h1><b>SAM Compiler</b></h1>
   
   <p><b><code>SYNTAX ANALYSIS MACHINE</code></b></p>
 
@@ -12,11 +12,11 @@
 
   <p>
     <a href="https://sam-compiler-web.vercel.app/" target="_blank">
-      <img src="https://img.shields.io/badge/LIVE_APP-OBSIDIAN-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Live App">
+      <img src="https://img.shields.io/badge/Live%20App-OBSIDIAN-black?style=for-the-badge&logo=vercel&logoColor=white" alt="Live App">
     </a>
-    <img src="https://img.shields.io/badge/ARCHITECTURE-DISTRIBUTED_CORE-111111?style=for-the-badge" alt="Architecture">
-    <img src="https://img.shields.io/badge/SECURITY-gVISOR_HARDENED-000000?style=for-the-badge&logo=docker&logoColor=white" alt="Security">
-    <img src="https://img.shields.io/badge/AI-GEMINI_PRO-111111?style=for-the-badge&logo=google&logoColor=white" alt="AI">
+    <img src="https://img.shields.io/badge/Architecture-Distributed%20Core-black?style=for-the-badge" alt="Architecture">
+    <img src="https://img.shields.io/badge/Security-gVisor%20Hardened-black?style=for-the-badge&logo=docker&logoColor=white" alt="Security">
+    <img src="https://img.shields.io/badge/AI-Gemini%20Pro-black?style=for-the-badge&logo=google&logoColor=white" alt="AI">
   </p>
 
   <br>
@@ -168,9 +168,16 @@ npm install && npm run dev
 
 <div align="center">
   <br>
-  <b>Engineered with uncompromising standards by <a href="https://linkedin.com/in/syedmukheeth">Syed Mukheeth</a>.</b><br><br>
-  <img src="https://img.shields.io/badge/License-MIT-000?style=flat-square" alt="License">
-  <a href="./DEPLOYMENT.md"><img src="https://img.shields.io/badge/Deployment_Guide-000?style=flat-square" alt="Deployment Guide"></a>
+  <b>Engineered with uncompromising standards by</b>
+  <br><br>
+  <a href="https://linkedin.com/in/syedmukheeth">
+    <img src="https://img.shields.io/badge/Syed_Mukheeth-000000?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn">
+  </a>
+  <br><br>
+  <img src="https://img.shields.io/badge/License-MIT-000000?style=for-the-badge" alt="License">
+  <a href="./DEPLOYMENT.md">
+    <img src="https://img.shields.io/badge/Deployment-Guide-000000?style=for-the-badge" alt="Deployment Guide">
+  </a>
   <br><br>
   <sub>v3.0.0-OBSIDIAN | Peak Performance Architecture</sub>
 </div>
