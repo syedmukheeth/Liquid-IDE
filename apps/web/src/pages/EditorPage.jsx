@@ -9,10 +9,11 @@ import { getSocket } from "../services/socketClient";
 import AuthModal from "../components/AuthModal";
 import SettingsModal from "../components/SettingsModal";
 import UpgradeModal from "../components/UpgradeModal";
+import HistoryPanel from "../components/HistoryPanel";
 import AiPanel from "../components/AiPanel";
 import { useAuth } from "../hooks/useAuth";
 import { Link, useSearchParams } from "react-router-dom";
-import { Sparkles, Keyboard, Info } from "lucide-react";
+import { Sparkles, Keyboard, Clock } from "lucide-react";
 import toast, { Toaster } from 'react-hot-toast';
 import { motion, AnimatePresence } from "framer-motion";
 import ENDPOINTS from "../services/endpoints";
@@ -218,11 +219,12 @@ export default function EditorPage() {
   }, []);
   const [busy, setBusy] = useState(false);
   const [activeModal, setActiveModal] = useState(null); 
+  const [showHistory, setShowHistory] = useState(false);
   const [isWorkerOnline, setIsWorkerOnline] = useState(false);
   const [isApiOnline, setIsApiOnline] = useState(true);
   const [activeMobileTab, setActiveMobileTab] = useState('editor');
   
-  const { user, loginUser, logoutUser } = useAuth();
+  const { user, token, loginUser, logoutUser } = useAuth();
 
   // Layout Resizing Logic (60/40 Split)
   const [leftPanelWidth, setLeftPanelWidth] = useState(60); // Percentage
@@ -257,6 +259,21 @@ export default function EditorPage() {
       });
     }
   }, [activeLangId]);
+
+  // Load code from history into the editor
+  const handleLoadFromHistory = useCallback((runtime, code) => {
+    // Map runtime name to our langId key
+    const langMap = { javascript: 'javascript', nodejs: 'javascript', python: 'python', cpp: 'cpp', c: 'c', java: 'java' };
+    const langId = langMap[runtime] || 'cpp';
+    setActiveLangId(langId);
+    // Dispatch to CodeEditor via the same reset event channel
+    window.dispatchEvent(new CustomEvent('sam-editor-reset', { detail: { template: code } }));
+    setBuffers(prev => ({ ...prev, [langId]: code }));
+    toast.success('Code loaded from history', {
+      icon: '📦',
+      style: { background: 'var(--sam-surface)', color: 'var(--sam-text)', border: '1px solid var(--sam-glass-border)', fontSize: '11px', fontWeight: 700 }
+    });
+  }, []);
 
   const onResize = useCallback((e) => {
     if (!isResizing || !containerRef.current) return;
@@ -789,6 +806,25 @@ builtins.input = input_shim
               <Sparkles className={`h-4 w-4 ${showAiPanel ? 'animate-pulse' : ''}`} />
             </button>
 
+            {/* History Button */}
+            <button 
+              onClick={() => {
+                if (!token) { setActiveModal('auth'); return; }
+                setShowHistory(prev => !prev);
+              }}
+              className="group flex h-9 w-9 md:h-10 md:w-auto md:px-4 items-center justify-center gap-2 rounded-xl border transition-all duration-300 shrink-0"
+              style={{ 
+                background: showHistory ? 'var(--sam-accent-muted)' : 'var(--sam-surface-low)',
+                borderColor: showHistory ? 'var(--sam-accent)' : 'var(--sam-glass-border)',
+                color: showHistory ? 'var(--sam-accent)' : 'var(--sam-text-dim)',
+                boxShadow: 'var(--sam-glow-bloom)'
+              }}
+              title="Run History"
+            >
+              <Clock className="h-4 w-4" />
+              <span className="hidden md:inline" style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', fontFamily: 'var(--font-body)' }}>History</span>
+            </button>
+
             <button 
               onClick={() => setActiveModal('settings')} 
               className="md:hidden flex items-center justify-center h-9 w-9 shrink-0"
@@ -1168,6 +1204,13 @@ builtins.input = input_shim
       <AuthModal isOpen={activeModal === 'auth'} onClose={() => setActiveModal(null)} onLogin={loginUser} theme={theme} />
       <SettingsModal isOpen={activeModal === 'settings'} onClose={() => setActiveModal(null)} settings={settings} onSettingsChange={onSettingsUpdate} />
       <UpgradeModal isOpen={activeModal === 'upgrade'} onClose={() => setActiveModal(null)} />
+      <HistoryPanel
+        isOpen={showHistory}
+        onClose={() => setShowHistory(false)}
+        theme={theme}
+        token={token}
+        onLoadCode={handleLoadFromHistory}
+      />
       
       <Toaster position="bottom-right" reverseOrder={false} />
     </div>
