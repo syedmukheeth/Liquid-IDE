@@ -25,6 +25,11 @@ function generateRunTitle(code, runtime) {
   for (const line of lines) {
     const trimmed = line.trim();
     if (trimmed.length > 0 && !skipPatterns.some(p => p.test(line))) {
+      // 🚀 ANALYSIS: Try to find a descriptive string literal in output statements
+      const outputMatch = line.match(/(?:cout\s*<<\s*|print\s*\(|System\.out\.println\s*\(|console\.log\s*\()(?:"|')([^"']+)(?:"|')/i);
+      if (outputMatch && outputMatch[1].trim().length > 3) {
+        return outputMatch[1].trim().substring(0, 47) + (outputMatch[1].length > 47 ? "..." : "");
+      }
       return trimmed.length > 50 ? trimmed.substring(0, 47) + "..." : trimmed;
     }
   }
