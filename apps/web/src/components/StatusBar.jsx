@@ -120,7 +120,7 @@ export default function StatusBar({
           }`}>
             <LinkedinIcon className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
             <span className={`text-[9.5px] font-black uppercase tracking-[0.2em] sm:tracking-[0.25em] whitespace-nowrap`}>
-              SYED M.
+              SYED MUKHEETH
             </span>
           </div>
         </a>

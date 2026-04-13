@@ -74,36 +74,28 @@ export default function AiPanel({
           const trimmedLine = line.trim();
           if (!trimmedLine || !trimmedLine.startsWith("data: ")) continue;
           
-          const dataStr = trimmedLine.replace("data: ", "");
+          const dataStr = trimmedLine.substring(6).trim(); // More robust than replace
           if (dataStr === "[DONE]") break;
           
           try {
             const parsed = JSON.parse(dataStr);
             if (parsed.error) {
-              // Only throw if it's a terminal error from the backend
               if (parsed.terminal) throw new Error(parsed.error);
-              console.warn("⚠️ [SAM AI] Non-terminal error in stream:", parsed.error);
               continue;
             }
             if (parsed.chunk) {
-              assistantMsg.content += parsed.chunk;
+              assistantMsg.content = (assistantMsg.content || "") + parsed.chunk;
               setMessages(prev => {
                 const newMsgs = [...prev];
-                newMsgs[newMsgs.length - 1] = { ...assistantMsg };
+                const lastIdx = newMsgs.length - 1;
+                if (newMsgs[lastIdx] && newMsgs[lastIdx].role === "model") {
+                  newMsgs[lastIdx] = { ...assistantMsg };
+                }
                 return newMsgs;
               });
             }
           } catch (e) {
-            // Only throw if we have a definitive error signature or a terminal state issue
-            // Otherwise, we log and try to continue the stream if it's just a fragmentation glitch
-            const isTerminalError = dataStr.includes('"terminal":true') || dataStr.includes('"error"');
-            
-            if (isTerminalError) {
-               console.error("❌ [SAM AI] Terminal error received:", dataStr);
-               throw new Error(e.message.includes("JSON") ? "AI stream corrupted. Please try again." : e.message);
-            } else {
-               console.warn("⚠️ [SAM AI] Fragmented line received (ignoring):", dataStr);
-            }
+            console.warn("⚠️ [SAM AI] Stream chunk error:", e.message, dataStr);
           }
         }
       }
@@ -295,7 +287,7 @@ export default function AiPanel({
               </div>
 
               {/* Chat Area */}
-              <div ref={scrollRef} className="flex-1 overflow-y-auto p-8 scrollbar-hide">
+              <div ref={scrollRef} className="flex-1 overflow-y-auto p-8 select-text">
                 <div className="flex flex-col gap-8">
                   {messages.map((msg, i) => (
                     <motion.div 
@@ -304,7 +296,7 @@ export default function AiPanel({
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}
                     >
-                      <div className={`max-w-[95%] rounded-3xl px-5 py-4 text-[13px] leading-[1.6] shadow-xl ${
+                      <div className={`max-w-[95%] rounded-3xl px-5 py-4 text-[13px] leading-[1.6] shadow-xl select-text relative z-20 ${
                         msg.role === "user" 
                           ? (theme === 'dark' ? "bg-white/10 text-white border border-white/10" : "bg-slate-100 text-slate-900 border border-slate-200") + " rounded-tr-none shadow-2xl" 
                           : (theme === 'dark' ? "bg-white/5 text-white/90 border border-white/5" : "bg-white text-slate-800 border border-slate-100") + " backdrop-blur-xl rounded-tl-none"
