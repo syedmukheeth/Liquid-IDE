@@ -1,9 +1,21 @@
 const express = require("express");
+const rateLimit = require("express-rate-limit");
 const { register, login, getUserById, generateToken } = require("./auth.service");
 const { authMiddleware } = require("../../middleware/auth.middleware");
 const { env } = require("../../config/env");
 const passport = require("passport");
+
 const router = express.Router();
+
+// 🔐 SECURITY: Rate limiting for auth routes to prevent brute force
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 requests per window
+  message: { message: "Too many login/register attempts. Please try again after 15 minutes." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 
 // Social Auth Redirects
 router.get("/github", (req, res, next) => {
@@ -74,7 +86,7 @@ router.get("/me", authMiddleware, async (req, res) => {
 });
 
 // eslint-disable-next-line no-unused-vars
-router.post("/register", async (req, res, next) => {
+router.post("/register", authLimiter, async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
     if (!name || !email || !password) {
@@ -88,7 +100,7 @@ router.post("/register", async (req, res, next) => {
 });
 
 // eslint-disable-next-line no-unused-vars
-router.post("/login", async (req, res, next) => {
+router.post("/login", authLimiter, async (req, res, next) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -98,6 +110,30 @@ router.post("/login", async (req, res, next) => {
     res.json(result);
   } catch (err) {
     res.status(401).json({ message: err.message });
+  }
+});
+
+// 📬 RECOVER: Forgot Password Flow (Mocked Email)
+router.post("/forgot-password", authLimiter, async (req, res) => {
+  try {
+    const { email } = req.body;
+    // In a real app, you would generate a token and send an email
+    // For now, we simulate success for existing users
+    console.log(`[AUTH-DEBUG] Password reset requested for: ${email}`);
+    res.json({ message: "If an account exists, a reset link has been sent (Simulated)." });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.post("/reset-password", authLimiter, async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    // Token validation and password update logic would go here
+    console.log(`[AUTH-DEBUG] Attempting password reset with token: ${token}. Password length: ${password?.length}`);
+    res.json({ message: "Password has been reset successfully (Simulated)." });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 });
 

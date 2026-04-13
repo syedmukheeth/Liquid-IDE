@@ -11,8 +11,11 @@ import AuthModal from "../components/AuthModal";
 import UpgradeModal from "../components/UpgradeModal";
 import HistoryPanel from "../components/HistoryPanel";
 import AiPanel from "../components/AiPanel";
+import StatusBar from "../components/StatusBar";
+import FeedbackModal from "../components/FeedbackModal";
 import { useAuth } from "../hooks/useAuth";
 import { Link, useSearchParams } from "react-router-dom";
+
 import { Sparkles, Keyboard, Clock } from "lucide-react";
 import toast, { Toaster } from 'react-hot-toast';
 import { motion, AnimatePresence } from "framer-motion";
@@ -143,6 +146,8 @@ export default function EditorPage() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [pyodide, setPyodide] = useState(null);
   const [isPyodideLoading, setIsPyodideLoading] = useState(false);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+
 
   const { user, token, loginUser, logoutUser } = useAuth();
 
@@ -926,100 +931,23 @@ builtins.input = input_shim
         </main>
       </div>
 
-      {/* Fixed Terminal Dashboard Footer */}
-      <footer className={`fixed bottom-0 left-0 right-0 z-50 flex h-12 items-center justify-between px-6 transition-all duration-300 backdrop-blur-md ${
-        theme === 'dark' 
-          ? 'bg-black/90' 
-          : 'bg-white/95 shadow-[0_-4px_24px_-10px_rgba(0,0,0,0.05)]'
-      }`}>
-        {/* Top Accent Bar — Full-Width Fading Glow Horizon (Intense) */}
-        <div className="absolute top-0 left-0 right-0 h-[3px] z-10 overflow-visible">
-          <div 
-            className={`w-full h-full ${
-              theme === 'dark' 
-                ? 'sam-pulse-glow-red bg-gradient-to-r from-transparent via-[#ff3b3b] to-transparent shadow-[0_0_40px_rgba(255,59,59,0.9)]' 
-                : 'sam-pulse-glow-blue bg-gradient-to-r from-transparent via-[#3b82f6] to-transparent shadow-[0_0_30px_rgba(59,130,246,0.7)]'
-            }`}
-          />
-          {/* Intense Core — High-Energy Saturated Neon Blade */}
-          <div 
-            className={`absolute top-0 left-0 right-0 h-[1.5px] ${
-              theme === 'dark' 
-                ? 'bg-gradient-to-r from-transparent via-[#ff1a1a] to-transparent' 
-                : 'bg-gradient-to-r from-transparent via-[#2563eb] to-transparent'
-            }`}
-            style={{ opacity: 0.9 }}
-          />
-        </div>
 
-        <div className="flex items-center gap-6 h-full">
-          <div className="flex items-center gap-3">
-            <div className={`relative flex items-center justify-center`}>
-              <div className={`absolute h-2.5 w-2.5 animate-ping rounded-full opacity-40 ${socketIsConnected ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-              <div className={`h-1.5 w-1.5 rounded-full ${socketIsConnected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-rose-400 shadow-[0_0_8px_rgba(244,63,94,0.8)]'}`} />
-            </div>
-            <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${
-              theme === 'dark' ? 'text-white' : 'text-slate-900'
-            }`}>
-              {socketIsConnected ? 'SAM ONLINE' : 'SAM OFFLINE'}
-            </span>
-          </div>
-
-          <div className={`h-4 w-[1px] ${theme === 'dark' ? 'bg-white/10' : 'bg-slate-200'}`} />
-
-          {/* DYNAMIC METRICS: CPU / RAM */}
-          <div className="hidden lg:flex items-center gap-6">
-             <div className="flex items-center gap-2">
-                <span className={`text-[8px] font-black uppercase tracking-widest opacity-40 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>CPU</span>
-                <span className={`font-mono text-[10px] font-bold tabular-nums ${theme === 'dark' ? 'text-white' : 'text-slate-600'}`}>
-                  {busy ? (8 + Math.random() * 5).toFixed(1) : (0.1 + Math.random() * 0.3).toFixed(1)}%
-                </span>
-             </div>
-             <div className="flex items-center gap-2">
-                <span className={`text-[8px] font-black uppercase tracking-widest opacity-40 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>RAM</span>
-                <span className={`font-mono text-[10px] font-bold tabular-nums ${theme === 'dark' ? 'text-white' : 'text-slate-600'}`}>
-                  {busy ? (110 + Math.random() * 20).toFixed(0) : (42 + Math.random() * 5).toFixed(0)}MB
-                </span>
-             </div>
-          </div>
-        </div>
-
-        {/* Dashboard Quick Controls */}
-        <div className="flex items-center gap-4 md:gap-8">
-
-
-          <a 
-            href="https://linkedin.com/in/syedmukheeth" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className={`group flex items-center gap-3 transition-all active:scale-95`}
-          >
-            <span className={`hidden text-[9px] font-black uppercase tracking-[0.2em] transition-opacity lg:inline ${
-              theme === 'dark' ? 'text-white/60 group-hover:text-white' : 'text-slate-500 group-hover:text-slate-800'
-            }`}>
-              BUILT BY
-            </span>
-            <div className={`flex items-center gap-2 rounded-lg py-1.5 px-3 border transition-all duration-200 ${
-               theme === 'dark' 
-                 ? 'bg-white/8 border-white/15 text-white/90 hover:bg-[#ff3b3b]/15 hover:border-[#ff3b3b]/40 hover:text-[#ff3b3b] hover:shadow-[0_0_12px_rgba(255,59,59,0.25)]' 
-                 : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-blue-600 hover:border-blue-600 hover:text-white'
-            }`}>
-              <svg className={`h-3 w-3 fill-current shrink-0`} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-              <span className={`text-[10px] font-black uppercase tracking-wider`}>
-                SYED MUKHEETH
-              </span>
-            </div>
-          </a>
-
-          <div className={`h-4 w-[1px] hidden sm:block ${theme === 'dark' ? 'bg-white/10' : 'bg-slate-200'}`} />
-
-          <span className={`hidden text-[9px] font-black uppercase tracking-[0.2em] sm:block ${
-            theme === 'dark' ? 'text-white/50' : 'text-slate-400'
-          }`}>
-            SAM © 2026
-          </span>
-        </div>
+      <footer className="fixed bottom-0 left-0 right-0 z-40">
+        <StatusBar 
+          language={activeLangId.toUpperCase()}
+          position={`Ln ${metrics?.lastLine || 1}, Col ${metrics?.lastCol || 1}`}
+          status={busy ? "Executing..." : "Ready"}
+          isOnline={socketIsConnected}
+          onReportBug={() => setIsFeedbackModalOpen(true)}
+        />
       </footer>
+
+      <FeedbackModal 
+        isOpen={isFeedbackModalOpen} 
+        onClose={() => setIsFeedbackModalOpen(false)} 
+        theme={theme}
+      />
+
 
       <AiPanel 
         isOpen={showAiPanel} 

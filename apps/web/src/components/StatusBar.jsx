@@ -1,6 +1,6 @@
-import React from "react";
+import { Bug } from "lucide-react";
 
-export default function StatusBar({ language = "JavaScript", position = "Ln 1, Col 1", status = "Ready", isOnline = true }) {
+export default function StatusBar({ language = "JavaScript", position = "Ln 1, Col 1", status = "Ready", isOnline = true, onReportBug }) {
   return (
     <div className="flex w-full items-center justify-between px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-300" 
          style={{ color: 'var(--sam-text-dim)', background: 'var(--sam-glass-bg)', borderTop: '1px solid var(--sam-glass-border)' }}>
@@ -11,7 +11,17 @@ export default function StatusBar({ language = "JavaScript", position = "Ln 1, C
         </span>
         <span className="opacity-20" style={{ color: 'var(--sam-text-dim)' }}>/</span>
         <span style={{ color: 'var(--sam-text-muted)' }}>SAM Engine v3.0-Robust</span>
+        <span className="opacity-20" style={{ color: 'var(--sam-text-dim)' }}>/</span>
+        <button 
+          onClick={onReportBug}
+          className="group flex items-center gap-2 text-rose-500/60 transition-all hover:text-rose-500 active:scale-95"
+          title="Report a bug"
+        >
+          <Bug className="h-3 w-3 transition-transform group-hover:rotate-12" />
+          <span>Report Bug</span>
+        </button>
       </div>
+
       <div className="flex items-center gap-4">
         <span style={{ color: 'var(--sam-text-muted)' }}>{position}</span>
         <span className="opacity-20" style={{ color: 'var(--sam-text-dim)' }}>/</span>
