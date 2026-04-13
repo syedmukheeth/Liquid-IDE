@@ -10,7 +10,6 @@ const { runsRouter } = require("./modules/runs/runs.routes");
 const { githubRouter } = require("./modules/github/github.routes");
 const { authRouter } = require("./modules/auth/auth.routes");
 const { aiRouter } = require("./modules/ai/ai.routes");
-const { ProjectStateModel } = require("./modules/runs/project.model");
 const path = require("path");
 
 
@@ -141,9 +140,8 @@ function createApp() {
 
 
   // Global Error Handler
-  // eslint-disable-next-line no-unused-vars
-  app.use((err, req, res, next) => {
-    const errorLogger = req.log || logger;
+  app.use((err, _req, res, _next) => { // eslint-disable-line no-unused-vars
+    const errorLogger = _req.log || logger;
     errorLogger.error({ err }, "Unhandled application error");
     res.status(err.status || 500).json({
       message: err.message || "Internal Server Error",

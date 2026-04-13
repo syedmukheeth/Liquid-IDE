@@ -2,8 +2,37 @@ const { spawn } = require("node:child_process");
 const os = require("node:os");
 const path = require("node:path");
 const fs = require("node:fs/promises");
+const crypto = require("node:crypto");
 const { logger } = require("../../config/logger");
 const { getBufferedInput } = require("./socketHandler");
+
+// Senior Dev Performance Cache: Map<toolName, boolean>
+const TOOL_AVAILABILITY_CACHE = new Map();
+// Senior Dev Concurrency Control
+let activeRunsCount = 0;
+const MAX_CONCURRENT_RUNS = parseInt(process.env.MAX_CONCURRENT_RUNS || "15");
+const BIN_CACHE_DIR = path.join(os.tmpdir(), "sam-bin-cache");
+
+// Ensure cache dir exists
+fs.mkdir(BIN_CACHE_DIR, { recursive: true }).catch(err => logger.error({ err }, "Failed to create binary cache dir"));
+
+// Senior Dev: Cache Expiry Logic
+async function cleanOldBinaries() {
+  try {
+    const files = await fs.readdir(BIN_CACHE_DIR);
+    const now = Date.now();
+    for (const file of files) {
+      const filePath = path.join(BIN_CACHE_DIR, file);
+      const stats = await fs.stat(filePath);
+      if (now - stats.atimeMs > 10 * 60 * 1000) { // 10 minutes TTL
+        await fs.unlink(filePath).catch(() => {});
+      }
+    }
+  } catch (err) {
+    logger.warn({ err }, "Failed to clean old binaries");
+  }
+}
+setInterval(cleanOldBinaries, 5 * 60 * 1000); // Check every 5 minutes
 
 let pty = null;
 function getPty() {
@@ -22,27 +51,41 @@ const { execSync } = require("node:child_process");
 
 /**
  * Checks if a specific command/tool is available in the system PATH.
+ * Optimized with caching and async execution to prevent event loop blocking.
  */
-function isToolAvailable(cmd) {
-  try {
+async function isToolAvailable(cmd) {
+  if (TOOL_AVAILABILITY_CACHE.has(cmd)) {
+    return TOOL_AVAILABILITY_CACHE.get(cmd);
+  }
+
+  return new Promise((resolve) => {
     const isWin = os.platform() === "win32";
     const checkCmd = isWin ? `where ${cmd}` : `command -v ${cmd}`;
     
-    // 1. Try standard path check (where/command -v)
-    try {
-      execSync(checkCmd, { stdio: "ignore" });
-    } catch (e) {
-      // If 'where' fails, it might still be available but not in a way 'where' likes.
-      // We'll proceed to the version check regardless.
-    }
+    const child = spawn(isWin ? "cmd" : "sh", [isWin ? "/c" : "-c", `${checkCmd} && ${cmd} --version`], {
+      stdio: "ignore",
+      windowsHide: true
+    });
 
-    // 2. Critical Check: Does the tool actually run?
-    // We use a short timeout to prevent hanging.
-    execSync(`${cmd} --version`, { stdio: "ignore", timeout: 3000 });
-    return true;
-  } catch (e) {
-    return false;
-  }
+    const timeout = setTimeout(() => {
+      child.kill();
+      TOOL_AVAILABILITY_CACHE.set(cmd, false);
+      resolve(false);
+    }, 3000);
+
+    child.on("close", (code) => {
+      clearTimeout(timeout);
+      const available = code === 0;
+      TOOL_AVAILABILITY_CACHE.set(cmd, available);
+      resolve(available);
+    });
+
+    child.on("error", () => {
+      clearTimeout(timeout);
+      TOOL_AVAILABILITY_CACHE.set(cmd, false);
+      resolve(false);
+    });
+  });
 }
 
 async function execWithTimeout(cmd, args, timeoutMs, jobId, onLog, spawnOpts = {}) {
@@ -200,6 +243,9 @@ async function materializeFiles(root, files) {
 }
 
 async function executeDirectly(run, onLog) {
+  // Senior Dev: Increment immediately to block other runs if at limit
+  activeRunsCount++;
+
   const runtime = run.runtime || run.language;
   const language = runtime;
   const jobId = run._id.toString();
@@ -209,14 +255,39 @@ async function executeDirectly(run, onLog) {
   const mainFile = files.find(f => f.path === entrypoint);
   const code = mainFile ? mainFile.content : (run.code || "");
 
-  if (!runtime) {
-    logger.error({ runId: jobId }, "Execution failed: No runtime specified");
-    throw new Error("Unsupported language/runtime (Check model consistency)");
-  }
-
   const tempDir = path.join(os.tmpdir(), `sam-run-${jobId}`);
 
   try {
+    if (!runtime) {
+      logger.error({ runId: jobId }, "Execution failed: No runtime specified");
+      throw new Error("Unsupported language/runtime (Check model consistency)");
+    }
+
+    // Concurrency Check (Apply AFTER increment, if over, decrement and return)
+    if (activeRunsCount > MAX_CONCURRENT_RUNS) {
+      const msg = `❌ Server Load High: ${activeRunsCount - 1} concurrent executions active. Please wait a moment.`;
+      if (onLog) onLog(jobId, "stderr", msg);
+      return { status: "failed", stderr: "Server Overloaded" };
+    }
+
+    // Binary Caching Logic for Compiled Languages
+    const isCompiled = ["cpp", "c", "java"].includes(language);
+    let cacheKey = null;
+    let cachedBinPath = null;
+
+    if (isCompiled) {
+      const hash = crypto.createHash("sha256");
+      hash.update(language);
+      hash.update(entrypoint);
+      files.sort((a, b) => a.path.localeCompare(b.path)).forEach(f => {
+        hash.update(f.path);
+        hash.update(f.content);
+      });
+      cacheKey = hash.digest("hex");
+      const ext = language === "java" ? ".class" : (IS_WINDOWS ? ".exe" : "");
+      cachedBinPath = path.join(BIN_CACHE_DIR, cacheKey + ext);
+    }
+
     await fs.mkdir(tempDir, { recursive: true });
     await materializeFiles(tempDir, files);
 
@@ -227,22 +298,39 @@ async function executeDirectly(run, onLog) {
     if (language === "cpp") {
       const filePath = path.join(tempDir, "solution.cpp");
       const outPath = path.join(tempDir, IS_WINDOWS ? "program.exe" : "program");
-      await fs.writeFile(filePath, code);
-      const compile = await execWithTimeout("g++", [filePath, "-o", outPath], 15000, null, null, { noPty: true });
-      if (compile.exitCode !== 0) {
-        if (onLog) onLog(jobId, "stderr", compile.stderr || "Compilation failed\n");
-        return { status: "failed", stderr: compile.stderr };
+      
+      try {
+        await fs.access(cachedBinPath);
+        if (onLog) onLog(jobId, "stdout", "✨ \x1b[1;32mBinary Cache Hit! Skipping compilation...\x1b[0m\n\r\n");
+        await fs.copyFile(cachedBinPath, outPath);
+      } catch (e) {
+        await fs.writeFile(filePath, code);
+        const compile = await execWithTimeout("g++", [filePath, "-o", outPath], 15000, null, null, { noPty: true });
+        if (compile.exitCode !== 0) {
+          if (onLog) onLog(jobId, "stderr", compile.stderr || "Compilation failed\n");
+          return { status: "failed", stderr: compile.stderr };
+        }
+        // Save to cache
+        await fs.copyFile(outPath, cachedBinPath).catch(() => {});
       }
       return await execWithTimeout(outPath, [], 60000, jobId, onLog, { cwd: tempDir });
 
     } else if (language === "c") {
       const filePath = path.join(tempDir, "solution.c");
       const outPath = path.join(tempDir, IS_WINDOWS ? "program.exe" : "program");
-      await fs.writeFile(filePath, code);
-      const compile = await execWithTimeout("gcc", [filePath, "-o", outPath], 15000, null, null, { noPty: true });
-      if (compile.exitCode !== 0) {
-        if (onLog) onLog(jobId, "stderr", compile.stderr || "Compilation failed\n");
-        return { status: "failed", stderr: compile.stderr };
+      
+      try {
+        await fs.access(cachedBinPath);
+        if (onLog) onLog(jobId, "stdout", "✨ \x1b[1;32mBinary Cache Hit! Skipping compilation...\x1b[0m\n\r\n");
+        await fs.copyFile(cachedBinPath, outPath);
+      } catch (e) {
+        await fs.writeFile(filePath, code);
+        const compile = await execWithTimeout("gcc", [filePath, "-o", outPath], 15000, null, null, { noPty: true });
+        if (compile.exitCode !== 0) {
+          if (onLog) onLog(jobId, "stderr", compile.stderr || "Compilation failed\n");
+          return { status: "failed", stderr: compile.stderr };
+        }
+        await fs.copyFile(outPath, cachedBinPath).catch(() => {});
       }
       return await execWithTimeout(outPath, [], 60000, jobId, onLog, { cwd: tempDir });
 
@@ -259,26 +347,37 @@ async function executeDirectly(run, onLog) {
     } else if (language === "java") {
       const javaClass = getJavaMainClass(code);
       const javaFile = `${javaClass}.java`;
+      const javaClassFile = `${javaClass}.class`;
       const javaFilePath = path.join(tempDir, javaFile);
+      const outClassPath = path.join(tempDir, javaClassFile);
       
-      await fs.writeFile(javaFilePath, code);
-      
-      const compile = await execWithTimeout("javac", [javaFile], 15000, null, null, { noPty: true, cwd: tempDir });
-      if (compile.exitCode !== 0) {
-        if (onLog) onLog(jobId, "stderr", compile.stderr || "Compilation failed\n");
-        return { status: "failed", stderr: compile.stderr };
+      try {
+        await fs.access(cachedBinPath);
+        if (onLog) onLog(jobId, "stdout", "✨ \x1b[1;32mBinary Cache Hit! Skipping compilation...\x1b[0m\n\r\n");
+        await fs.copyFile(cachedBinPath, outClassPath);
+      } catch (e) {
+        await fs.writeFile(javaFilePath, code);
+        const compile = await execWithTimeout("javac", [javaFile], 15000, null, null, { noPty: true, cwd: tempDir });
+        if (compile.exitCode !== 0) {
+          if (onLog) onLog(jobId, "stderr", compile.stderr || "Compilation failed\n");
+          return { status: "failed", stderr: compile.stderr };
+        }
+        await fs.copyFile(outClassPath, cachedBinPath).catch(() => {});
       }
       return await execWithTimeout("java", [javaClass], 60000, jobId, onLog, { cwd: tempDir });
-
     }
     throw new Error(`Unsupported language/runtime: ${runtime}`);
   } catch (err) {
     if (onLog) onLog(jobId, "stderr", err.message);
     return { status: "failed", stderr: err.message };
   } finally {
+    activeRunsCount = Math.max(0, activeRunsCount - 1);
     setTimeout(async () => {
       try {
-        await fs.rm(tempDir, { recursive: true, force: true });
+        const exists = await fs.access(tempDir).then(() => true).catch(() => false);
+        if (exists) {
+          await fs.rm(tempDir, { recursive: true, force: true });
+        }
       } catch (e) {
         /* ignore cleanup error */
         logger.warn({ path: tempDir }, "Failed to cleanup temp execution directory");

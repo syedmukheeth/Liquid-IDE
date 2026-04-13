@@ -75,7 +75,7 @@ runsRouter.get("/health/queue", async (req, res, next) => {
 
 // eslint-disable-next-line no-unused-vars
 
-runsRouter.use((err, _req, res, next) => {
+runsRouter.use((err, _req, res, _next) => { // eslint-disable-line no-unused-vars
   if (err instanceof z.ZodError) {
     return res.status(400).json({ message: "Invalid request", issues: err.issues });
   }

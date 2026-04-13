@@ -4,14 +4,14 @@ const { executeDirectly, isToolAvailable } = require("./directExecutor");
 const { executeViaPiston } = require("./pistonExecutor");
 const { logger } = require("../../config/logger");
 const { emitLog } = require("./socketHandler");
-const { env, isVercel } = require("../../config/env");
+const { isVercel } = require("../../config/env");
 const { getRunsQueue, getRedisClient, WORKER_HEARTBEAT_KEY } = require("./runs.queue");
 
 /**
  * Extracts a meaningful "title" from the run's code.
  * Skips boilerplate, headers, and comments to find the first functional line.
  */
-function generateRunTitle(code, runtime) {
+function generateRunTitle(code, _runtime) { // eslint-disable-line no-unused-vars
   if (!code) return "Empty Run";
   const lines = code.split("\n");
   const skipPatterns = [
@@ -103,16 +103,13 @@ async function createRun(input) {
 
   // Execute ALL languages directly on this server (in the background)
   const runTask = async () => {
-    // Small delay to allow frontend to subscribe to the socket
-    await new Promise(resolve => setTimeout(resolve, 800));
     try {
       const runData = (run && typeof run.toObject === "function") ? run.toObject() : run;
       const hostTool = runData.runtime === "cpp" ? "g++" : 
                        runData.runtime === "c" ? "gcc" : 
                        runData.runtime === "java" ? "javac" : null;
                        
-      const isCloud = !!process.env.RENDER;
-      let canRunDirectly = !hostTool || isToolAvailable(hostTool);
+      let canRunDirectly = !hostTool || (await isToolAvailable(hostTool));
       
       if (process.env.VERCEL && hostTool) canRunDirectly = false;
 
@@ -251,8 +248,6 @@ async function getQueueStatus() {
   if (isSandbox) {
     workerOnline = true; // In sandbox mode, the API node itself is the worker (Piston fallback)
   }
-
-  const isCloud = !!process.env.RENDER;
 
   return {
     online: true, 

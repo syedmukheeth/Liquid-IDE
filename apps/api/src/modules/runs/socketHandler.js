@@ -6,6 +6,7 @@ const { ProjectStateModel } = require("./project.model");
 let io = null;
 let redisSubscriber = null;
 const inputBuffers = new Map(); // jobId -> string[]
+const logBuffers = new Map(); // jobId -> { type, chunk }[]
 const activeSubscriptions = new Set(); // jobId
 
 function initSocket(server) {
@@ -25,7 +26,7 @@ function initSocket(server) {
   const ysocket = new YSocketIO(io);
   
   // Persistence 
-  ysocket.on("document-update", async (doc, update) => {
+  ysocket.on("document-update", async (doc, _update) => { // eslint-disable-line no-unused-vars
     try {
       const sessionId = doc.name; // Room name
       const binaryState = Buffer.from(Y.encodeStateAsUpdate(doc));
@@ -132,6 +133,14 @@ function initSocket(server) {
         });
         activeSubscriptions.add(jobId);
       }
+
+      // Replay buffered logs to the newly joined client
+      if (logBuffers.has(jobId)) {
+        const bufferedLines = logBuffers.get(jobId);
+        bufferedLines.forEach(log => {
+          socket.emit("exec:log", log);
+        });
+      }
     });
 
     socket.on("unsubscribe", ({ jobId }) => {
@@ -163,6 +172,7 @@ function initSocket(server) {
 
     socket.on("exec:log:end", ({ jobId }) => {
        inputBuffers.delete(jobId);
+       logBuffers.delete(jobId);
        if (redisSubscriber && activeSubscriptions.has(jobId)) {
          redisSubscriber.unsubscribe(`run:logs:${jobId}`);
          activeSubscriptions.delete(jobId);
@@ -186,14 +196,24 @@ function getIO() {
  */
 function emitLog(jobId, type, chunk) {
   if (!io) return;
+  
   if (type === "end") {
     inputBuffers.delete(jobId);
+    setTimeout(() => logBuffers.delete(jobId), 10000); // Keep logs for 10s after completion
     // Cleanup Redis sub on job completion
     if (redisSubscriber && activeSubscriptions.has(jobId)) {
        redisSubscriber.unsubscribe(`run:logs:${jobId}`);
        activeSubscriptions.delete(jobId);
     }
+  } else {
+    // Senior Dev Buffer: Ensure logs aren't lost during the client connection handshake
+    if (!logBuffers.has(jobId)) logBuffers.set(jobId, []);
+    const buffer = logBuffers.get(jobId);
+    if (buffer.length < 500) { // Limit buffer size to 500 lines
+      buffer.push({ type, chunk });
+    }
   }
+
   io.to(`run:${jobId}`).emit("exec:log", { type, chunk });
 }
 
