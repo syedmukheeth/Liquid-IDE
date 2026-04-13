@@ -20,9 +20,18 @@ export function getSocket() {
     autoConnect: true
   });
 
+  let heartbeatInterval = null;
+
   socket.on("connect", () => {
     const transport = socket.io.engine.transport.name;
     console.log(`✅ [SAM Compiler] WebSocket Connected | Host: ${endpoint} | Transport: ${transport}`);
+    
+    // Heartbeat to keep Render proxy alive
+    if (heartbeatInterval) clearInterval(heartbeatInterval);
+    heartbeatInterval = setInterval(() => {
+      if (socket.connected) socket.emit("sam:ping");
+    }, 45000);
+
     window.dispatchEvent(new CustomEvent("sam:socket:status", { 
       detail: { connected: true, status: "online", endpoint, transport } 
     }));
@@ -53,6 +62,11 @@ export function getSocket() {
 
     if (reason === "io server disconnect") {
       socket.connect();
+    }
+
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval);
+      heartbeatInterval = null;
     }
 
     window.dispatchEvent(new CustomEvent("sam:socket:status", { 

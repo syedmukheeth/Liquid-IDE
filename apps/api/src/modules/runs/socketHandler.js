@@ -13,13 +13,18 @@ function initSocket(server) {
   const { Server } = require("socket.io");
   io = new Server(server, {
     cors: {
-      origin: "*", 
-      methods: ["GET", "POST"]
+      origin: [
+        "https://sam-compiler-web.vercel.app",
+        "https://sam-compiler.onrender.com",
+        "http://localhost:3000",
+        "http://localhost:5173"
+      ],
+      methods: ["GET", "POST"],
+      credentials: true
     },
-    pingTimeout: 60000,
-    pingInterval: 25000,
-    transports: ["websocket", "polling"], // Align with client
-    allowEIO3: true
+    pingTimeout: 120000, // Surrounding mobile latency
+    pingInterval: 30000,
+    transports: ["websocket", "polling"]
   });
 
   // Initialize Yjs Sync over Socket.io
@@ -177,6 +182,10 @@ function initSocket(server) {
          redisSubscriber.unsubscribe(`run:logs:${jobId}`);
          activeSubscriptions.delete(jobId);
        }
+    });
+
+    socket.on("sam:ping", () => {
+       // Silent heartbeat to keep proxies alive
     });
 
     socket.on("disconnect", (reason) => {
