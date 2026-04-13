@@ -961,7 +961,7 @@ builtins.input = input_shim
             <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${
               theme === 'dark' ? 'text-white' : 'text-slate-900'
             }`}>
-              {socketIsConnected ? 'SYNC ONLINE' : 'SYNC OFFLINE'}
+              {socketIsConnected ? 'SAM ONLINE' : 'SAM OFFLINE'}
             </span>
           </div>
 
