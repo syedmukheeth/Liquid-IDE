@@ -463,7 +463,7 @@ export default function EditorPage() {
       // Note: The success toast is handled centrally inside CodeEditor.jsx
       // to ensure it only fires when the network transaction actually completes.
     }
-  }, [activeLangId, languageConfigs]);
+  }, [activeLangId]);
 
   // Keyboard Shortcuts
   useEffect(() => {
@@ -491,20 +491,19 @@ export default function EditorPage() {
         e.preventDefault();
         setShowAiPanel(prev => !prev);
       }
-
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [user]); // user is a dependency for history shortcut
+  }, [onRun, setShowAiPanel, user]); // Stabilized dependencies
 
   const activeConfig = languageConfigs[activeLangId];
 
-  function onCodeChange(value) {
+  const onCodeChange = useCallback((value) => {
     setBuffers((b) => ({ ...b, [activeLangId]: value ?? "" }));
-  }
+  }, [activeLangId]);
 
-  async function runPythonInBrowser(code) {
+  const runPythonInBrowser = useCallback(async (code) => {
     if (!pyodide) throw new Error("Python engine is still booting...");
     
     pyodide.setStdout({ batched: (str) => { 
@@ -530,9 +529,9 @@ builtins.input = input_shim
       xtermRef.current.write(err.message + "\r\n");
       setRunStatus("Failed");
     }
-  }
+  }, [pyodide]); // xtermRef is a ref
 
-  async function onRun() {
+  const onRun = useCallback(async () => {
     const code = buffers[activeLangId] ?? "";
     const language = activeConfig.lang;
 
@@ -637,7 +636,7 @@ builtins.input = input_shim
     } finally {
       setBusy(false);
     }
-  }
+  }, [activeConfig, activeLangId, buffers, busy, runPythonInBrowser]);
 
   const onClear = () => {
     xtermRef.current.clear();
