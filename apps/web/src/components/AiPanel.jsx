@@ -19,7 +19,7 @@ export default function AiPanel({
   width = 500
 }) {
   const [messages, setMessages] = useState([
-    { role: "model", content: "I am Sam AI, your elite coding partner. How can I assist with your code today?" }
+    { role: "model", content: "I am Sam AI, your world-class code helper and compiler assistant. How can I help you understand or fix your code today?" }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
