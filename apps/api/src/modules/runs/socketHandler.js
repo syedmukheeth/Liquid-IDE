@@ -179,8 +179,8 @@ function initSocket(server) {
        }
     });
 
-    socket.on("disconnect", () => {
-      logger.info({ socketId: socket.id }, "Client disconnected from socket");
+    socket.on("disconnect", (reason) => {
+      logger.info({ socketId: socket.id, reason }, "Client disconnected from socket");
     });
   });
 

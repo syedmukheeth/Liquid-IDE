@@ -21,6 +21,28 @@ async function main() {
     console.log(`🚀 API Server ready on http://localhost:${env.PORT}`);
     console.log(`📡 Environment: ${process.env.NODE_ENV || "development"}`);
   });
+
+  // GRACEFUL SHUTDOWN: Ensure we don't drop active runs or Yjs updates on redeploy
+  const shutdown = async (signal) => {
+    logger.info(`${signal} received. Shutting down gracefully...`);
+    server.close(() => {
+      logger.info("HTTP server closed.");
+      const mongoose = require("mongoose");
+      mongoose.connection.close(false, () => {
+        logger.info("MongoDB connection closed.");
+        process.exit(0);
+      });
+    });
+
+    // Force exit after 10s
+    setTimeout(() => {
+      logger.error("Could not close connections in time, forceful shutdown");
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+  process.on("SIGINT", () => shutdown("SIGINT"));
 }
 
 main().catch((err) => {
