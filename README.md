@@ -39,6 +39,7 @@
 | **Intelligence** | **SAM AI Kernel**: Hardened Gemini 1.5 Flash with retry-resilience and fault-tolerant streaming. | Primitive GPT-3.5 wrappers with high failure rates. |
 | **Stability** | **Resilient Topology**: Multi-layered WebSocket heartbeats with automatic polling fallbacks. | Single-channel sockets that drop sessions on network glitches. |
 | **Security** | **Military-Grade Isolation**: Code executes inside locked-down `gVisor` containers. | Basic Docker containers without kernel-level sandboxing. |
+| **Responsiveness** | **Adaptive Fluid System**: Spring-animated drawers and touch-optimized workspace for mobile excellence. | Basic media queries that break under IDE complexity. |
 | **Logic** | **Mathematical CRDTs**: Powered by Yjs for seamless, conflict-free data synchronization. | Simple text-diffs prone to state corruption and data loss. |
 
 ---
@@ -70,7 +71,7 @@
 
 ## 🎨 THE "DIGITAL OBSIDIAN" DESIGN SYSTEM
 
-SAM is built on the **Obsidian** design philosophy—a space-black, borderless UI that prioritizes visual clarity and cognitive focus.
+SAM is built on the **Obsidian** design philosophy—a space-black, borderless UI that prioritizes visual clarity and cognitive focus. The latest update introduces a **Native-Grade Mobile Experience** featuring spring-animated drawers, touch-optimized hit targets, and a fluid tab-based navigation system.
 
 <div align="center">
   <br>
@@ -89,12 +90,12 @@ SAM is built on the **Obsidian** design philosophy—a space-black, borderless U
   </table>
   <br><br>
 
-  <h3>Mobile High-Fidelity</h3>
+  <h3>Adaptive Mobile Architecture</h3>
   <br>
-  <img src="docs/assets/mobile-editor.jpg" alt="Mobile Editor" width="23%" style="border-radius:12px; border: 1px solid #222;">
-  <img src="docs/assets/mobile-code.jpg" alt="Mobile Code" width="23%" style="border-radius:12px; border: 1px solid #222;">
-  <img src="docs/assets/mobile-ai.jpg" alt="Mobile AI" width="23%" style="border-radius:12px; border: 1px solid #222;">
-  <img src="docs/assets/mobile-settings.jpg" alt="Mobile Settings" width="23%" style="border-radius:12px; border: 1px solid #222;">
+  <img src="docs/assets/mobile-editor.jpg" alt="Mobile Editor - Bottom Navigation" width="23%" style="border-radius:12px; border: 1px solid #222;">
+  <img src="docs/assets/mobile-code.jpg" alt="Mobile Output - Responsive Console" width="23%" style="border-radius:12px; border: 1px solid #222;">
+  <img src="docs/assets/mobile-ai.jpg" alt="SAM AI Drawer - Mobile Intelligence" width="23%" style="border-radius:12px; border: 1px solid #222;">
+  <img src="docs/assets/mobile-settings.jpg" alt="Mobile Workspace - Touch Resizing" width="23%" style="border-radius:12px; border: 1px solid #222;">
 </div>
 
 ---
@@ -167,5 +168,5 @@ npm install && npm run dev
     <img src="https://img.shields.io/badge/-SYED_MUKHEETH-black?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn">
   </a>
   <br><br>
-  <sub>v3.5.0-RESILIENT | Obsidian Principal Edition</sub>
+  <sub>v3.6.0-ADAPTIVE | Obsidian Principal Edition</sub>
 </div>
