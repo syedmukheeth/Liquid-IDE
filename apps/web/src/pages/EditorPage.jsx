@@ -563,7 +563,7 @@ builtins.input = input_shim
           )}
         </AnimatePresence>
 
-        <div className="flex items-center gap-2 md:gap-14 shrink-0 overflow-hidden">
+        <div className="flex items-center gap-2 md:gap-14 overflow-hidden">
           <div className="flex items-center gap-2 sm:gap-5 shrink-0">
             <div className="flex items-center gap-2 sm:gap-3 transition-all hover:scale-105">
               <div className="scale-75 sm:scale-100 origin-left">
@@ -663,7 +663,7 @@ builtins.input = input_shim
               }}
             >
               <Sparkles className={`h-4 w-4 ${showAiPanel ? 'animate-pulse' : ''}`} />
-              <span className="hidden md:inline text-[10px] font-black uppercase tracking-widest">Assistant</span>
+              <span className="hidden sm:inline text-[10px] font-black uppercase tracking-widest">SAM AI</span>
             </button>
 
             {/* Desktop-only secondary actions */}
@@ -798,8 +798,8 @@ builtins.input = input_shim
             color: activeMobileTab === 'ai' || showAiPanel ? 'var(--sam-accent)' : 'var(--sam-text-dim)',
           }}
         >
-          <Sparkles className="h-3.5 w-3.5" />
-          <span className="text-[9px] font-black uppercase tracking-[0.2em]">Assistant</span>
+          <Sparkles className="h-4 w-4" />
+          <span className="text-[10px] font-black uppercase tracking-widest">SAM AI</span>
           {(activeMobileTab === 'ai' || (isMobile && showAiPanel)) && <motion.div layoutId="mobileTabIdx" className="absolute bottom-0 left-4 right-4 h-0.5 bg-[var(--sam-accent)] rounded-full" />}
         </button>
       </div>
