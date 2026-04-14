@@ -238,47 +238,52 @@ export default function AiPanel({
 
           {/* Panel */}
           <motion.aside
-            initial={{ x: "100%", opacity: 0.5 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: "100%", opacity: 0.5 }}
-            transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
-            className={`fixed right-0 top-0 bottom-12 z-[65] border-l shadow-[-20px_0_50px_rgba(0,0,0,0.1)] backdrop-blur-3xl overflow-hidden ${
-              theme === 'dark' ? 'bg-black border-white/5 text-white' : 'bg-white border-slate-200 text-slate-900'
-            }`}
+            initial={{ x: window.innerWidth < 768 ? "0%" : "100%", y: window.innerWidth < 768 ? "100%" : "0%", opacity: 0.5 }}
+            animate={{ x: 0, y: 0, opacity: 1 }}
+            exit={{ x: window.innerWidth < 768 ? "0%" : "100%", y: window.innerWidth < 768 ? "100%" : "0%", opacity: 0.5 }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className={`fixed right-0 top-0 md:top-0 bottom-0 md:bottom-12 z-[65] border-l shadow-[-20px_0_50px_rgba(0,0,0,0.1)] backdrop-blur-3xl overflow-hidden ${
+              theme === 'dark' ? 'bg-black/95 border-white/5 text-white' : 'bg-white border-slate-200 text-slate-900'
+            } ${window.innerWidth < 768 ? 'rounded-t-[32px] mt-20 h-[calc(100%-80px)]' : ''}`}
             style={{ width: window.innerWidth < 768 ? '100vw' : width }}
           >
+            {/* Mobile Handle */}
+            <div className="flex md:hidden justify-center pt-3 pb-1">
+              <div className="h-1.5 w-12 rounded-full bg-white/20" />
+            </div>
+
             {/* Ambient Background Glow */}
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
                <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/5 blur-[80px]" />
             </div>
 
             <div className="relative flex h-full flex-col z-10">
-              <div className={`flex h-20 items-center justify-between border-b px-8 ${
+              <div className={`flex h-16 md:h-20 items-center justify-between border-b px-6 md:px-8 ${
                 theme === 'dark' ? 'border-white/5' : 'border-slate-100'
               }`}>
-                <div className="flex items-center gap-4">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-2xl shadow-lg transition-transform hover:scale-110 ${
+                <div className="flex items-center gap-3 md:gap-4">
+                  <div className={`flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-2xl shadow-lg transition-transform hover:scale-110 ${
                     theme === 'dark' ? 'bg-white text-black shadow-white/10' : 'bg-black text-white shadow-black/10'
                   }`}>
-                    <Sparkles className="h-5 w-5" />
+                    <Sparkles className="h-4 w-4 md:h-5 md:w-5" />
                   </div>
                   <div>
-                    <h2 className={`text-base font-black tracking-tight sam-headline ${
+                    <h2 className={`text-sm md:text-base font-black tracking-tight sam-headline ${
                        theme === 'dark' ? 'text-white' : 'text-slate-900'
                     }`}>Sam AI</h2>
-                    <div className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest opacity-90 text-label ${
+                    <div className={`flex items-center gap-1.5 text-[9px] md:text-[10px] font-bold uppercase tracking-widest opacity-90 text-label ${
                         theme === 'dark' ? 'text-white/40' : 'text-slate-400'
                     }`}>
                        <div className={`h-1.5 w-1.5 rounded-full animate-pulse ${
                          theme === 'dark' ? 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]' : 'bg-black shadow-[0_0_8px_rgba(0,0,0,0.3)]'
                        }`} />
-                       Intelligence Active
+                       Intelligence
                     </div>
                   </div>
                 </div>
                 <button 
                   onClick={onClose} 
-                  className={`rounded-xl p-2.5 transition-all hover:scale-110 active:scale-95 ${
+                  className={`rounded-xl p-2 md:p-2.5 transition-all hover:scale-110 active:scale-95 ${
                     theme === 'dark' ? 'text-white/30 hover:bg-white/5 hover:text-white' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-900'
                   }`}
                 >

@@ -90,23 +90,12 @@ export default function StatusBar({
       <div className="flex items-center gap-4 md:gap-7">
         <span className={`font-black tracking-[0.3em] hidden lg:block ${theme === 'dark' ? 'text-white/20' : 'text-slate-400'}`}>SAM © 2026</span>
         <span className={`opacity-10 hidden lg:inline ${theme === 'dark' ? 'text-white/40' : 'text-slate-300'}`}>|</span>
-
-        <div className="hidden sm:flex items-center gap-4">
-          <span className={`font-mono tracking-widest opacity-60 ${theme === 'dark' ? 'text-white' : 'text-slate-600'}`}>{position}</span>
-          <span className="rounded-md px-3 py-1 font-black shadow-lg transition-all hover:bg-opacity-80" style={{ 
-            background: theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#f8fafc', 
-            color: theme === 'dark' ? 'rgb(59, 130, 246)' : '#0ea5e9',
-            border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0'
-          }}>{language}</span>
-        </div>
-
-        <span className={`opacity-10 hidden sm:inline ${theme === 'dark' ? 'text-white/40' : 'text-slate-300'}`}>|</span>
         
         <a 
           href="https://linkedin.com/in/syedmukheeth" 
           target="_blank" 
           rel="noopener noreferrer" 
-          className={`group flex items-center gap-2 sm:gap-3 transition-all active:scale-95`}
+          className={`group flex items-center gap-2 sm:gap-3 transition-all active:scale-95 ${window.innerWidth < 640 ? 'hidden' : 'flex'}`}
         >
           <span className={`text-[8.5px] font-black uppercase tracking-[0.3em] transition-opacity hidden lg:inline ${
             theme === 'dark' ? 'text-white/30 group-hover:text-white/60' : 'text-slate-400 group-hover:text-slate-800'

@@ -16,7 +16,7 @@ import FeedbackModal from "../components/FeedbackModal";
 import { useAuth } from "../hooks/useAuth";
 import { Link, useSearchParams } from "react-router-dom";
 
-import { Sparkles, Keyboard, Clock } from "lucide-react";
+import { Sparkles, Keyboard, Clock, Menu, X } from "lucide-react";
 import toast, { Toaster } from 'react-hot-toast';
 import { motion, AnimatePresence } from "framer-motion";
 import ENDPOINTS from "../services/endpoints";
@@ -148,6 +148,7 @@ export default function EditorPage() {
   const [pyodide, setPyodide] = useState(null);
   const [isPyodideLoading, setIsPyodideLoading] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
 
   const { user, token, loginUser, logoutUser } = useAuth();
@@ -220,6 +221,27 @@ builtins.input = input_shim
     }
     setRunStatus("Running");
     setMetrics(null);
+
+    // Ensure socket is alive for real-time logs before submission
+    if (!socket.connected && activeLangId !== "python") {
+      try {
+        await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            socket.off("connect", onConnect);
+            resolve(); // Proceed anyway, polling will catch the final state
+          }, 2000);
+          const onConnect = () => {
+             clearTimeout(timeout);
+             resolve();
+          };
+          socket.once("connect", onConnect);
+          socket.connect();
+        });
+      } catch (err) {
+        console.warn("Socket connection failed, proceeding with polling only.");
+      }
+    }
+
     if (activeLangId === "python") {
       try {
         await runPythonInBrowser(code);
@@ -383,6 +405,9 @@ builtins.input = input_shim
 
   // Socket status monitoring
   useEffect(() => {
+    // Initial connection trigger
+    getSocket();
+    
     const handleStatus = (e) => setSocketIsConnected(e.detail.connected);
     window.addEventListener("sam:socket:status", handleStatus);
     return () => window.removeEventListener("sam:socket:status", handleStatus);
@@ -520,7 +545,7 @@ builtins.input = input_shim
       <div className="bg-mesh" />
       <div className="noise-overlay" />
 
-      <header className="relative z-20 flex h-14 md:h-16 shrink-0 items-center justify-between px-4 md:px-8 border-b-0 sam-glass" style={{ borderBottom: '1px solid var(--sam-glass-border)', background: 'var(--sam-glass-bg)', backdropFilter: 'blur(30px)' }}>
+      <header className="relative z-[80] flex h-14 md:h-16 shrink-0 items-center justify-between px-4 md:px-8 border-b-0 sam-glass" style={{ borderBottom: '1px solid var(--sam-glass-border)', background: 'var(--sam-glass-bg)', backdropFilter: 'blur(30px)' }}>
         {/* Connection Resilience Banner */}
         <AnimatePresence>
           {!socketIsConnected && (
@@ -541,16 +566,14 @@ builtins.input = input_shim
         <div className="flex items-center gap-2 md:gap-14 shrink-0 overflow-hidden">
           <div className="flex items-center gap-2 sm:gap-5 shrink-0">
             <div className="flex items-center gap-2 sm:gap-3 transition-all hover:scale-105">
-              <div className="scale-90 sm:scale-100 origin-left">
+              <div className="scale-75 sm:scale-100 origin-left">
                 <SamNavLogo theme={theme} />
               </div>
-              <div className="flex flex-col leading-[0.9] mt-1 relative scale-75 sm:scale-100 origin-left -ml-1 sm:ml-0">
+              <div className="flex flex-col leading-[0.9] mt-1 relative scale-[0.65] sm:scale-100 origin-left -ml-1 sm:ml-0">
                 <span className="font-black tracking-tight text-[18px] uppercase italic" style={{ fontFamily: 'var(--font-display)', color: 'var(--sam-text)' }}>SAM</span>
                 <span className="text-[10px] font-black uppercase tracking-[0.35em] opacity-40 ml-0.5" style={{ color: 'var(--sam-text)' }}>Compiler</span>
               </div>
             </div>
-
-
           </div>
           
           <nav className="hidden xl:flex items-center gap-8">
@@ -596,164 +619,188 @@ builtins.input = input_shim
             })}
           </nav>
         </div>
-        <motion.div 
-          animate={{ x: (showAiPanel && window.innerWidth >= 768) ? -440 : 0 }}
-          transition={{ type: "spring", damping: 30, stiffness: 300 }}
-          className="flex items-center gap-1 sm:gap-2 md:gap-5 shrink-0"
-        >
+
+        <div className="flex items-center gap-2 sm:gap-3 md:gap-5 shrink-0">
           <div className="scale-75 sm:scale-100 origin-right">
             <ThemeToggle theme={theme} toggle={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')} />
           </div>
           
-          {user ? (
-            <div className="hidden md:flex items-center gap-1 sm:gap-2 md:gap-3 shrink-0">
-              <div style={{
+          <div className="hidden sm:flex items-center gap-2 md:gap-3">
+            {user ? (
+               <div style={{
                 display: 'flex', alignItems: 'center', gap: 6,
                 padding: '2px 4px 2px 8px',
                 borderRadius: 20,
                 border: '1px solid var(--sam-glass-border)',
                 background: 'var(--sam-accent-muted)',
               }}>
-                <span className="hidden lg:block" style={{ fontSize: 11, fontWeight: 600, color: 'var(--sam-text)', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'var(--font-body)' }}>
+                <span className="hidden lg:block text-[11px] font-semibold text-white/90 max-w-[100px] truncate">
                   {user.name}
                 </span>
                 <img
                   src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=000000&color=FFFFFF`}
                   alt="Avatar"
-                  style={{ width: 24, height: 24, borderRadius: '50%', border: '1px solid var(--sam-glass-border)', objectFit: 'cover' }}
+                  style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover' }}
                 />
               </div>
+            ) : (
               <button
-                onClick={() => confirm("Sign out of SAM Compiler?") && logoutUser()}
-                className="shrink-0"
-                style={{
-                  padding: '5px 8px', borderRadius: 6,
-                  border: '1px solid var(--sam-glass-border)',
-                  background: 'var(--sam-surface-low)',
-                  color: 'var(--sam-text-dim)',
-                  fontSize: 9, fontWeight: 950, textTransform: 'uppercase', letterSpacing: '0.1em',
-                  cursor: 'pointer', transition: 'all 0.2s',
-                  fontFamily: 'var(--font-body)',
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--sam-text)'; e.currentTarget.style.background = 'var(--sam-glass-border)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--sam-text-dim)'; e.currentTarget.style.background = 'var(--sam-surface-low)'; }}
-              >
-                <span className="hidden sm:inline">Sign Out</span>
-                <span className="inline sm:hidden">Quit</span>
-              </button>
-            </div>
-          ) : (
-            <button
-              id="signin-btn"
-              onClick={() => setActiveModal('auth')}
-              className="sam-button-primary shrink-0"
-              style={{
-                padding: window.innerWidth < 768 ? '5px 10px' : '7px 18px', 
-                borderRadius: 4,
-                fontSize: window.innerWidth < 768 ? 9 : 10, 
-                fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em',
-                cursor: 'pointer', transition: 'all 0.25s',
-                fontFamily: 'var(--font-body)',
-                background: 'var(--sam-accent)',
-                color: 'var(--sam-bg)',
-                border: 'none',
-                whiteSpace: 'nowrap'
-              }}
-            >Sign In</button>
-          )}
+                id="signin-btn"
+                onClick={() => setActiveModal('auth')}
+                className="sam-button-primary h-8 px-4 text-[9px] font-black uppercase tracking-wider rounded-md"
+              >Sign In</button>
+            )}
+          </div>
 
-          {/* Navigation & Actions */}
-          <div className="flex items-center gap-1 sm:gap-1.5 md:gap-3 shrink-0">
-
-            <button 
-              onClick={() => setShowShortcutsHelp(true)}
-              className="group hidden md:flex h-10 w-10 items-center justify-center rounded-xl border transition-all duration-300"
-              style={{ 
-                background: 'var(--sam-surface-low)',
-                borderColor: 'var(--sam-glass-border)',
-                boxShadow: 'var(--sam-glow-bloom)'
-              }}
-              title="Keyboard Shortcuts"
-            >
-              <Keyboard className="h-5 w-5 transition-colors" style={{ color: 'var(--sam-text-dim)' }} />
-            </button>
-
+          <div className="flex items-center gap-1.5 md:gap-3">
             <button 
               onClick={() => setShowAiPanel(!showAiPanel)}
-              className="group flex h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-auto md:px-4 items-center justify-center gap-2 rounded-xl border transition-all duration-300 shrink-0"
+              className="flex h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-auto md:px-4 items-center justify-center gap-2 rounded-xl border transition-all duration-300 shrink-0"
               style={{ 
                 background: showAiPanel ? 'var(--sam-accent-muted)' : 'var(--sam-surface-low)',
                 borderColor: showAiPanel ? 'var(--sam-accent)' : 'var(--sam-glass-border)',
                 color: showAiPanel ? 'var(--sam-accent)' : 'var(--sam-text-dim)',
-                boxShadow: 'var(--sam-glow-bloom)'
               }}
-              title="AI Assistant"
             >
-              <Sparkles className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${showAiPanel ? 'animate-pulse' : ''}`} />
+              <Sparkles className={`h-4 w-4 ${showAiPanel ? 'animate-pulse' : ''}`} />
+              <span className="hidden md:inline text-[10px] font-black uppercase tracking-widest">Assistant</span>
             </button>
 
-            {/* History Button */}
-            <button 
-              onClick={() => {
-                if (!token) { setActiveModal('auth'); return; }
-                setShowHistory(prev => !prev);
-              }}
-              className="group flex h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-auto md:px-4 items-center justify-center gap-2 rounded-xl border transition-all duration-300 shrink-0"
-              style={{ 
-                background: showHistory ? 'var(--sam-accent-muted)' : 'var(--sam-surface-low)',
-                borderColor: showHistory ? 'var(--sam-accent)' : 'var(--sam-glass-border)',
-                color: showHistory ? 'var(--sam-accent)' : 'var(--sam-text-dim)',
-                boxShadow: 'var(--sam-glow-bloom)'
-              }}
-              title="Run History"
-            >
-              <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden md:inline" style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', fontFamily: 'var(--font-body)' }}>History</span>
-            </button>
+            {/* Desktop-only secondary actions */}
+            <div className="hidden lg:flex items-center gap-2">
+              <button 
+                onClick={() => setShowShortcutsHelp(true)}
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--sam-glass-border)] bg-[var(--sam-surface-low)] text-[var(--sam-text-dim)] transition-all hover:text-white"
+              >
+                <Keyboard className="h-5 w-5" />
+              </button>
+              <button 
+                onClick={() => { if (!token) { setActiveModal('auth'); return; } setShowHistory(!showHistory); }}
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--sam-glass-border)] bg-[var(--sam-surface-low)] text-[var(--sam-text-dim)] transition-all hover:text-white"
+              >
+                <Clock className="h-5 w-5" />
+              </button>
+            </div>
 
+            {/* Mobile Menu Toggle */}
             <button 
-              onClick={() => setActiveModal('settings')} 
-              className="flex items-center justify-center h-8 w-8 sm:h-9 sm:w-9 shrink-0 md:hidden"
-              style={{ background: 'none', border: 'none', color: 'var(--sam-text-dim)', cursor: 'pointer', opacity: 0.7 }}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl border border-[var(--sam-glass-border)] bg-[var(--sam-surface-low)] text-[var(--sam-text-dim)]"
             >
-              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </button>
           </div>
-        </motion.div>
+        </div>
+
+        {/* Mobile Slide-down Menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="absolute left-0 right-0 top-full mt-2 mx-4 p-4 sam-glass dark:bg-black/95 bg-white/95 border-white/5 shadow-2xl z-[90] lg:hidden overflow-hidden"
+              style={{ borderRadius: 20 }}
+            >
+              <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <button 
+                    onClick={() => { setShowShortcutsHelp(true); setMobileMenuOpen(false); }}
+                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors gap-2"
+                  >
+                    <Keyboard className="h-5 w-5 text-white/60" />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-white/40">Shortcuts</span>
+                  </button>
+                  <button 
+                    onClick={() => { if (!token) { setActiveModal('auth'); } else { setShowHistory(true); } setMobileMenuOpen(false); }}
+                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors gap-2"
+                  >
+                    <Clock className="h-5 w-5 text-white/60" />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-white/40">History</span>
+                  </button>
+                </div>
+                
+                <div className="h-[1px] bg-white/5 w-full" />
+
+                <div className="flex flex-col gap-1">
+                   {['Editor', 'Dashboard', 'Settings'].map((tab) => {
+                      if (tab === 'Dashboard' && user?.role !== 'admin') return null;
+                      const isActive = (!activeModal && tab === 'Editor') || activeModal === tab.toLowerCase();
+                      return (
+                        <button
+                          key={tab}
+                          onClick={() => { setActiveModal(tab === 'Editor' ? null : tab.toLowerCase()); setMobileMenuOpen(false); }}
+                          className={`flex items-center justify-between p-3 rounded-xl transition-all ${isActive ? 'bg-white/10 text-white' : 'text-white/40'}`}
+                        >
+                          <span className="text-xs font-bold uppercase tracking-[0.2em]">{tab}</span>
+                          {isActive && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                        </button>
+                      );
+                   })}
+                </div>
+
+                {!user && (
+                   <button 
+                    onClick={() => { setActiveModal('auth'); setMobileMenuOpen(false); }}
+                    className="w-full sam-button-primary p-4 rounded-xl text-xs font-black uppercase tracking-widest"
+                  >
+                    Sign In to SAM
+                  </button>
+                )}
+
+                {user && (
+                  <div className="mt-2 flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/5">
+                    <div className="flex items-center gap-3">
+                      <img src={user.avatar} className="h-8 w-8 rounded-full border border-white/10" />
+                      <span className="text-xs font-bold text-white/80">{user.name}</span>
+                    </div>
+                    <button onClick={logoutUser} className="text-[9px] font-black uppercase tracking-widest text-rose-500 px-3 py-1.5 rounded-lg bg-rose-500/10">Sign Out</button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
-      <div className="flex md:hidden h-12 shrink-0" style={{ borderBottom: '1px solid var(--sam-glass-border)', background: 'var(--sam-surface-low)' }}>
+      <div className="flex xl:hidden h-12 shrink-0 bg-[var(--sam-surface-low)] border-b border-[var(--sam-glass-border)] z-[70] shadow-lg sticky top-0">
         <button
-          onClick={() => setActiveMobileTab('editor')}
-          className="relative flex-1 flex items-center justify-center gap-2"
+          onClick={() => { setActiveMobileTab('editor'); setShowAiPanel(false); }}
+          className="relative flex-1 flex flex-col items-center justify-center gap-1.5 transition-all"
           style={{
-            fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em',
-            color: activeMobileTab === 'editor' ? 'var(--sam-accent)' : 'var(--sam-text-dim)',
-            background: 'transparent',
-            border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)',
+            color: activeMobileTab === 'editor' && !showAiPanel ? 'var(--sam-accent)' : 'var(--sam-text-dim)',
           }}
         >
-          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
-          Code
-          {activeMobileTab === 'editor' && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: 'var(--sam-accent)' }} />}
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+          <span className="text-[9px] font-black uppercase tracking-[0.2em]">Code</span>
+          {activeMobileTab === 'editor' && !showAiPanel && <motion.div layoutId="mobileTabIdx" className="absolute bottom-0 left-4 right-4 h-0.5 bg-[var(--sam-accent)] rounded-full" />}
         </button>
-        <div style={{ width: 1, background: 'var(--sam-glass-border)' }} />
+        
         <button
-          onClick={() => setActiveMobileTab('terminal')}
-          className="relative flex-1 flex items-center justify-center gap-2"
+          onClick={() => { setActiveMobileTab('terminal'); setShowAiPanel(false); }}
+          className="relative flex-1 flex flex-col items-center justify-center gap-1.5 transition-all"
           style={{
-            fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em',
-            color: activeMobileTab === 'terminal' ? 'var(--sam-accent)' : 'var(--sam-text-dim)',
-            background: activeMobileTab === 'terminal' ? 'var(--sam-accent-muted)' : 'transparent',
-            border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)',
+            color: activeMobileTab === 'terminal' && !showAiPanel ? 'var(--sam-accent)' : 'var(--sam-text-dim)',
           }}
         >
-          <div style={{ position: 'relative' }}>
-            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
-            {busy && <div style={{ position: 'absolute', top: -3, right: -3, width: 6, height: 6, borderRadius: '50%', background: 'var(--sam-accent)', animation: 'sam-pulse 1s infinite' }} />}
+          <div className="relative">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
+            {busy && <div className="absolute -top-1 -right-1 h-1.5 w-1.5 rounded-full bg-[var(--sam-accent)] animate-pulse" />}
           </div>
-          Output
-          {activeMobileTab === 'terminal' && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: 'var(--sam-accent)' }} />}
+          <span className="text-[9px] font-black uppercase tracking-[0.2em]">Output</span>
+          {activeMobileTab === 'terminal' && !showAiPanel && <motion.div layoutId="mobileTabIdx" className="absolute bottom-0 left-4 right-4 h-0.5 bg-[var(--sam-accent)] rounded-full" />}
+        </button>
+
+        <button
+          onClick={() => { setActiveMobileTab('ai'); setShowAiPanel(true); }}
+          className="relative flex-1 flex flex-col items-center justify-center gap-1.5 transition-all"
+          style={{
+            color: activeMobileTab === 'ai' || showAiPanel ? 'var(--sam-accent)' : 'var(--sam-text-dim)',
+          }}
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          <span className="text-[9px] font-black uppercase tracking-[0.2em]">Assistant</span>
+          {(activeMobileTab === 'ai' || (isMobile && showAiPanel)) && <motion.div layoutId="mobileTabIdx" className="absolute bottom-0 left-4 right-4 h-0.5 bg-[var(--sam-accent)] rounded-full" />}
         </button>
       </div>
 
@@ -841,13 +888,19 @@ builtins.input = input_shim
             </div>
           </section>
 
-          {/* DRAGGABLE SPLITTER */}
+          {/* DRAGGABLE SPLITTER - Always available for senior users */}
           <div 
             onMouseDown={startResizing}
-            className="hidden md:flex group relative w-1.5 h-full cursor-col-resize items-center justify-center transition-all hover:bg-white/5 z-30"
+            onTouchStart={(e) => {
+              // Simple touch proxy for startResizing
+              const touch = e.touches[0];
+              const event = { clientX: touch.clientX };
+              startResizing(event);
+            }}
+            className="flex group relative w-1 md:w-1.5 h-full cursor-col-resize items-center justify-center transition-all hover:bg-white/5 z-30 resizer-handle-touch"
           >
-            <div className="h-24 w-[1px] bg-white/5 group-hover:bg-white/20 transition-all" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-4 rounded-full bg-black/80 border border-white/5 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-0.5">
+            <div className="h-24 w-[1px] bg-white/10 group-hover:bg-white/30 transition-all" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-4 rounded-full bg-black/80 border border-white/5 opacity-0 md:group-hover:opacity-100 transition-all flex items-center justify-center gap-0.5">
               <div className="w-[1px] h-3 bg-white/20" />
               <div className="w-[1px] h-3 bg-white/20" />
             </div>

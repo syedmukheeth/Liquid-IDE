@@ -9,7 +9,7 @@ export default function OfficialLogo({ theme = 'dark', size = 32, className = ""
   const src = theme === 'light' ? OFFICIAL_LOGO_BLACK : OFFICIAL_LOGO_WHITE;
   return (
     <div className={`flex items-center justify-center transition-all duration-500 ${className}`}>
-      <img src={src} alt="SAM Compiler" style={{ width: size, height: size }} />
+      <img src={src} alt="SAM Compiler Logo" style={{ width: size, height: size }} />
     </div>
   );
 }
