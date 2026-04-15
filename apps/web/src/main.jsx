@@ -11,6 +11,16 @@ axios.defaults.withCredentials = true;
 // Register service worker for offline support
 // registerSW({ immediate: true });
 
+// 🛠️ EMERGENCY Fix: Force-unregister any legacy Service Workers from previous sessions
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    for (let registration of registrations) {
+      registration.unregister();
+      console.log("🧹 [SAM Compiler] Legacy Service Worker purged.");
+    }
+  });
+}
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <App />
