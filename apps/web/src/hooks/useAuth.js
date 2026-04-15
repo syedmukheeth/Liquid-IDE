@@ -3,21 +3,21 @@ import { getMe } from "../services/authApi";
 
 export function useAuth() {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem("sam_token"));
+  const [token, setToken] = useState(localStorage.getItem("token"));
   const [loading, setLoading] = useState(true);
 
   const logoutUser = useCallback(() => {
     setUser(null);
     setToken(null);
     localStorage.removeItem("sam_user");
-    localStorage.removeItem("sam_token");
+    localStorage.removeItem("token");
   }, []);
 
   const loginUser = useCallback((userData, accessToken) => {
     setUser(userData);
     setToken(accessToken);
     localStorage.setItem("sam_user", JSON.stringify(userData));
-    localStorage.setItem("sam_token", accessToken);
+    localStorage.setItem("token", accessToken);
   }, []);
 
   const fetchUser = useCallback(async (authToken) => {
@@ -43,7 +43,7 @@ export function useAuth() {
     if (oauthToken) {
       // 1. Immediately persist to state and storage
       setToken(oauthToken);
-      localStorage.setItem("sam_token", oauthToken);
+      localStorage.setItem("token", oauthToken);
       
       // 2. High-Fidelity URL Cleaning: Remove ONLY the token, leave other params (like session)
       searchParams.delete("token");

@@ -10,7 +10,7 @@ async function checkResponseType(res) {
 }
 
 export async function submitRun({ language, code }) {
-  const token = localStorage.getItem("sam_token");
+  const token = localStorage.getItem("token");
   const headers = { "content-type": "application/json" };
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
@@ -79,7 +79,7 @@ export async function pollUntilDone(jobId, { onUpdate, pollMs = 500 } = {}) {
 }
 
 export async function fetchHistory() {
-  const token = localStorage.getItem("sam_token");
+  const token = localStorage.getItem("token");
   if (!token) return [];
 
   const res = await fetch(`${API_BASE}/history`, {
