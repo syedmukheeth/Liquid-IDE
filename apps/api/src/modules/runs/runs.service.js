@@ -168,6 +168,7 @@ async function createRun(input) {
           }
           // Falls through to emitLog("end") below — do NOT return early here
         }
+      }
       run.finishedAt = new Date();
     } catch (err) {
       logger.error({ err }, "Execution error");
