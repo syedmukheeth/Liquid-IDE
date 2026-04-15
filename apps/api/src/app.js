@@ -47,20 +47,9 @@ function createApp() {
     message: { message: "Too many code executions. Please wait a minute." }
   });
 
-  // 🛡️ SECURITY Audit Fix: Prioritize CORS middleware to handle pre-flight OPTIONS requests immediately
-  // 🛡️ SECURITY Audit Fix: Dynamic origin validator for Vercel & Localhost
+  // 🛡️ SECURITY Fix: Strict CORS for Vercel Production
   const corsOptions = {
-    origin: function (origin, callback) {
-      const allowedPatterns = [/vercel\.app$/, /localhost:\d+/];
-      const isAllowed = !origin || allowedPatterns.some(pattern => pattern.test(origin));
-      
-      if (isAllowed) {
-        callback(null, true);
-      } else {
-        logger.warn({ origin }, "CORS blocked for unauthorized origin");
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: "https://sam-compiler-web.vercel.app",
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
@@ -68,6 +57,7 @@ function createApp() {
   };
 
   app.use(cors(corsOptions));
+  app.options("*", cors(corsOptions)); // Handle preflight across all routes
 
   app.use(compression()); // Compress all responses
   app.use(globalLimiter);

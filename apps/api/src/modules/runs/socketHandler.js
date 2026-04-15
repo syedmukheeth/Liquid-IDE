@@ -36,14 +36,7 @@ function initSocket(server) {
   const { Server } = require("socket.io");
   io = new Server(server, {
     cors: {
-      origin: function (origin, callback) {
-        const allowedPatterns = [/vercel\.app$/, /localhost:\d+/];
-        if (!origin || allowedPatterns.some(pattern => pattern.test(origin))) {
-          callback(null, true);
-        } else {
-          callback(new Error("Not allowed by CORS"));
-        }
-      },
+      origin: "https://sam-compiler-web.vercel.app",
       methods: ["GET", "POST"],
       credentials: true
     },
