@@ -1,4 +1,5 @@
-import { Bug } from "lucide-react";
+import { Bug, RefreshCw } from "lucide-react";
+import { reconnect } from "../services/socketClient";
 
 const LinkedinIcon = ({ className }) => (
   <svg 
@@ -55,8 +56,18 @@ export default function StatusBar({
             {isOnline ? status : "OFFLINE"}
           </span>
         </span>
+
+        {!isOnline && (
+          <button 
+            onClick={() => reconnect()}
+            className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white transition-all text-[8px] font-black animate-pulse"
+          >
+            <RefreshCw className="h-2.5 w-2.5" />
+            RECONNECT
+          </button>
+        )}
         
-        <span className={`opacity-20 hidden sm:inline ${theme === 'dark' ? 'text-white/40' : 'text-slate-300'}`}>|</span>
+        <span className={`opacity-20 ${theme === 'dark' ? 'text-white/40' : 'text-slate-300'} ${!isOnline ? 'hidden' : ''}`}>|</span>
 
         {/* Editor Position & Language */}
         <div className="flex items-center gap-4">

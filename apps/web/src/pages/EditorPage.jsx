@@ -435,6 +435,15 @@ builtins.input = input_shim
     };
   }, []);
 
+  // Resubscribe Guardian: Pick up lost streams after reconnection
+  useEffect(() => {
+    if (socketIsConnected && busy && runRef.current.jobId) {
+      const socket = getSocket();
+      console.log(`🛡️ [SAM] Connection recovered. Resubscribing to active job: ${runRef.current.jobId}`);
+      socket.emit("subscribe", { jobId: runRef.current.jobId });
+    }
+  }, [socketIsConnected, busy]);
+
   // Pyodide (Python-in-browser) engine
   useEffect(() => {
     if (!window.loadPyodide && !isPyodideLoading && !pyodide) {

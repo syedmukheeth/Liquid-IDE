@@ -85,5 +85,21 @@ export function getSocket() {
     socket.disconnect();
   });
 
+  // Self-Healing Transport: Periodically try to upgrade back to WebSockets
+  setInterval(() => {
+    if (socket && socket.connected && socket.io.engine.transport.name === "polling") {
+      console.log("🛠️ [SAM Compiler] Attempting transport self-healing (Polling -> WebSocket)...");
+      socket.io.opts.transports = ["websocket", "polling"];
+    }
+  }, 60000);
+
   return socket;
+}
+
+export function reconnect() {
+  const s = getSocket();
+  if (s) {
+    console.log("🔄 [SAM Compiler] Manual reconnection triggered.");
+    s.connect();
+  }
 }
