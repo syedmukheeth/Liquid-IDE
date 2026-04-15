@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const { RunModel } = require("./runs.model");
-const { executeDirectly, isToolAvailable } = require("./directExecutor");
 const { executeViaPiston } = require("./pistonExecutor");
 const { logger } = require("../../config/logger");
 const { emitLog } = require("./socketHandler");
@@ -105,68 +104,52 @@ async function createRun(input) {
   const runTask = async () => {
     try {
       const runData = (run && typeof run.toObject === "function") ? run.toObject() : run;
-      const hostTool = runData.runtime === "cpp" ? "g++" : 
-                       runData.runtime === "c" ? "gcc" : 
-                       runData.runtime === "java" ? "javac" : null;
-                       
-      let canRunDirectly = !hostTool || (await isToolAvailable(hostTool));
-      
-      if (process.env.VERCEL && hostTool) canRunDirectly = false;
+      // 🛡️ SECURITY AUDIT FIX: Direct execution on host is forbidden.
+      // Delegation Flow: Worker Pool (Primary) -> Judge0/Piston API (Fallback)
+      const queue = getRunsQueue();
+      const redis = getRedisClient();
+      let workerOnline = false;
+      try {
+        workerOnline = redis ? !!(await redis.get(WORKER_HEARTBEAT_KEY)) : false;
+      } catch (e) {
+        logger.warn({ e }, "Worker heartbeat check failed");
+      }
 
-      if (canRunDirectly) {
-        const result = await executeDirectly(runData, emitLog);
-        run.stdout = result.stdout;
-        run.stderr = result.stderr;
-        run.exitCode = result.exitCode;
-        run.metrics = result.metrics || {};
-        run.status = result.exitCode === 0 ? "succeeded" : "failed";
-      } else {
-        const queue = getRunsQueue();
-        const redis = getRedisClient();
-        let workerOnline = false;
-        try {
-          workerOnline = redis ? !!(await redis.get(WORKER_HEARTBEAT_KEY)) : false;
-        } catch (e) {
-          logger.warn({ e }, "Worker heartbeat check failed");
+      if (queue && workerOnline) {
+        if (emitLog) emitLog(run._id.toString(), "stdout", `📡 \x1b[1;33mDelegating to Hardened Worker...\x1b[0m\n\r\n`);
+        await queue.add("execute", { runId: run._id.toString() });
+        run.status = "queued";
+        if (useMongo) {
+          await RunModel.findByIdAndUpdate(run._id, { 
+            status: run.status,
+            stderr: run.stderr
+          });
         }
-
-        if (queue && workerOnline) {
-          if (emitLog) emitLog(run._id.toString(), "stdout", `📡 \x1b[1;33m${hostTool} delegating to Worker...\x1b[0m\n\r\n`);
-          await queue.add("execute", { runId: run._id.toString() });
-          run.status = "queued";
-          if (useMongo) {
-            await RunModel.findByIdAndUpdate(run._id, { 
-              status: run.status,
-              stderr: run.stderr
-            });
+        // Worker owns the "end" event for queued jobs — don't double-emit
+        return;
+      } else {
+        // 🚀 Fallback to external sandbox (Judge0/Piston)
+        try {
+          const result = await executeViaPiston(runData, emitLog);
+          run.stdout = result.stdout;
+          run.stderr = result.stderr;
+          run.exitCode = result.exitCode;
+          run.status = result.status;
+        } catch (pistonErr) {
+          const toolName = hostTool === 'javac' ? 'JDK' : hostTool === 'g++' ? 'G++' : hostTool === 'gcc' ? 'GCC' : 'Compiler';
+          let errMsg = `❌ \x1b[1;31mError: Execution environment unavailable.\x1b[0m\n`;
+          
+          if (isVercel) {
+            errMsg += `💡 \x1b[1;36mCloud Sandbox: Fallback execution failed.\x1b[0m\n` +
+                      `💡 \x1b[1;36mPlease start your SAM worker locally for high-performance runs.\x1b[0m\n\r\n`;
+          } else {
+            errMsg += `💡 \x1b[1;36mPrimary worker is offline and Cloud Fallback failed.\x1b[0m\n` +
+                      `💡 \x1b[1;36mEnsure your SAM worker is running or check your internet connection.\x1b[0m\n\r\n`;
           }
-          // Worker owns the "end" event for queued jobs — don't double-emit
-          return;
-        } else {
-          // 🚀 SENIOR FIX: Piston API Fallback for Cloud Sandbox
-          try {
-            const result = await executeViaPiston(runData, emitLog);
-            run.stdout = result.stdout;
-            run.stderr = result.stderr;
-            run.exitCode = result.exitCode;
-            run.status = result.status;
-          } catch (pistonErr) {
-            const toolName = hostTool === 'javac' ? 'JDK' : hostTool === 'g++' ? 'G++' : hostTool === 'gcc' ? 'GCC' : 'Compiler';
-            let errMsg = `❌ \x1b[1;31mError: ${hostTool || "Compiler"} not found.\x1b[0m\n`;
-            
-            if (isVercel) {
-              errMsg += `💡 \x1b[1;36mCloud Sandbox: Fallback execution failed.\x1b[0m\n` +
-                        `💡 \x1b[1;36mPlease start your SAM worker locally for high-performance runs.\x1b[0m\n\r\n`;
-            } else {
-              errMsg += `💡 \x1b[1;36mIf running locally, ensure ${toolName} is installed and in your PATH.\x1b[0m\n` +
-                        `💡 \x1b[1;36mOtherwise, start your SAM worker.\x1b[0m\n\r\n`;
-            }
 
-            if (emitLog) emitLog(run._id.toString(), "stderr", errMsg);
-            run.status = "failed";
-            run.stderr = `Piston Fallback Failed: ${pistonErr.message}`;
-          }
-          // Falls through to emitLog("end") below — do NOT return early here
+          if (emitLog) emitLog(run._id.toString(), "stderr", errMsg);
+          run.status = "failed";
+          run.stderr = `Environment Failure: ${pistonErr.message}`;
         }
       }
       run.finishedAt = new Date();
@@ -249,7 +232,7 @@ async function getQueueStatus() {
 
   const isSandbox = !redis;
   if (isSandbox) {
-    workerOnline = true; // In sandbox mode, the API node itself is the worker (Piston fallback)
+    workerOnline = false; // Forced false as the API node can no longer execute code
   }
 
   return {
