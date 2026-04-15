@@ -61,6 +61,7 @@ function createApp() {
         "https://sam-compiler-web.vercel.app",
         "https://sam-compiler.onrender.com",
         "http://localhost:3000",
+        "http://localhost:5173",
         "http://localhost:8080"
       ],
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
