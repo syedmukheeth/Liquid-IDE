@@ -95,78 +95,10 @@ async function executeRun(opts, onLog) {
         metrics: { durationMs: duration, sandbox: "docker-hardened" } 
       };
     } catch (dockerErr) {
-      // 🚀 SENIOR FIX: Default to secure mode. Local execution without Docker is dangerous.
-      const isStrict = env.SECURITY_STRICT !== "false" && env.SECURITY_STRICT !== false;
-      
-      if (isStrict) {
-         throw new Error(`Security Error: Host execution disabled. Docker sandbox is required for executing untrusted code.\n(If running a local development environment, set SECURITY_STRICT=false)`);
-      }
-      
-      if (dockerErr.code !== "ENOENT") throw dockerErr;
-      
-      // 2. Fallback to Local execution if Docker is missing (and not in strict mode)
-      console.warn(`Docker not found. Falling back to local execution for ${language}`);
-      
-      const isWin = process.platform === "win32";
-      const exeExt = isWin ? ".exe" : "";
-      const shell = isWin ? "cmd" : "sh";
-      const shellFlag = isWin ? "/c" : "-c";
-
-      const pythonCmd = await findPythonCommand();
-      const localCmds = {
-        javascript: ["node", entry],
-        python: pythonCmd ? [pythonCmd, entry] : null,
-        cpp: [shell, shellFlag, `g++ "${entry}" -o "main${exeExt}" && ".${path.sep}main${exeExt}"`],
-        c: [shell, shellFlag, `gcc "${entry}" -o "main${exeExt}" && ".${path.sep}main${exeExt}"`],
-        java: (() => {
-          const className = entry.replace(".java", "");
-          return [shell, shellFlag, `javac "${entry}" && java "${className}"`];
-        })()
-      };
-
-      const cmdInfo = localCmds[language];
-      if (!cmdInfo) {
-        return { 
-          stdout: "", 
-          stderr: `SAM Compiler Execution Engine Error:\n- ${language} configuration is missing for this host.\n- Docker is not available for sandboxed execution.\n\nPlease install ${language} or start Docker to enable execution for this language.`, 
-          exitCode: 127 
-        };
-      }
-
-      const [cmd, ...args] = cmdInfo;
-      
-      // Verify command availability
-      try {
-        const { execSync } = require("node:child_process");
-        const checkCmd = isWin ? `where "${cmd}"` : `command -v "${cmd}"`;
-        try {
-          execSync(checkCmd, { stdio: "ignore" });
-        } catch (err) {
-          console.warn(`Warning: Shell command '${cmd}' not found in PATH via '${checkCmd}'. Attempting execution anyway...`);
-        }
-        
-        // If it's a compiler command, also check the compiler itself inside the shell script
-        if (language === "cpp" || language === "c" || language === "java") {
-            const tool = language === "cpp" ? "g++" : language === "c" ? "gcc" : "javac";
-            const checkTool = isWin ? `where "${tool}"` : `command -v "${tool}"`;
-            try {
-              execSync(checkTool, { stdio: "ignore" });
-            } catch (err) {
-               // If it's Java, we can be more specific
-               if (language === "java") {
-                 throw new Error(`javac (Java Compiler) not found. Please ensure JDK is installed and in your PATH.\n- PATH searched: ${process.env.PATH}`);
-               }
-               throw new Error(`${tool} not found. Please install the ${language.toUpperCase()} compiler.`);
-            }
-        }
-      } catch (e) {
-        return {
-          stdout: "",
-          stderr: `SAM Compiler Worker Error:\n- ${e.message}\n\n💡 If running locally, ensure the compiler is installed and in your PATH.\n💡 Otherwise, use the Cloud Sandbox (Docker).`,
-          exitCode: 127 
-        };
-      }
-      return await execWithTimeout(cmd, args, env.RUN_TIMEOUT_MS || 10000, { cwd: runDir, onLog });
+      // 🚨 Host execution is strictly forbidden in SAM Compiler by design.
+      // If Docker is unavailable, we explicitly reject local execution so the task 
+      // fails securely, allowing the upstream service to fallback to Judge0 Cloud API.
+      throw new Error(`Security Error: Docker is required for executing untrusted code. Host fallback disabled.\nDetails: ${dockerErr.message}`);
     }
   } catch (err) {
     return { stdout: "", stderr: `Execution Error: ${err.message}`, exitCode: 1 };
