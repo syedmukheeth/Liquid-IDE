@@ -40,9 +40,9 @@ function initSocket(server) {
       methods: ["GET", "POST"],
       credentials: true
     },
-    pingTimeout: 120000, // Surrounding mobile latency
-    pingInterval: 30000,
-    transports: ["websocket", "polling"]
+    transports: ["websocket", "polling"],
+    pingTimeout: 120000,
+    pingInterval: 30000
   });
   
   // 🚀 HORIZONTAL SCALING: Sync events across multiple API instances via Redis
