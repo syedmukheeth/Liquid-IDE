@@ -33,7 +33,6 @@ function initSocket(server) {
     cors: {
       origin: [
         "https://sam-compiler-web.vercel.app",
-        "https://sam-compiler.onrender.com",
         "http://localhost:3000",
         "http://localhost:5173"
       ],
