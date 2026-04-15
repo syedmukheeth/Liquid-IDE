@@ -134,6 +134,14 @@ async function createRun(input) {
           if (emitLog) emitLog(run._id.toString(), "stdout", `📡 \x1b[1;33m${hostTool} delegating to Worker...\x1b[0m\n\r\n`);
           await queue.add("execute", { runId: run._id.toString() });
           run.status = "queued";
+          if (useMongo) {
+            await RunModel.findByIdAndUpdate(run._id, { 
+              status: run.status,
+              stderr: run.stderr
+            });
+          }
+          // Worker owns the "end" event for queued jobs — don't double-emit
+          return;
         } else {
           // 🚀 SENIOR FIX: Piston API Fallback for Cloud Sandbox
           try {
@@ -158,17 +166,8 @@ async function createRun(input) {
             run.status = "failed";
             run.stderr = `Piston Fallback Failed: ${pistonErr.message}`;
           }
+          // Falls through to emitLog("end") below — do NOT return early here
         }
-
-        if (useMongo) {
-          await RunModel.findByIdAndUpdate(run._id, { 
-            status: run.status,
-            stderr: run.stderr
-          });
-        }
-        
-        return;
-      }
       run.finishedAt = new Date();
     } catch (err) {
       logger.error({ err }, "Execution error");
@@ -198,8 +197,11 @@ async function createRun(input) {
     emitLog(run._id.toString(), "end", { status: run.status, metrics: run.metrics });
   };
 
-  // Trigger background task
-  runTask();
+  // Trigger background task — .catch() guarantees "end" reaches client even on unhandled rejection
+  runTask().catch((err) => {
+    logger.error({ err }, "runTask unhandled rejection — emitting fallback end");
+    emitLog(run._id.toString(), "end", { status: "failed" });
+  });
 
   return run;
 }
