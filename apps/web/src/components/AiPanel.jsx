@@ -63,7 +63,7 @@ function MessageBubble({ msg, theme, onApplyRefactor, isLast }) {
     h1: ({ children }) => <h1 className={`text-xl font-black mb-4 tracking-tighter ${isDark ? 'text-white' : 'text-slate-900'}`}>{children}</h1>,
     h2: ({ children }) => <h2 className={`text-lg font-bold mb-3 ${isDark ? 'text-white/90' : 'text-slate-900'}`}>{children}</h2>,
     h3: ({ children }) => <h3 className={`text-base font-bold mb-2 ${isDark ? 'text-white/80' : 'text-slate-800'}`}>{children}</h3>,
-    p: ({ children }) => <p className={`mb-3 last:mb-0 leading-relaxed ${isDark ? 'text-white/85' : 'text-slate-800'}`}>{children}</p>,
+    p: ({ children }) => <p className={`mb-3 last:mb-0 leading-relaxed break-words ${isDark ? 'text-white/85' : 'text-slate-800'}`}>{children}</p>,
     ul: ({ children }) => <ul className="mb-4 space-y-1.5 list-none">{children}</ul>,
     ol: ({ children }) => <ol className="mb-4 space-y-1.5 list-decimal pl-4">{children}</ol>,
     li: ({ children }) => (
@@ -93,9 +93,9 @@ function MessageBubble({ msg, theme, onApplyRefactor, isLast }) {
             <div className={`rounded-2xl border overflow-hidden shadow-xl min-w-0 ${
               isDark ? 'bg-black/60 border-white/5' : 'bg-slate-50 border-slate-200'
             }`}>
-              <pre className={`p-4 font-mono text-[12px] leading-relaxed overflow-x-auto whitespace-pre ${
+              <pre className={`p-4 font-mono text-[12px] leading-relaxed whitespace-pre-wrap break-words ${
                 isDark ? 'text-white/80' : 'text-slate-700'
-              }`} style={{ maxWidth: '100%', wordBreak: 'normal' }}>
+              }`} style={{ overflowWrap: 'break-word', wordBreak: 'break-word' }}>
                 <code className={className} {...props}>{children}</code>
               </pre>
               <div className={`flex items-center justify-end gap-2 border-t p-2 opacity-0 group-hover:opacity-100 transition-opacity ${
@@ -152,7 +152,7 @@ function MessageBubble({ msg, theme, onApplyRefactor, isLast }) {
         </div>
       )}
       <div className="relative w-full min-w-0">
-        <div className={`w-full rounded-2xl px-4 py-3 text-[12px] leading-[1.65] border select-text overflow-hidden ${
+        <div className={`w-full rounded-2xl px-4 py-3 text-[12px] leading-[1.65] border select-text overflow-hidden break-words ${
           isUser
             ? (isDark ? 'bg-white/10 text-white border-white/10 rounded-tr-none' : 'bg-slate-100 text-slate-900 border-slate-200 rounded-tr-none')
             : (isDark ? 'bg-white/5 text-white/90 border-white/5 rounded-tl-none' : 'bg-white text-slate-800 border-slate-100 rounded-tl-none shadow-sm')
