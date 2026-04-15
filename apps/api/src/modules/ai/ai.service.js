@@ -6,8 +6,10 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "dummy-key");
 
 // SAM AI Configuration - Priority list for fallback resilience
 const MODELS = [
-  process.env.GEMINI_MODEL || "gemini-1.5-flash",
+  process.env.GEMINI_MODEL || "gemini-2.0-flash",
+  "gemini-1.5-flash",
   "gemini-1.5-pro",
+  "gemini-2.0-pro-exp",
   "gemini-1.0-pro"
 ];
 
@@ -37,12 +39,22 @@ async function withRetry(fn, maxRetries = 2) {
     } catch (err) {
       lastErr = err;
       const statusCode = err.status || (err.response && err.response.status);
-      const isRetryable = statusCode === 503 || statusCode === 429 || err.message.includes("high demand");
+      const msg = (err.message || "").toLowerCase();
+      
+      const isRetryable = 
+        statusCode === 503 || 
+        statusCode === 429 || 
+        statusCode === 504 || 
+        statusCode === 500 ||
+        msg.includes("high demand") ||
+        msg.includes("resource has been exhausted") ||
+        msg.includes("deadline exceeded") ||
+        msg.includes("internal error");
       
       if (!isRetryable) throw err;
       
       logger.warn({ attempt: i + 1, err: err.message }, "Transient AI failure, retrying...");
-      await new Promise(r => setTimeout(r, 1000 * (i + 1))); 
+      await new Promise(r => setTimeout(r, 1500 * (i + 1))); 
     }
   }
   throw lastErr;
@@ -81,7 +93,7 @@ ${code}
         return response.text();
       });
     } catch (err) {
-      logger.warn({ model: modelName, err: err.message }, "AI model fallback triggered");
+      logger.warn({ model: modelName, error: err.message }, "AI model fallback triggered in generateRefactor");
       if (modelName === MODELS[MODELS.length - 1]) throw err; // Re-throw if last resort fails
     }
   }
@@ -135,11 +147,11 @@ async function streamChat(context, onChunk) {
       } catch (streamErr) {
         // If the stream fails halfway, we can't easily switch models without restarting the whole history
         // So we just log and throw.
-        logger.error({ err: streamErr }, "Gemini AI streaming interrupted");
+        logger.error({ err: streamErr.message }, "Gemini AI streaming interrupted");
         throw new Error("AI Stream interrupted due to connection issues. Please try again.");
       }
     } catch (err) {
-      logger.warn({ model: modelName, err: err.message }, "AI model fallback triggered in streamChat");
+      logger.warn({ model: modelName, error: err.message }, "AI model fallback triggered in streamChat");
       if (modelName === MODELS[MODELS.length - 1]) {
         throw new Error(`AI Assistant is currently facing high demand. Please try again in a moment.`);
       }
