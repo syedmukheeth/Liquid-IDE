@@ -2,6 +2,9 @@ const jwt = require("jsonwebtoken");
 const { env } = require("../../config/env");
 const { RunModel } = require("./runs.model");
 const { ProjectStateModel } = require("./project.model");
+const { createAdapter } = require("@socket.io/redis-adapter");
+const { logger } = require("../../config/logger");
+const { getRedisClient } = require("./runs.queue");
 
 let io = null;
 let redisSubscriber = null;
