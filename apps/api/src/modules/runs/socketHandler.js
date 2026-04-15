@@ -40,7 +40,7 @@ function initSocket(server) {
       methods: ["GET", "POST"],
       credentials: true
     },
-    transports: ["websocket", "polling"],
+    transports: ["websocket"],
     pingTimeout: 120000,
     pingInterval: 30000
   });
@@ -56,18 +56,19 @@ function initSocket(server) {
 
   // 🛡️ SECURITY: Mandatory JWT Authentication for WebSocket connections
   io.use((socket, next) => {
-    try {
-      const token = socket.handshake.auth?.token || socket.handshake.query?.token;
-      if (!token) {
-        return next(new Error("Authentication error: No token provided"));
-      }
+    const token = socket.handshake.auth?.token || socket.handshake.query?.token;
 
+    if (!token) {
+      return next(new Error("Authentication error: No token provided"));
+    }
+
+    try {
       const decoded = jwt.verify(token, env.JWT_SECRET);
       socket.user = decoded; // { id, email, role }
       next();
     } catch (err) {
       logger.warn({ err: err.message, socketId: socket.id }, "Socket authentication failed");
-      next(new Error("Authentication error: Invalid or expired token"));
+      return next(new Error("Authentication error"));
     }
   });
 

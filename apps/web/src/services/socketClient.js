@@ -3,11 +3,14 @@ import ENDPOINTS from "./endpoints";
 
 let socket = null;
 
-export function getSocket(token) {
+export function getSocket(tokenArg) {
+  // 🛡️ SECURITY Fix: Always ensure we have a token, fallback to localStorage
+  const token = tokenArg || localStorage.getItem("token");
+
   if (socket) {
-    // If we have a socket but the token changed, we might need to update auth
-    if (token && socket.auth) {
-      socket.auth.token = token;
+    // If we have a socket but the token changed, update auth
+    if (token) {
+      socket.auth = { token };
     }
     return socket;
   }
@@ -50,12 +53,6 @@ export function getSocket(token) {
 
     console.error("❌ [SAM Compiler] WebSocket Connection Error:", err.message);
     
-    // Fallback strategy for Render
-    if (socket.io.opts.transports.includes("websocket")) {
-       console.warn("⚠️ [SAM Compiler] Potential proxy block: Falling back to polling for stability.");
-       socket.io.opts.transports = ["polling"];
-    }
-
     window.dispatchEvent(new CustomEvent("sam:socket:status", { 
       detail: { connected: false, status: "error", message: err.message } 
     }));
@@ -91,14 +88,6 @@ export function getSocket(token) {
     console.warn("🌐 [SAM Compiler] Internet hardware disconnected. Suspending sync.");
     socket.disconnect();
   });
-
-  // Self-Healing Transport: Periodically try to upgrade back to WebSockets
-  setInterval(() => {
-    if (socket && socket.connected && socket.io.engine.transport.name === "polling") {
-      console.log("🛠️ [SAM Compiler] Attempting transport self-healing (Polling -> WebSocket)...");
-      socket.io.opts.transports = ["websocket", "polling"];
-    }
-  }, 60000);
 
   return socket;
 }
