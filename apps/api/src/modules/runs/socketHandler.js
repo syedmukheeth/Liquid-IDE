@@ -1,8 +1,6 @@
-const { logger } = require("../../config/logger");
-const { YSocketIO } = require("y-socket.io/dist/server");
-const Y = require("yjs");
-const { createAdapter } = require("@socket.io/redis-adapter");
-const { getRedisClient } = require("./runs.queue");
+const jwt = require("jsonwebtoken");
+const { env } = require("../../config/env");
+const { RunModel } = require("./runs.model");
 const { ProjectStateModel } = require("./project.model");
 
 let io = null;
@@ -56,6 +54,23 @@ function initSocket(server) {
     logger.info("Socket.IO Redis adapter initialized for horizontal scaling");
   }
 
+  // 🛡️ SECURITY: Mandatory JWT Authentication for WebSocket connections
+  io.use((socket, next) => {
+    try {
+      const token = socket.handshake.auth?.token || socket.handshake.query?.token;
+      if (!token) {
+        return next(new Error("Authentication error: No token provided"));
+      }
+
+      const decoded = jwt.verify(token, env.JWT_SECRET);
+      socket.user = decoded; // { id, email, role }
+      next();
+    } catch (err) {
+      logger.warn({ err: err.message, socketId: socket.id }, "Socket authentication failed");
+      next(new Error("Authentication error: Invalid or expired token"));
+    }
+  });
+
   // Initialize Yjs Sync over Socket.io
   const ysocket = new YSocketIO(io);
   
@@ -74,6 +89,15 @@ function initSocket(server) {
     const timer = setTimeout(async () => {
       try {
         const binaryState = Buffer.from(Y.encodeStateAsUpdate(doc));
+        
+        // 🛡️ SECURITY Audit Fix: Preventive check - Guard against MongoDB 16MB BSON limit
+        const MAX_YJS_SIZE = 10 * 1024 * 1024; // 10MB Safety Ceiling
+        if (binaryState.length > MAX_YJS_SIZE) {
+          logger.error({ sessionId, size: binaryState.length }, "Yjs document exceeds 10MB limit. Persistence rejected to protect MongoDB.");
+          persistenceTimers.delete(sessionId);
+          return;
+        }
+
         await ProjectStateModel.findOneAndUpdate(
           { sessionId },
           { binaryState, lastSaved: new Date() },
@@ -166,26 +190,51 @@ function initSocket(server) {
   }
 
   io.on("connection", (socket) => {
-    logger.info({ socketId: socket.id }, "Client connected to socket");
+    logger.info({ socketId: socket.id, userId: socket.user.id }, "Client authenticated and connected to socket");
+    const userId = socket.user.id;
 
-    socket.on("subscribe", ({ jobId }) => {
-      logger.info({ socketId: socket.id, jobId }, "Socket subscribed to job");
-      socket.join(`run:${jobId}`);
-      
-      // Also subscribe to Redis logs if not already active
-      if (redisSubscriber && !activeSubscriptions.has(jobId)) {
-        redisSubscriber.subscribe(`run:logs:${jobId}`).catch(err => {
-          logger.error({ err, jobId }, "Failed to subscribe to Redis logs");
-        });
-        activeSubscriptions.add(jobId);
-      }
+    socket.on("subscribe", async ({ jobId }) => {
+      try {
+        // 🛡️ SECURITY Audit Fix: Preventive DoS check - Limit concurrent subscriptions per socket
+        const activeRooms = Array.from(socket.rooms).filter(r => r.startsWith("run:"));
+        if (activeRooms.length >= 10) {
+          logger.warn({ socketId: socket.id, count: activeRooms.length }, "Subscription cap reached for socket");
+          return socket.emit("error", { message: "Subscription limit reached (Max 10). Please close some runs." });
+        }
 
-      // Replay buffered logs to the newly joined client
-      if (logBuffers.has(jobId)) {
-        const bufferedLines = logBuffers.get(jobId);
-        bufferedLines.forEach(log => {
-          socket.emit("exec:log", log);
-        });
+        // 🔒 SECURITY Audit Fix: Validate job ownership before joining room
+        const job = await RunModel.findById(jobId).select("userId").lean();
+        if (!job) {
+          return socket.emit("error", { message: "Job not found" });
+        }
+
+        const ownerId = job.userId ? job.userId.toString() : null;
+        if (ownerId !== userId) {
+          logger.warn({ userId, ownerId, jobId }, "Unauthorized subscription attempt blocked");
+          return socket.emit("error", { message: "Unauthorized: You do not own this job" });
+        }
+
+        logger.info({ socketId: socket.id, jobId }, "Socket authorized and subscribed to job");
+        socket.join(`run:${jobId}`);
+        
+        // Also subscribe to Redis logs if not already active
+        if (redisSubscriber && !activeSubscriptions.has(jobId)) {
+          redisSubscriber.subscribe(`run:logs:${jobId}`).catch(err => {
+            logger.error({ err, jobId }, "Failed to subscribe to Redis logs");
+          });
+          activeSubscriptions.add(jobId);
+        }
+
+        // Replay buffered logs to the newly joined client
+        if (logBuffers.has(jobId)) {
+          const bufferedLines = logBuffers.get(jobId);
+          bufferedLines.forEach(log => {
+            socket.emit("exec:log", log);
+          });
+        }
+      } catch (err) {
+        logger.error({ err, jobId }, "Error during job subscription validation");
+        socket.emit("error", { message: "Internal server error during subscription" });
       }
     });
 
@@ -203,7 +252,13 @@ function initSocket(server) {
       }
     });
 
-    socket.on("exec:input", ({ jobId, input }) => {
+    socket.on("exec:input", async ({ jobId, input }) => {
+      // 🔒 SECURITY Audit Fix: Validate job ownership before accepting input
+      const job = await RunModel.findById(jobId).select("userId").lean();
+      if (!job || (job.userId && job.userId.toString() !== userId)) {
+        return logger.warn({ userId, jobId }, "Unauthorized input attempt blocked");
+      }
+
       logger.info({ socketId: socket.id, jobId }, "Socket received input for job");
       
       const listenerCount = process.listenerCount(`run:input:${jobId}`);

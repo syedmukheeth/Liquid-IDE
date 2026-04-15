@@ -166,7 +166,7 @@ builtins.input = input_shim
     if (busy) return;
     setBusy(true);
     analytics.trackCodeRun(activeLangId, null); // Track execution attempt
-    const socket = getSocket();
+    const socket = getSocket(token);
     if (runRef.current.jobId && socket) {
       socket.emit("unsubscribe", { jobId: runRef.current.jobId });
       socket.off("exec:log");
@@ -394,7 +394,7 @@ builtins.input = input_shim
   // Socket status monitoring
   useEffect(() => {
     // Initial connection trigger
-    getSocket();
+    getSocket(token);
     
     let statusTimeout;
     const handleStatus = (e) => {
@@ -419,7 +419,7 @@ builtins.input = input_shim
   // Resubscribe Guardian: Pick up lost streams after reconnection
   useEffect(() => {
     if (socketIsConnected && busy && runRef.current.jobId) {
-      const socket = getSocket();
+      const socket = getSocket(token);
       console.log(`🛡️ [SAM] Connection recovered. Resubscribing to active job: ${runRef.current.jobId}`);
       socket.emit("subscribe", { jobId: runRef.current.jobId });
     }

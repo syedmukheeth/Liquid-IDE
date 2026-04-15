@@ -3,17 +3,24 @@ import ENDPOINTS from "./endpoints";
 
 let socket = null;
 
-export function getSocket() {
-  if (socket) return socket;
+export function getSocket(token) {
+  if (socket) {
+    // If we have a socket but the token changed, we might need to update auth
+    if (token && socket.auth) {
+      socket.auth.token = token;
+    }
+    return socket;
+  }
   
   // Use centralized production/dev endpoint
   const endpoint = ENDPOINTS.WS_ENDPOINT;
 
-  console.log(`📡 [SAM Compiler] Initializing WebSocket @ ${endpoint}`);
+  console.log(`📡 [SAM Compiler] Initializing Secure WebSocket @ ${endpoint}`);
 
   socket = io(endpoint, {
     path: "/socket.io", 
     ...ENDPOINTS.SOCKET_OPTIONS,
+    auth: { token }, // 🛡️ Pass JWT for server-side verification
     reconnectionDelay: 2000,
     reconnectionDelayMax: 10000,
     randomizationFactor: 0.5,

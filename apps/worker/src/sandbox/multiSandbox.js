@@ -133,21 +133,34 @@ function execWithTimeout(cmd, args, timeoutMs, opts = {}) {
   return new Promise((resolve, reject) => {
     try {
       const child = spawn(cmd, args, { ...spawnOpts, windowsHide: true });
-      let stdout = "";
-      let stderr = "";
+      const MAX_OUTPUT_BYTES = 5 * 1024 * 1024; // 5MB guard rail
+      let isLimitExceeded = false;
       
+      const checkLimit = () => {
+        if (!isLimitExceeded && (stdout.length + stderr.length) > MAX_OUTPUT_BYTES) {
+          isLimitExceeded = true;
+          stderr += "\n\x1b[1;31m[Output limit exceeded]\x1b[0m\n";
+          if (onLog) onLog("stderr", "\n[Output limit exceeded]\n");
+          try { child.kill("SIGKILL"); } catch (e) { /* ignore */ void e; }
+        }
+      };
+
       if (child.stdout) {
         child.stdout.on("data", (d) => {
+          if (isLimitExceeded) return;
           const chunk = d.toString();
           stdout += chunk;
           if (onLog) onLog("stdout", chunk);
+          checkLimit();
         });
       }
       if (child.stderr) {
         child.stderr.on("data", (d) => {
+          if (isLimitExceeded) return;
           const chunk = d.toString();
           stderr += chunk;
           if (onLog) onLog("stderr", chunk);
+          checkLimit();
         });
       }
 
@@ -162,7 +175,7 @@ function execWithTimeout(cmd, args, timeoutMs, opts = {}) {
 
       child.on("close", (code) => {
         clearTimeout(timeout);
-        resolve({ stdout, stderr, exitCode: code });
+        resolve({ stdout, stderr, exitCode: isLimitExceeded ? 137 : code });
       });
     } catch (err) {
       reject(err);
