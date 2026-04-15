@@ -74,7 +74,7 @@ function initSocket(server) {
         logger.info({ sessionId }, "Yjs document loaded from MongoDB");
         
         // SERVER-SIDE HEALER: Detects and cures 'Code Soup'
-        const langId = sessionId.split('-').pop(); // Updated to dash separator
+        const langId = sessionId.split('::').pop(); // Updated to high-fidelity separator
         const templates = {
           cpp: '#include <iostream>\n\nint main() {\n    std::cout << "Welcome to SAM Compiler!" << std::endl;\n    return 0;\n}\n',
           c: '#include <stdio.h>\n\nint main() {\n    printf("Welcome to SAM Compiler!\\n");\n    return 0;\n}\n',

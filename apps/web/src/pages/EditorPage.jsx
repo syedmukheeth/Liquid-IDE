@@ -120,7 +120,7 @@ export default function EditorPage() {
   const sessionId = useMemo(() => {
     const s = searchParams.get("session");
     const raw = (s && s !== "default") ? s : "default";
-    return `${raw}_${activeLangId}`;
+    return `${raw}::${activeLangId}`;
   }, [searchParams, activeLangId]);
 
   const onCodeChange = useCallback((value) => {
