@@ -16,7 +16,9 @@ export default function AiPanel({
   metrics,
   onApplyRefactor,
   theme,
-  width = 500
+  width = 33.33,
+  isMobile,
+  activeMobileTab
 }) {
   const [messages, setMessages] = useState([
     { role: "model", content: "I am Sam AI, your world-class code helper and compiler assistant. How can I help you understand or fix your code today?" }
