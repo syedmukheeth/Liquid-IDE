@@ -15,15 +15,23 @@ const path = require("path");
 
 
 function createApp() {
-  const app = express();
-
-  // Enable trust proxy for correct IP detection behind Vercel/Render
-  app.set("trust proxy", 1);
-
+  // 🛡️ ABSOLUTE PRIORITY: Manual CORS Middleware (Bypass middleware ordering issues)
   app.use((req, res, next) => {
-    res.setHeader("X-Sam-Api", "v3.0-stable");
-    if (req.url.includes("/auth")) {
-      logger.info({ url: req.url, method: req.method });
+    const origin = req.headers.origin;
+    const allowedOrigins = ["https://sam-compiler-web.vercel.app", "http://localhost:5173", "http://localhost:3000"];
+    
+    if (allowedOrigins.includes(origin)) {
+      res.header("Access-Control-Allow-Origin", origin);
+    }
+    
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Sam-Api");
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("X-Sam-Api", "v3.0-stable");
+
+    // Immediately respond to preflight
+    if (req.method === "OPTIONS") {
+      return res.status(204).end();
     }
     next();
   });
@@ -47,17 +55,7 @@ function createApp() {
     message: { message: "Too many code executions. Please wait a minute." }
   });
 
-  // 🛡️ SECURITY Fix: Strict CORS for Vercel Production
-  const corsOptions = {
-    origin: "https://sam-compiler-web.vercel.app",
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-    exposedHeaders: ["X-Sam-Api"]
-  };
-
-  app.use(cors(corsOptions));
-  app.options("*", cors(corsOptions)); // Handle preflight across all routes
+  // Rate Limiting - Global & Run Specific
 
   app.use(compression()); // Compress all responses
   app.use(globalLimiter);
