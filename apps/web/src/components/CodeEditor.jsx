@@ -160,9 +160,7 @@ export default function CodeEditor({
           // PRO DELETION: Use Monaco's native state-engine to guarantee zero visual artifacts.
           // y-monaco will automatically intercept this and broadcast the delta to Yjs correctly.
           editorRef.current.setValue(template);
-          
-          // Re-trigger the toast message properly so the user knows it's complete
-          toast.success("Workspace Sanitized & Redeployed", {
+          toast.success("Applied to editor ✨", {
             style: { background: 'var(--sam-surface)', color: 'var(--sam-text)', border: '1px solid var(--sam-glass-border)', fontSize: '11px', fontWeight: 900 },
             icon: '✨'
           });

@@ -80,7 +80,11 @@ function MessageBubble({ msg, theme, onApplyRefactor, isLast }) {
     ),
     code({ inline, className, children, ...props }) {
       const match = /language-(\w+)/.exec(className || "");
-      const codeStr = String(children).replace(/\n$/, "");
+      const codeStr = (Array.isArray(children)
+        ? children.map(c => typeof c === 'string' ? c : '').join('')
+        : String(children ?? '')
+      ).replace(/\n$/, "");
+
 
       if (!inline && match) {
         return (
@@ -98,20 +102,24 @@ function MessageBubble({ msg, theme, onApplyRefactor, isLast }) {
               }`} style={{ overflowWrap: 'break-word', wordBreak: 'break-word' }}>
                 <code className={className} {...props}>{children}</code>
               </pre>
-              <div className={`flex items-center justify-end gap-2 border-t p-2 opacity-0 group-hover:opacity-100 transition-opacity ${
+              <div className={`flex items-center justify-end gap-2 border-t p-2 ${
                 isDark ? 'border-white/5 bg-white/[0.02]' : 'border-slate-200 bg-slate-100/50'
               }`}>
                 <button
                   onClick={() => navigator.clipboard.writeText(codeStr)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
-                    isDark ? 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white' : 'bg-slate-200 text-slate-500 hover:bg-slate-300 hover:text-slate-900'
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all active:scale-95 ${
+                    isDark ? 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white' : 'bg-slate-200 text-slate-500 hover:bg-slate-300 hover:text-slate-900'
                   }`}
                 >
                   <Copy size={11} /> Copy
                 </button>
                 <button
-                  onClick={() => onApplyRefactor(codeStr)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
+                  onClick={() => {
+                    if (typeof onApplyRefactor === 'function') {
+                      onApplyRefactor(codeStr);
+                    }
+                  }}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all active:scale-95 ${
                     isDark ? 'bg-white/10 text-white hover:bg-white hover:text-black' : 'bg-black text-white hover:opacity-90'
                   }`}
                 >
