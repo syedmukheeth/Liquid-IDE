@@ -33,14 +33,26 @@
 
 **SAM Compiler** is not just a code runner—it is a **High-Fidelity Distributed Environment** designed to mirror the workflow of Principal Engineers. Borne from the necessity of total execution safety and real-time collaboration, SAM utilizes a **Decoupled Control Plane** to manage safe, containerized code execution across isolated compute nodes.
 
-### 🏆 ENGINEERING EXCELLENCE
+### 🏆 THE COMPETITIVE EDGE: ARCHITECTURAL SUPERIORITY
 
-| Pillar | Implementation | Technical Logic |
+SAM is engineered to exceed the limitations of standard web-based compilers through deep-system hardening and distributed orchestration.
+
+| Dimension | The SAM Standard (Elite) | Industry Average (Generic) |
 |---|---|---|
-| **Security Paradox** | **Zero-Trust Handshakes** | WebSocket sessions are cryptographically bound to JWT identities. Job streams are ownership-restricted at the kernel level. |
-| **Execution Micro-Kernel** | **Docker-as-a-Service** | Every run is spawned in a **Network-Ghost** container. CPU/RAM is strictly gated via Cgroups to prevent host takeover. |
-| **Eventual Consistency** | **Yjs Persistence Engine** | Mathematical CRDT logic prevents data-corruption. Binary state is debounced and persisted with size-guarded BSON safety. |
-| **Fail-Secure Path** | **Adaptive Proxying** | Automatic fallback to Judge0/Piston API clusters if the primary worker node enters a high-IO wait state. |
+| **Architecture** | **Decoupled Control Plane**: Segregated API and Hardened Worker nodes for zero-leak execution. | **Monolithic Spawning**: Code runs on the same process as the API, leading to critical ACE risks. |
+| **Data Consistency** | **Mathematical CRDT (Yjs)**: Conflict-free binary state sync with sub-10ms resolution. | **Naive JSON Overwrites**: Prone to race conditions and "Code Soup" during collaboration. |
+| **Isolation** | **OOM-Guarded Sandboxing**: Immediate `SIGKILL` for malicious loops or log-bombs. | **Unbounded Buffering**: Vulnerable to memory exhaustion and system-wide OOM crashes. |
+| **Connectivity** | **Fail-Secure Topology**: Multi-layered WebSocket heartbeats with 20s auto-polling fallbacks. | **Brittle Channels**: Disconnects result in total state loss and session expiration. |
+| **Intelligence** | **Principal-Grade Prompting**: Gemini 1.5 Flash tuned for SRE/Senior coding standards. | **Basic LLM Wrappers**: Generic completions without architectural context. |
+
+---
+
+## 📈 OPERATIONAL EXCELLENCE
+
+SAM's "Good" isn't just a UI—it's **Operational Integrity**:
+- **Resource Gating**: We enforce a 5MB output boundary to protect multi-tenant infrastructure.
+- **Latency Masking**: Optimistic UI updates combined with Yjs ensuring zero "perceived" lag.
+- **Fail-Secure Routing**: If a local Docker worker is saturated, SAM instantly reroutes to high-availability Judge0/Piston clusters.
 
 ---
 
