@@ -15,6 +15,7 @@ const UpgradeModal  = React.lazy(() => import("../components/UpgradeModal"));
 const HistoryPanel  = React.lazy(() => import("../components/HistoryPanel"));
 const AiPanel       = React.lazy(() => import("../components/AiPanel"));
 const FeedbackModal = React.lazy(() => import("../components/FeedbackModal"));
+const AboutModal    = React.lazy(() => import("../components/AboutModal"));
 
 import StatusBar from "../components/StatusBar";
 import { useAuth } from "../hooks/useAuth";
@@ -1187,6 +1188,7 @@ builtins.input = input_shim
           socketStatus={socketStatus}
           showBanner={showStatusBanner}
           onReportBug={() => setIsFeedbackModalOpen(true)}
+          onShowAbout={() => setActiveModal('about')}
           theme={theme}
           busy={busy}
         />
@@ -1265,6 +1267,7 @@ builtins.input = input_shim
           onLoadCode={handleLoadFromHistory}
         />
         <FeedbackModal isOpen={isFeedbackModalOpen} onClose={() => setIsFeedbackModalOpen(false)} />
+        <AboutModal isOpen={activeModal === 'about'} onClose={() => setActiveModal(null)} theme={theme} />
       </React.Suspense>
       
       <Toaster position="bottom-right" reverseOrder={false} />
