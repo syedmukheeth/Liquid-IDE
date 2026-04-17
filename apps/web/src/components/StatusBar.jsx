@@ -13,6 +13,12 @@ const LinkedinIcon = ({ className }) => (
 );
 
 export default function StatusBar({ 
+  language = "JavaScript", 
+  position = "Ln 1, Col 1", 
+  status = "ONLINE", 
+  isOnline = true, 
+  onReportBug,
+  theme = 'dark',
   busy = false,
   isColdStarting = false
 }) {
