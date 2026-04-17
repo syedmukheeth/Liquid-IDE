@@ -68,9 +68,14 @@ export default function EditorPage() {
 
   // --- 2. State Hooks ---
   const [activeLangId, setActiveLangId] = useState("cpp");
-  const [buffers, setBuffers] = useState(
-    Object.fromEntries(Object.entries(languageConfigs).map(([id, cfg]) => [id, cfg.template]))
-  );
+  const [buffers, setBuffers] = useState(() => {
+    try {
+      const saved = localStorage.getItem("sam_code_buffers");
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return Object.fromEntries(Object.entries(languageConfigs).map(([id, cfg]) => [id, cfg.template]));
+  });
+  const [isColdStarting, setIsColdStarting] = useState(false);
   const [runStatus, setRunStatus] = useState("Ready");
   const [metrics, setMetrics] = useState(null);
   const [theme, setTheme] = useState(() => localStorage.getItem('sam-theme') || 'dark');
@@ -358,22 +363,38 @@ builtins.input = input_shim
     }
   }, [searchParams, setSearchParams]);
 
-  // Health check & worker status
+  // Health check & worker status (with Cold Start detection)
   useEffect(() => {
     const checkStatus = async () => {
       if (!navigator.onLine) { setIsWorkerOnline(false); return; }
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        setIsColdStarting(true);
+      }, 5000); // 5s threshold for Cold Start detection
+
       try {
-        const res = await fetch(`${ENDPOINTS.API_BASE_URL}/runs/health/queue`);
+        const res = await fetch(`${ENDPOINTS.API_BASE_URL}/runs/health/queue`, { signal: controller.signal });
+        clearTimeout(timeoutId);
         const data = await res.json();
         setIsWorkerOnline(data.workerOnline);
+        setIsColdStarting(false);
       } catch (err) {
+        clearTimeout(timeoutId);
         setIsWorkerOnline(false);
+        // If aborted or failed, keep cold starting flag if network is fine
+        if (navigator.onLine) setIsColdStarting(true);
       }
     };
     checkStatus();
     const timer = setInterval(checkStatus, 15000);
     return () => clearInterval(timer);
   }, []);
+
+  // Persist buffers to localStorage
+  useEffect(() => {
+    localStorage.setItem("sam_code_buffers", JSON.stringify(buffers));
+  }, [buffers]);
 
   // Theme synchronization
   useEffect(() => {
@@ -976,19 +997,15 @@ builtins.input = input_shim
           language={activeLangId.toUpperCase()}
           position={`Ln ${metrics?.lastLine || 1}, Col ${metrics?.lastCol || 1}`}
           status={busy ? "EXECUTING..." : "CONNECTED"}
-          isOnline={socketIsConnected}
+          isOnline={isWorkerOnline}
+          isColdStarting={isColdStarting}
           onReportBug={() => setIsFeedbackModalOpen(true)}
           theme={theme}
           busy={busy}
         />
       </footer>
 
-      <FeedbackModal 
-        isOpen={isFeedbackModalOpen} 
-        onClose={() => setIsFeedbackModalOpen(false)} 
-        theme={theme}
-      />
-
+      <FeedbackModal isOpen={isFeedbackModalOpen} onClose={() => setIsFeedbackModalOpen(false)} />
 
 
       <AnimatePresence>

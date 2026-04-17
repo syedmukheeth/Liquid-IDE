@@ -111,7 +111,8 @@ export default function CodeEditor({
     const editor = editorRef.current;
     
     // 1. Instant Local Write: Fill the editor from buffer immediately
-    if (value !== undefined && value !== editor.getValue() && !hasInitializedRef.current) {
+    // Only if the current editor is empty OR we are switching languages
+    if (value && (editor.getValue().trim() === "" || !hasInitializedRef.current)) {
       editor.setValue(value);
     }
 
@@ -176,7 +177,11 @@ export default function CodeEditor({
     return () => window.removeEventListener('sam-editor-reset', handleResetEvent);
   }, []);
   const handleChange = useCallback((v) => {
-    onChange?.(v ?? "");
+    // Only propagate changes to the parent buffers IF we are initialized
+    // or if the change is significant (not an accidental empty wipe)
+    if (hasInitializedRef.current || (v && v.trim() !== "")) {
+      onChange?.(v ?? "");
+    }
   }, [onChange]);
 
   return (

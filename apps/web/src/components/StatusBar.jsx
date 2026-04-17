@@ -13,14 +13,25 @@ const LinkedinIcon = ({ className }) => (
 );
 
 export default function StatusBar({ 
-  language = "JavaScript", 
-  position = "Ln 1, Col 1", 
-  status = "ONLINE", 
-  isOnline = true, 
-  onReportBug,
-  theme = 'dark',
-  busy = false 
+  busy = false,
+  isColdStarting = false
 }) {
+  const displayStatus = isColdStarting ? "WAKING UP SERVER..." : status;
+  const statusColorClass = isColdStarting 
+    ? "text-amber-400 font-black drop-shadow-[0_0_8px_rgba(251,191,36,0.4)]"
+    : isOnline 
+      ? "text-cyan-400 font-black drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]" 
+      : "text-red-500 font-black drop-shadow-[0_0_8px_rgba(239,68,68,0.4)]";
+
+  const glowClass = isColdStarting
+    ? "bg-amber-500/30 animate-pulse"
+    : isOnline ? "bg-cyan-500/30 animate-pulse" : "bg-red-500/30 animate-pulse";
+    
+  const dotClass = isColdStarting
+    ? "bg-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.8)] animate-bounce"
+    : isOnline 
+      ? "bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.8)]" 
+      : "bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)] animate-pulse";
   return (
     <div className={`relative flex w-full items-center justify-between px-3 sm:px-6 py-2.5 sm:py-3 text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-300 backdrop-blur-xl ${
       theme === 'dark' 
@@ -50,10 +61,10 @@ export default function StatusBar({
       <div className="flex items-center gap-5">
         {/* Left Side: Status & Bug */}
         <span className="flex items-center gap-2 relative group cursor-default">
-          <div className={`absolute -inset-1.5 rounded-full blur-md transition-all duration-500 ${isOnline ? 'bg-cyan-500/30' : 'bg-red-500/30'} animate-pulse`} />
-          <div className={`relative h-2.5 w-2.5 rounded-full transition-all duration-500 ring-2 ring-black/20 ${isOnline ? 'bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.8)]' : 'bg-red-500 animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.8)]'}`} />
-          <span className={`relative ml-1 text-[9px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.3em] transition-all duration-300 ${isOnline ? "text-cyan-400 font-black drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]" : "text-red-500 font-black drop-shadow-[0_0_8px_rgba(239,68,68,0.4)]"}`}>
-            {isOnline && status}
+          <div className={`absolute -inset-1.5 rounded-full blur-md transition-all duration-500 ${glowClass}`} />
+          <div className={`relative h-2.5 w-2.5 rounded-full transition-all duration-500 ring-2 ring-black/20 ${dotClass}`} />
+          <span className={`relative ml-1 text-[9px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.3em] transition-all duration-300 ${statusColorClass}`}>
+            {displayStatus}
           </span>
         </span>
 
