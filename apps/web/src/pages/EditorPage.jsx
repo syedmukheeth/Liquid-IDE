@@ -137,6 +137,7 @@ export default function EditorPage() {
   const xtermRef = useRef(null);
   const fitAddonRef = useRef(null);
   const runRef = useRef({ jobId: null });
+  const hasReceivedOutputRef = useRef(false);
   const isMounted = useRef(true);
 
   // --- 4. Logic & Memoization ---
@@ -191,14 +192,11 @@ builtins.input = input_shim
       xtermRef.current.write(err.message + "\r\n");
       setRunStatus("Failed");
     }
-  }, [pyodide]);
-
-  const onRun = useCallback(async () => {
+  }, [pyodide])  const onRun = useCallback(async () => {
     const activeConfig = languageConfigs[activeLangId];
     const code = buffers[activeLangId] ?? "";
     const language = activeConfig.lang;
     if (busy) return;
-    console.log(`📡 [SAM-AUDIT] [FRONTEND] Click RUN detected for language: ${activeLangId}`);
     
     // 🔥 PREMIUM TERMINAL UX: Boot Sequence
     if (xtermRef.current) {
@@ -208,28 +206,35 @@ builtins.input = input_shim
       await writeTypewriter(xtermRef.current, `🚀 \x1b[1;36m[SAM] EXECUTION START.\x1b[0m\r\n\r\n`, 2);
     }
 
+    if (isMobile) {
+      setActiveMobileTab('terminal');
+      setShowAiPanel(false);
+    }
+    
     setBusy(true);
+    hasReceivedOutputRef.current = false;
     setErrorMarkers([]);
     stdErrRef.current = "";
-    analytics.trackCodeRun(activeLangId, null); // Track execution attempt
+    analytics.trackCodeRun(activeLangId, null); 
+    
     const socket = getSocket(token);
     if (runRef.current.jobId && socket) {
       socket.emit("unsubscribe", { jobId: runRef.current.jobId });
       socket.off("exec:log");
     }
+    
     if (xtermRef.current) {
       xtermRef.current.reset();
       xtermRef.current.write("\x1b[2J\x1b[0;0H");
     }
     setRunStatus("Running");
 
-    // Ensure socket is alive for real-time logs before submission
     if (socket && !socket.connected && activeLangId !== "python") {
       try {
         await new Promise((resolve) => {
           const timeout = setTimeout(() => {
             if (socket) socket.off("connect", onConnect);
-            resolve(); // Proceed anyway, polling will catch the final state
+            resolve(); 
           }, 2000);
           const onConnect = () => {
              clearTimeout(timeout);
@@ -255,10 +260,11 @@ builtins.input = input_shim
         return;
       }
     }
+
     try {
       const { jobId } = await submitRun({ language, code });
-      console.log(`📡 [SAM-AUDIT] [FRONTEND] Job Created successfully. jobId: ${jobId}`);
       runRef.current.jobId = jobId;
+      
       const sendSubscription = () => socket && socket.emit("subscribe", { jobId });
       if (socket) {
         if (!socket.connected) {
@@ -268,36 +274,36 @@ builtins.input = input_shim
           sendSubscription();
         }
       }
+
       const onLog = (evt) => {
         if (!evt || runRef.current.jobId !== jobId) return;
-        console.log(`📡 [SAM-AUDIT] [FRONTEND] Received Socket Event: ${evt.type}`, evt.chunk || "");
-        if (xtermRef.current) {
-           if (evt.type === "stdout") xtermRef.current.write(evt.chunk);
-           else if (evt.type === "stderr") {
-             xtermRef.current.write(`\x1b[31m${evt.chunk}\x1b[0m`);
-             stdErrRef.current += evt.chunk;
+        
+        if (evt.type === "stdout" || evt.type === "stderr") {
+           const content = evt.chunk || "";
+           if (content.trim()) {
+             hasReceivedOutputRef.current = true;
+           }
+           if (xtermRef.current) {
+             if (evt.type === "stdout") xtermRef.current.write(content);
+             else {
+               xtermRef.current.write(`\x1b[31m${content}\x1b[0m`);
+               stdErrRef.current += content;
+             }
            }
         }
+
         if (evt.type === "end") {
           const { status: jobStatus, metrics } = evt.chunk || {};
           const success = jobStatus === "succeeded";
           
-          // 🛡️ PARSE ERRORS: Extract markers and primary error line
-          if (!success) {
-            const { markers, primaryLine } = parseErrors(stdErrRef.current, activeLangId);
-            setErrorMarkers(markers);
-            
-            // 🔥 SENIOR UX: Auto-scroll to primary error
-            if (primaryLine && window.samEditor) {
-               window.samEditor.revealLineInCenter(primaryLine);
-               window.samEditor.setPosition({ lineNumber: primaryLine, column: 1 });
-            }
+          if (!hasReceivedOutputRef.current && xtermRef.current && success) {
+             xtermRef.current.write("\r\n\x1b[1;33m[SYSTEM] Program finished with no output.\x1b[0m\r\n");
           }
-          
+
           if (xtermRef.current) {
-            const summaryColor = success ? '\x1b[1;32m' : '\x1b[1;31m';
             const reset = '\x1b[0m';
             const dim = '\x1b[2m';
+            const summaryColor = success ? '\x1b[1;32m' : '\x1b[1;31m';
             
             xtermRef.current.write(`\r\n${dim}────────────────────────────────────────${reset}\r\n`);
             xtermRef.current.write(`${summaryColor}SAM EXECUTION SUMMARY${reset}\r\n`);
@@ -308,11 +314,24 @@ builtins.input = input_shim
           }
 
           setRunStatus(jobStatus ? (jobStatus.charAt(0).toUpperCase() + jobStatus.slice(1)) : (success ? "Succeeded" : "Failed"));
+          
+          if (!success) {
+            const diags = parseErrors(activeLangId, stdErrRef.current || "");
+            if (diags.length > 0) {
+              setErrorMarkers(diags.map(d => d.marker));
+              if (window.samEditor && diags[0].primaryLine) {
+                window.samEditor.revealLineInCenter(diags[0].primaryLine);
+              }
+            }
+          }
+
           analytics.trackCodeRun(activeLangId, success);
           setBusy(false);
         }
       };
+
       if (socket) socket.on("exec:log", onLog);
+
       await pollUntilDone(jobId, {
         onUpdate: (s) => {
           if (runRef.current.jobId !== jobId) return;
@@ -324,19 +343,15 @@ builtins.input = input_shim
             'failed': 'RETRY'
           };
           setRunStatus(statusMap[s.status.toLowerCase()] || s.status.toUpperCase());
-          
-          if (s.status === 'succeeded') {
-            setTimeout(() => setRunStatus("Ready"), 2000);
-          }
         }
       });
+
       if (socket) {
         socket.off("exec:log", onLog);
         socket.emit("unsubscribe", { jobId });
       }
     } catch (e) {
       setRunStatus("Failed");
-      // Senior Dev: Sanitize error output to prevent HTML dumping in terminal
       const rawMsg = e?.message || String(e);
       const isHtml = /<[a-z][\s\S]*>/i.test(rawMsg);
       const cleanMsg = isHtml 
@@ -344,6 +359,11 @@ builtins.input = input_shim
         : rawMsg.substring(0, 200);
         
       if (xtermRef.current) xtermRef.current.write(`\x1b[1;31mError: ${cleanMsg}\x1b[0m\r\n`);
+    } finally {
+      setBusy(false);
+    }
+  }, [activeLangId, buffers, busy, token, isMobile, runPythonInBrowser]);
+Ref.current) xtermRef.current.write(`\x1b[1;31mError: ${cleanMsg}\x1b[0m\r\n`);
     } finally {
       setBusy(false);
     }
@@ -1026,39 +1046,40 @@ builtins.input = input_shim
                     {languageConfigs[activeLangId]?.name}
                   </span>
                 </div>
-                <motion.button
-                  id="editor-run-btn"
-                  onClick={onRun}
-                  disabled={busy}
-                  whileTap={{ scale: 0.95 }}
-                  className={`${isMobile ? 'fixed bottom-24 right-5 z-[90] h-14 w-14 rounded-full shadow-2xl bg-white text-black' : 'sam-button-run'} transition-all duration-300 flex items-center justify-center`}
-                  style={isMobile ? { boxShadow: '0 10px 40px rgba(0,0,0,0.6)' } : {}}
-                >
-                  <AnimatePresence mode="wait">
-                    {runStatus === 'Ready' && (
-                      <motion.div key="ready" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center gap-2">
-                        <Play width={12} height={12} fill="currentColor" />
-                        <span className="font-black uppercase tracking-widest text-[10px]">Run</span>
-                      </motion.div>
-                    )}
-                    {(busy || runStatus === 'Running' || runStatus === 'QUEUED' || runStatus === 'COMPILING' || runStatus === 'EXECUTING') && (
-                      <motion.div key="busy" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center gap-2">
-                        <div style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.2)', borderTopColor: 'currentColor', animation: 'spin 0.8s linear infinite' }} />
-                        <span className="font-black uppercase tracking-[0.15em] text-[9px]">{runStatus === 'Ready' || runStatus === 'Running' ? 'RUNNING' : runStatus}</span>
-                      </motion.div>
-                    )}
-                    {runStatus === 'SUCCESS' && (
-                      <motion.div key="success" initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.5 }} className="flex items-center gap-2">
-                        <Check width={12} height={12} strokeWidth={4} />
-                        <span className="font-black uppercase tracking-widest text-[10px]">Success</span>
-                      </motion.div>
-                    )}
-                    {runStatus === 'RETRY' && (
-                      <motion.div key="retry" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center gap-2">
-                        <RotateCcw width={12} height={12} strokeWidth={3} />
-                        <span className="font-black uppercase tracking-widest text-[10px]">Retry</span>
-                      </motion.div>
-                    )}
+                {/* DESKTOP RUN BUTTON — unchanged */}
+                {!isMobile && (
+                  <motion.button
+                    id="editor-run-btn"
+                    onClick={onRun}
+                    disabled={busy}
+                    whileTap={{ scale: 0.95 }}
+                    className="sam-button-run transition-all duration-300 flex items-center justify-center"
+                  >
+                    <AnimatePresence mode="wait">
+                      {runStatus === 'Ready' && (
+                        <motion.div key="ready" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center gap-2">
+                          <Play width={12} height={12} fill="currentColor" />
+                          <span className="font-black uppercase tracking-widest text-[10px]">Run</span>
+                        </motion.div>
+                      )}
+                      {(busy || runStatus === 'Running' || runStatus === 'QUEUED' || runStatus === 'COMPILING' || runStatus === 'EXECUTING') && (
+                        <motion.div key="busy" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center gap-2">
+                          <div style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.2)', borderTopColor: 'currentColor', animation: 'spin 0.8s linear infinite' }} />
+                          <span className="font-black uppercase tracking-[0.15em] text-[9px]">{runStatus === 'Ready' || runStatus === 'Running' ? 'RUNNING' : runStatus}</span>
+                        </motion.div>
+                      )}
+                      {runStatus === 'SUCCESS' && (
+                        <motion.div key="success" initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.5 }} className="flex items-center gap-2">
+                          <Check width={12} height={12} strokeWidth={4} />
+                          <span className="font-black uppercase tracking-widest text-[10px]">Success</span>
+                        </motion.div>
+                      )}
+                      {runStatus === 'RETRY' && (
+                        <motion.div key="retry" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center gap-2">
+                          <RotateCcw width={12} height={12} strokeWidth={3} />
+                          <span className="font-black uppercase tracking-widest text-[10px]">Retry</span>
+                        </motion.div>
+                      )}
                   </AnimatePresence>
                 </motion.button>
               </div>
@@ -1081,6 +1102,84 @@ builtins.input = input_shim
               </div>
             </div>
           </section>
+
+          {/* ═══════════════════════════════════════════
+              MOBILE RUN FAB — Only visible on <768px
+              Premium pill floating above the tab bar
+          ══════════════════════════════════════════════ */}
+          {isMobile && (
+            <motion.button
+              id="mobile-run-fab"
+              onClick={onRun}
+              disabled={busy}
+              whileTap={{ scale: 0.94, y: 2 }}
+              animate={{
+                backgroundColor:
+                  runStatus === 'Succeeded' || runStatus === 'SUCCESS'
+                    ? 'rgba(16,185,129,1)'
+                    : runStatus?.toLowerCase().includes('error') ||
+                      runStatus?.toLowerCase().includes('fail') ||
+                      runStatus === 'Timeout' || runStatus === 'Memory_Limit'
+                    ? 'rgba(239,68,68,1)'
+                    : '#FFFFFF',
+                color:
+                  runStatus === 'Succeeded' || runStatus === 'SUCCESS' ||
+                  runStatus?.toLowerCase().includes('error') ||
+                  runStatus?.toLowerCase().includes('fail') ||
+                  runStatus === 'Timeout' || runStatus === 'Memory_Limit'
+                    ? '#FFFFFF'
+                    : '#000000',
+              }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              style={{
+                position: 'fixed',
+                bottom: 'calc(64px + env(safe-area-inset-bottom, 0px) + 12px)',
+                right: 20,
+                zIndex: 90,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '0 20px',
+                height: 44,
+                borderRadius: 99,
+                border: 'none',
+                cursor: busy ? 'not-allowed' : 'pointer',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.3)',
+                minWidth: 100,
+                justifyContent: 'center',
+                fontFamily: 'var(--font-body)',
+                fontWeight: 900,
+                fontSize: 10,
+                letterSpacing: '0.25em',
+                textTransform: 'uppercase',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              <AnimatePresence mode="wait">
+                {busy ? (
+                  <motion.div key="running" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Loader2 style={{ width: 13, height: 13, animation: 'spin 0.8s linear infinite' }} />
+                    <span>Running...</span>
+                  </motion.div>
+                ) : runStatus === 'Succeeded' || runStatus === 'SUCCESS' ? (
+                  <motion.div key="success" initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.7 }} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Check style={{ width: 13, height: 13, strokeWidth: 3 }} />
+                    <span>Done</span>
+                  </motion.div>
+                ) : runStatus?.toLowerCase().includes('error') || runStatus?.toLowerCase().includes('fail') || runStatus === 'Timeout' || runStatus === 'Memory_Limit' ? (
+                  <motion.div key="error" initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.7 }} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span>Error</span>
+                  </motion.div>
+                ) : (
+                  <motion.div key="idle" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Play style={{ width: 13, height: 13, fill: 'currentColor' }} />
+                    <span>Run</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.button>
+          )}
 
           {/* SPLITTER 1 (Editor | Terminal) */}
           <div 
@@ -1157,6 +1256,20 @@ builtins.input = input_shim
                       </button>
                     </div>
                   </div>
+                )}
+
+                {/* 🚀 MOBILE EXECUTING OVERLAY */}
+                {isMobile && busy && (
+                  <motion.div 
+                    initial={{ opacity: 0 }} 
+                    animate={{ opacity: 1 }} 
+                    className="absolute inset-0 z-50 flex items-center justify-center backdrop-blur-[2px] bg-black/5"
+                  >
+                    <div className="flex items-center gap-3 px-6 py-3 rounded-full border border-white/10 bg-black/80 shadow-2xl">
+                      <Loader2 className="h-4 w-4 text-white animate-spin" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white">Executing...</span>
+                    </div>
+                  </motion.div>
                 )}
                 <div ref={terminalRef} className="h-full w-full overflow-hidden" 
                    style={{ padding: '10px' }} 
