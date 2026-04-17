@@ -96,6 +96,7 @@ export default function EditorPage() {
   const [isWorkerOnline, setIsWorkerOnline] = useState(false);
   const [isEngineReady, setIsEngineReady] = useState(false);
   const [engineMode, setEngineMode] = useState("preparing");
+  const [failSafeActive, setFailSafeActive] = useState(false);
   const [socketStatus, setSocketStatus] = useState("connecting");
   const [showStatusBanner, setShowStatusBanner] = useState(true);
   const [activeMobileTab, setActiveMobileTab] = useState('editor');
@@ -442,6 +443,8 @@ builtins.input = input_shim
 
   // Health check for worker availability (Backend sanity) & ADAPTIVE HEARTBEAT
   useEffect(() => {
+    let failSafeTimer = null;
+    
     const checkStatus = async () => {
       if (!navigator.onLine) { 
         setIsEngineReady(false);
@@ -449,24 +452,45 @@ builtins.input = input_shim
         return; 
       }
       try {
-        const res = await fetch(`${ENDPOINTS.API_BASE_URL}/runs/health/queue`);
+        // 🔥 HARDENING: Use absolute Render URL to bypass Vercel proxy interference
+        const API_BASE = ENDPOINTS.WS_ENDPOINT; // ENDPOINTS.WS_ENDPOINT is the Render domain
+        const res = await fetch(`${API_BASE}/api/runs/health/queue`);
         const data = await res.json();
         
         setIsEngineReady(data.canExecute || data.workerOnline);
         setIsWorkerOnline(data.workerOnline);
         setEngineMode(data.workerOnline ? "primary" : data.canExecute ? "sandbox" : "preparing");
         
-        console.log(`📡 [SAM-AUDIT] [FRONTEND] Health check successful. Mode: ${data.mode || 'unknown'}`);
+        if (data.canExecute || data.workerOnline) {
+          if (failSafeTimer) clearTimeout(failSafeTimer);
+          setFailSafeActive(false);
+        }
       } catch (err) {
-        setIsEngineReady(false);
-        setEngineMode("preparing");
+        // Only set to preparing if we haven't failed safe yet
+        if (!failSafeActive) {
+          setIsEngineReady(false);
+          setEngineMode("preparing");
+        }
       }
     };
 
+    // 🛡️ FAIL-SAFE: If engine isn't ready in 12s, allow sandbox anyway
+    failSafeTimer = setTimeout(() => {
+      if (!isEngineReady) {
+        console.warn("⚠️ [SAM-AUDIT] Fail-safe triggered: Engine took >12s. Defaulting to Sandbox.");
+        setIsEngineReady(true);
+        setEngineMode("sandbox");
+        setFailSafeActive(true);
+      }
+    }, 12000);
+
     checkStatus();
-    // Use a fast 5s poll while not ready, otherwise standard 3m interval
     const interval = setInterval(checkStatus, isEngineReady ? 180000 : 5000);
-    return () => clearInterval(interval);
+    
+    return () => {
+      clearInterval(interval);
+      if (failSafeTimer) clearTimeout(failSafeTimer);
+    };
   }, [isEngineReady, token]);
 
   // Persist buffers to localStorage
@@ -1051,6 +1075,12 @@ builtins.input = input_shim
                         <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white">Preparing Engine</span>
                         <span className="text-[8px] font-bold uppercase tracking-widest text-white/40">Zero-latency environment booting...</span>
                       </div>
+                      <button 
+                         onClick={() => { setIsEngineReady(true); setEngineMode("sandbox"); }}
+                         className="mt-2 text-[8px] font-black uppercase tracking-tighter text-white/20 hover:text-white transition-colors duration-200 py-1 px-3 border border-white/10 rounded-full"
+                      >
+                        Skip to Sandbox (BETA)
+                      </button>
                     </div>
                   </div>
                 )}
