@@ -192,7 +192,6 @@ builtins.input = input_shim
       xtermRef.current.write("\x1b[2J\x1b[0;0H");
     }
     setRunStatus("Running");
-    setMetrics(null);
 
     // Ensure socket is alive for real-time logs before submission
     if (socket && !socket.connected && activeLangId !== "python") {
@@ -248,7 +247,6 @@ builtins.input = input_shim
           const success = evt.status === "succeeded";
           setRunStatus(success ? "Succeeded" : "Failed");
           analytics.trackCodeRun(activeLangId, success); // Track completion status
-          if (evt.chunk?.metrics) setMetrics(evt.chunk.metrics);
           setBusy(false);
         }
       };

@@ -197,7 +197,6 @@ export default function AiPanel({
   onClose,
   currentCode,
   language,
-  metrics,
   onApplyRefactor,
   theme,
   width = 33.33,
