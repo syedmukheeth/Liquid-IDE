@@ -29,9 +29,11 @@ const CodeEditor = ({
   sessionId = "default",
   userName = null,
   theme = "vs-dark", 
+  markers = [],
   options = {} 
 }) => {
   const editorRef = useRef(null);
+  const monacoRef = useRef(null);
   const bindingRef = useRef(null);
   const providerRef = useRef(null);
   const ydocRef = useRef(null);
@@ -45,6 +47,7 @@ const CodeEditor = ({
 
   const handleMount = useCallback((editor, monaco) => {
     editorRef.current = editor;
+    monacoRef.current = monaco;
 
     // Define themes (kept same as before)
     monaco.editor.defineTheme('monolith-dark', {
@@ -111,6 +114,16 @@ const CodeEditor = ({
   }, [onCursorChange]);
   // THEME PERSISTENCE
   const monacoTheme = useMemo(() => theme === "light" ? "monolith-light" : "vs-dark", [theme]);
+
+  // 🛡️ SYNC MARKERS: Apply inline errors to the editor
+  useEffect(() => {
+    if (editorRef.current && monacoRef.current) {
+      const model = editorRef.current.getModel();
+      if (model) {
+        monacoRef.current.editor.setModelMarkers(model, "owner", markers);
+      }
+    }
+  }, [markers]);
 
   // ⚡ INSTANT BOOT & COLLABORATIVE LIFECYCLE
   useEffect(() => {

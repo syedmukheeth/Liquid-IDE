@@ -6,6 +6,7 @@ import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
 import { pollUntilDone, submitRun } from "../services/codeExecutionApi";
 import { getSocket } from "../services/socketClient";
+import { parseErrors } from "../services/errorParser";
 
 // ⚡ LAZY LOAD PERFORMANCE HYDRATION (Code-Splitting)
 const SettingsModal = React.lazy(() => import("../components/SettingsModal"));
@@ -100,6 +101,8 @@ export default function EditorPage() {
   const [socketStatus, setSocketStatus] = useState("connecting");
   const [showStatusBanner, setShowStatusBanner] = useState(true);
   const [activeMobileTab, setActiveMobileTab] = useState('editor');
+  const [errorMarkers, setErrorMarkers] = useState([]);
+  const stdErrRef = useRef("");
   const [editorWidth, setEditorWidth] = useState(() => Number(localStorage.getItem('sam-editor-width')) || 50);
   const [terminalWidth, setTerminalWidth] = useState(() => Number(localStorage.getItem('sam-terminal-width')) || 33.33);
   const [aiWidth, setAiWidth] = useState(() => Number(localStorage.getItem('sam-ai-width-pct')) || 33.33);
@@ -202,6 +205,8 @@ builtins.input = input_shim
     }
 
     setBusy(true);
+    setErrorMarkers([]);
+    stdErrRef.current = "";
     analytics.trackCodeRun(activeLangId, null); // Track execution attempt
     const socket = getSocket(token);
     if (runRef.current.jobId && socket) {
@@ -264,11 +269,20 @@ builtins.input = input_shim
         console.log(`📡 [SAM-AUDIT] [FRONTEND] Received Socket Event: ${evt.type}`, evt.chunk || "");
         if (xtermRef.current) {
            if (evt.type === "stdout") xtermRef.current.write(evt.chunk);
-           else if (evt.type === "stderr") xtermRef.current.write(`\x1b[31m${evt.chunk}\x1b[0m`);
+           else if (evt.type === "stderr") {
+             xtermRef.current.write(`\x1b[31m${evt.chunk}\x1b[0m`);
+             stdErrRef.current += evt.chunk;
+           }
         }
         if (evt.type === "end") {
           const { status: jobStatus, metrics } = evt.chunk || {};
           const success = jobStatus === "succeeded";
+          
+          // 🛡️ PARSE ERRORS: Extract markers from stderr on completion
+          if (!success) {
+            const markers = parseErrors(stdErrRef.current, activeLangId);
+            setErrorMarkers(markers);
+          }
           
           if (xtermRef.current) {
             const summaryColor = success ? '\x1b[1;32m' : '\x1b[1;31m';
@@ -1017,6 +1031,7 @@ builtins.input = input_shim
                    sessionId={sessionId}
                    userName={user?.name}
                    theme={theme}
+                   markers={errorMarkers}
                    options={{
                      fontSize: settings.fontSize,
                      tabSize: settings.tabSize,
