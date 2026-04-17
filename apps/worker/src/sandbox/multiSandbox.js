@@ -26,17 +26,17 @@ const LANGUAGE_CONFIGS = {
   },
   cpp: {
     image: env.SANDBOX_GCC_IMAGE,
-    command: (entry) => ["sh", "-c", `g++ ${entry} -o main && ./main`]
+    command: (entry) => ["sh", "-c", `g++ ${entry} -o main || exit 6; ./main`]
   },
   c: {
     image: env.SANDBOX_GCC_IMAGE,
-    command: (entry) => ["sh", "-c", `gcc ${entry} -o main && ./main`]
+    command: (entry) => ["sh", "-c", `gcc ${entry} -o main || exit 6; ./main`]
   },
   java: {
     image: env.SANDBOX_OPENJDK_IMAGE,
     command: (entry, code) => {
       const className = getJavaMainClass(code);
-      return ["sh", "-c", `javac ${className}.java && java ${className}`];
+      return ["sh", "-c", `javac ${className}.java || exit 6; java ${className}`];
     }
   }
 };
@@ -87,11 +87,18 @@ async function executeRun(opts, onLog) {
       ];
 
       const start = Date.now();
-      const result = await execWithTimeout("docker", dockerArgs, env.RUN_TIMEOUT_MS || 10000, { onLog });
+      const result = await execWithTimeout("docker", dockerArgs, env.RUN_TIMEOUT_MS || 5000, { onLog });
       const duration = Date.now() - start;
+
+      // 🛡️ High-Fidelity Status Mapping
+      let status = "runtime_error";
+      if (result.exitCode === 0) status = "succeeded";
+      else if (result.exitCode === 6) status = "compilation_error";
+      else if (result.exitCode === 137) status = "timeout";
 
       return { 
         ...result, 
+        status,
         metrics: { durationMs: duration, sandbox: "docker-hardened" } 
       };
     } catch (dockerErr) {

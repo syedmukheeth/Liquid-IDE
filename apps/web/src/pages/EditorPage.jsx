@@ -282,10 +282,16 @@ builtins.input = input_shim
           const { status: jobStatus, metrics } = evt.chunk || {};
           const success = jobStatus === "succeeded";
           
-          // 🛡️ PARSE ERRORS: Extract markers from stderr on completion
+          // 🛡️ PARSE ERRORS: Extract markers and primary error line
           if (!success) {
-            const markers = parseErrors(stdErrRef.current, activeLangId);
+            const { markers, primaryLine } = parseErrors(stdErrRef.current, activeLangId);
             setErrorMarkers(markers);
+            
+            // 🔥 SENIOR UX: Auto-scroll to primary error
+            if (primaryLine && window.samEditor) {
+               window.samEditor.revealLineInCenter(primaryLine);
+               window.samEditor.setPosition({ lineNumber: primaryLine, column: 1 });
+            }
           }
           
           if (xtermRef.current) {
@@ -295,14 +301,14 @@ builtins.input = input_shim
             
             xtermRef.current.write(`\r\n${dim}────────────────────────────────────────${reset}\r\n`);
             xtermRef.current.write(`${summaryColor}SAM EXECUTION SUMMARY${reset}\r\n`);
-            xtermRef.current.write(`${dim}STATUS  :${reset} ${success ? 'SUCCESS' : 'FAILED'}\r\n`);
+            xtermRef.current.write(`${dim}STATUS  :${reset} ${jobStatus?.toUpperCase() || (success ? 'SUCCESS' : 'FAILED')}\r\n`);
             xtermRef.current.write(`${dim}TIME    :${reset} ${metrics?.durationMs || 'N/A'}ms\r\n`);
             xtermRef.current.write(`${dim}ENGINE  :${reset} ${metrics?.sandbox || 'hardened-docker'}\r\n`);
             xtermRef.current.write(`${dim}────────────────────────────────────────${reset}\r\n\r\n`);
           }
 
-          setRunStatus(success ? "Succeeded" : "Failed");
-          analytics.trackCodeRun(activeLangId, success); // Track completion status
+          setRunStatus(jobStatus ? (jobStatus.charAt(0).toUpperCase() + jobStatus.slice(1)) : (success ? "Succeeded" : "Failed"));
+          analytics.trackCodeRun(activeLangId, success);
           setBusy(false);
         }
       };
@@ -1093,6 +1099,21 @@ builtins.input = input_shim
               <div className="flex h-11 shrink-0 items-center justify-between px-4 md:px-6" style={{ background: 'var(--sam-surface-low)', borderBottom: '1px solid var(--sam-glass-border)' }}>
                 <div className="flex items-center gap-2 md:gap-3">
                   <button
+                    onClick={() => {
+                       const logs = stdErrRef.current || "";
+                       navigator.clipboard.writeText(logs);
+                       toast.success("Logs copied to clipboard", {
+                         style: { background: 'var(--sam-surface)', color: 'var(--sam-text)', border: '1px solid var(--sam-glass-border)', fontSize: '10px', fontWeight: 900 }
+                       });
+                    }}
+                    title="Copy Logs"
+                    style={{ padding: '5px', background: 'none', border: 'none', color: 'rgba(221,226,241,0.25)', cursor: 'pointer', borderRadius: 6, transition: 'all 0.2s' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--sam-text)'; e.currentTarget.style.background = 'var(--sam-glass-border)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--sam-text-dim)'; e.currentTarget.style.background = 'none'; }}
+                  >
+                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                  </button>
+                  <button
                     onClick={onClear}
                     title="Clear Output"
                     style={{ padding: '5px', background: 'none', border: 'none', color: 'rgba(221,226,241,0.25)', cursor: 'pointer', borderRadius: 6, transition: 'all 0.2s' }}
@@ -1101,15 +1122,18 @@ builtins.input = input_shim
                   >
                     <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                   </button>
-                  <div className={runStatus === 'Failed' ? 'sam-pulse-glow-red' : ''} style={{
-                    width: 8, height: 8, borderRadius: '50%',
-                    background: runStatus === 'Succeeded' ? '#10B981' : runStatus === 'Failed' ? '#FF3B3B' : busy ? 'var(--sam-accent)' : 'var(--sam-glass-border)',
-                    boxShadow: runStatus === 'Succeeded' ? '0 0 10px rgba(16,185,129,0.4)' : runStatus === 'Failed' ? '0 0 20px rgba(255,59,59,0.8)' : busy ? '0 0 10px var(--sam-accent)' : 'none',
-                    animation: busy ? 'sam-pulse 1s infinite' : 'none',
-                    transition: 'all 0.5s',
-                  }} />
+                  <div 
+                    className={runStatus?.toLowerCase().includes('error') || runStatus?.toLowerCase().includes('fail') || runStatus?.toLowerCase().includes('timeout') ? 'sam-pulse-glow-red' : ''} 
+                    style={{
+                      width: 8, height: 8, borderRadius: '50%',
+                      background: runStatus === 'Succeeded' ? '#10B981' : (runStatus?.toLowerCase().includes('error') || runStatus?.toLowerCase().includes('fail') || runStatus?.toLowerCase().includes('timeout') || runStatus === 'Memory_limit') ? '#FF3B3B' : busy ? 'var(--sam-accent)' : 'var(--sam-glass-border)',
+                      boxShadow: runStatus === 'Succeeded' ? '0 0 10px rgba(16,185,129,0.4)' : (runStatus?.toLowerCase().includes('error') || runStatus?.toLowerCase().includes('fail') || runStatus?.toLowerCase().includes('timeout') || runStatus === 'Memory_limit') ? '0 0 20px rgba(255,59,59,0.8)' : busy ? '0 0 10px var(--sam-accent)' : 'none',
+                      animation: busy ? 'sam-pulse 1s infinite' : 'none',
+                      transition: 'all 0.5s',
+                    }} 
+                  />
                   <span style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--sam-text)', fontFamily: 'var(--font-mono)' }}>
-                    CLOUD OUTPUT
+                    CLOUD ENGINE
                   </span>
                 </div>
                 <div style={{ fontSize: 10, fontWeight: 950, textTransform: 'uppercase', letterSpacing: '0.25em', color: runStatus === 'Failed' ? '#FF3B3B' : 'var(--sam-text-muted)', fontFamily: 'var(--font-body)' }}>{runStatus}</div>

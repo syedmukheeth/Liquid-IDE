@@ -48,6 +48,7 @@ const CodeEditor = ({
   const handleMount = useCallback((editor, monaco) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
+    window.samEditor = editor;
 
     // Define themes (kept same as before)
     monaco.editor.defineTheme('monolith-dark', {

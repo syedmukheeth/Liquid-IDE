@@ -82,7 +82,7 @@ async function main() {
         };
 
         try {
-          const { stdout, stderr, exitCode, metrics } = await executeRun({
+          const { stdout, stderr, exitCode, status, metrics } = await executeRun({
             language: run.runtime,
             files: run.files,
             entrypoint: run.entrypoint
@@ -92,7 +92,7 @@ async function main() {
           run.stderr = stderr;
           run.exitCode = exitCode;
           run.metrics = metrics || {};
-          run.status = exitCode === 0 ? "succeeded" : "failed";
+          run.status = status || (exitCode === 0 ? "succeeded" : "failed");
         } catch (err) {
           run.status = "failed";
           logger.error({ err, runId: run._id }, "Job execution failed");

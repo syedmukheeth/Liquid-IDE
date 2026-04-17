@@ -8,7 +8,24 @@ const LANGUAGE_MAP = {
   javascript: 63, // Node.js
   cpp: 54,        // C++ (GCC 9.2.0)
   c: 50,          // C (GCC 9.2.0)
-  java: 62        // Java (OpenJDK 13.0.1)
+  java: 62,       // Java (OpenJDK 13.0.1)
+  go: 60,         // Go (1.13.5)
+  rust: 73        // Rust (1.40.0)
+};
+
+const STATUS_MAP = {
+  3: "succeeded",
+  4: "runtime_error",      // Wrong Answer (often logic error in competitive programming, but here it's just failed execution)
+  5: "timeout",           // Time Limit Exceeded
+  6: "compilation_error", // Compilation Error
+  7: "runtime_error",      // SIGSEGV
+  8: "runtime_error",      // SIGXFSZ
+  9: "runtime_error",      // SIGFPE
+  10: "runtime_error",     // SIGABRT
+  11: "runtime_error",     // NZEC
+  12: "memory_limit",      // Memory Limit Exceeded
+  13: "failed",            // Internal Error
+  14: "failed"             // Exec Format Error
 };
 
 const https = require("node:https");
@@ -27,7 +44,7 @@ async function executeViaPiston(run, onLog) { // Keeping name for compatibility
 
   const languageId = LANGUAGE_MAP[runtime];
   if (!languageId) {
-    throw new Error(`Judge0 does not support runtime: ${runtime}`);
+    throw new Error(`Cloud Sandbox does not support runtime: ${runtime}`);
   }
 
   // Status logs removed as requested by user
@@ -56,16 +73,21 @@ async function executeViaPiston(run, onLog) { // Keeping name for compatibility
       res.on("data", (chunk) => data += chunk);
       res.on("end", () => {
         if (res.statusCode >= 400) {
-          return reject(new Error(`Judge0 API Error (${res.statusCode}): ${data}`));
+          return reject(new Error(`Cloud Sandbox Error (${res.statusCode}): ${data}`));
         }
         try {
           const result = JSON.parse(data);
           
-          // Execution start log removed
-
           let stdout = result.stdout || "";
           let stderr = result.stderr || result.compile_output || "";
-          let exitCode = result.status?.id === 3 ? 0 : 1; // 3 is "Accepted"
+          
+          // 🛡️ High-Fidelity Capture: If it's a compile error, usually stderr is in compile_output
+          if (result.status?.id === 6 && result.compile_output) {
+             stderr = result.compile_output;
+          }
+
+          const statusId = result.status?.id || 13;
+          const status = STATUS_MAP[statusId] || "failed";
 
           if (stdout && onLog) onLog(jobId, "stdout", stdout);
           if (stderr && onLog) onLog(jobId, "stderr", stderr);
@@ -73,11 +95,11 @@ async function executeViaPiston(run, onLog) { // Keeping name for compatibility
           resolve({
             stdout,
             stderr,
-            exitCode,
-            status: exitCode === 0 ? "succeeded" : "failed"
+            exitCode: statusId === 3 ? 0 : 1,
+            status
           });
         } catch (e) {
-          reject(new Error(`Failed to parse Judge0 response: ${e.message}`));
+          reject(new Error(`Failed to parse Sandbox response: ${e.message}`));
         }
       });
     });
