@@ -21,7 +21,10 @@ import StatusBar from "../components/StatusBar";
 import { useAuth } from "../hooks/useAuth";
 import { Link, useSearchParams } from "react-router-dom";
 
-import { Sparkles, Keyboard, Clock, Menu, X, Play, Check, RotateCcw } from "lucide-react";
+import { 
+  Sparkles, Keyboard, Clock, Menu, X, Play, Check, RotateCcw, 
+  CircleHelp, Loader2, Code2, Terminal as TerminalIcon 
+} from "lucide-react";
 import toast, { Toaster } from 'react-hot-toast';
 import { motion, AnimatePresence } from "framer-motion";
 import ENDPOINTS from "../services/endpoints";
