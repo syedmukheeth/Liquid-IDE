@@ -369,7 +369,7 @@ export default function AiPanel({
         </div>
 
         {/* Chat Messages */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 custom-scrollbar min-w-0">
+        <div ref={scrollRef} className={`flex-1 overflow-y-auto overflow-x-hidden ${isMobile ? 'p-2 space-y-3' : 'p-4 space-y-4'} custom-scrollbar min-w-0`}>
           <AnimatePresence initial={false}>
             {messages.map((msg, i) => (
               <MessageBubble

@@ -42,20 +42,19 @@ export default function Modal({ isOpen, onClose, title, children, theme }) {
 
       {/* Modal Card */}
       <div
-        className="sam-glass"
+        className="sam-glass sam-modal-mobile-center"
         style={{
           position: "relative",
-          width: window.innerWidth < 640 ? "100%" : "calc(100% - 32px)",
+          width: "calc(100% - 32px)",
           maxWidth: 480,
-          maxHeight: window.innerWidth < 640 ? "100vh" : "90vh",
-          height: window.innerWidth < 640 ? "100vh" : "auto",
-          borderRadius: window.innerWidth < 640 ? 0 : 24,
-          border: window.innerWidth < 640 ? "none" : "1px solid var(--sam-glass-border)",
+          maxHeight: "90vh",
+          borderRadius: 24,
+          border: "1px solid var(--sam-glass-border)",
           background: "var(--sam-glass-bg)",
           backdropFilter: "blur(40px)",
           WebkitBackdropFilter: "blur(40px)",
           boxShadow: "var(--sam-card-shadow)",
-          animation: window.innerWidth < 640 ? "slideFromBottom 0.3s ease-out" : "slideUp 0.3s cubic-bezier(0.16,1,0.3,1)",
+          animation: "slideUp 0.3s cubic-bezier(0.16,1,0.3,1)",
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",

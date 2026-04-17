@@ -599,13 +599,13 @@ builtins.input = input_shim
 
         <div className="flex items-center gap-2 md:gap-14 overflow-hidden">
           <div className="flex items-center gap-2 sm:gap-5 shrink-0">
-            <div className="flex items-center gap-2 sm:gap-3 transition-all hover:scale-105">
-              <div className="scale-75 sm:scale-100 origin-left">
+            <div className="flex items-center gap-2 sm:gap-3 transition-all hover:scale-105 sam-nav-header-logo">
+              <div className="scale-[0.8] sm:scale-100 origin-left">
                 <SamNavLogo theme={theme} />
               </div>
-              <div className="flex flex-col leading-[0.9] mt-1 relative scale-[0.65] sm:scale-100 origin-left -ml-1 sm:ml-0">
-                <span className="font-black tracking-tight text-[18px] uppercase italic" style={{ fontFamily: 'var(--font-display)', color: 'var(--sam-text)' }}>SAM</span>
-                <span className="text-[10px] font-black uppercase tracking-[0.35em] opacity-40 ml-0.5" style={{ color: 'var(--sam-text)' }}>Compiler</span>
+              <div className="flex flex-col leading-[0.9] mt-1 relative scale-[0.7] sm:scale-100 origin-left -ml-1 sm:ml-0">
+                <span className="font-black tracking-tight text-[16px] sm:text-[18px] uppercase italic" style={{ fontFamily: 'var(--font-display)', color: 'var(--sam-text)' }}>SAM</span>
+                <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.35em] opacity-40 ml-0.5" style={{ color: 'var(--sam-text)' }}>Compiler</span>
               </div>
             </div>
           </div>
@@ -812,52 +812,13 @@ builtins.input = input_shim
         </AnimatePresence>
       </header>
 
-      <div className="flex xl:hidden h-12 shrink-0 bg-[var(--sam-surface-low)] border-b border-[var(--sam-glass-border)] z-[70] shadow-lg sticky top-0">
-        <button
-          onClick={() => { setActiveMobileTab('editor'); setShowAiPanel(false); }}
-          className="relative flex-1 flex flex-col items-center justify-center gap-1.5 transition-all"
-          style={{
-            color: activeMobileTab === 'editor' && !showAiPanel ? 'var(--sam-accent)' : 'var(--sam-text-dim)',
-          }}
-        >
-          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
-          <span className="text-[9px] font-black uppercase tracking-[0.2em]">Code</span>
-          {activeMobileTab === 'editor' && !showAiPanel && <motion.div layoutId="mobileTabIdx" className="absolute bottom-0 left-4 right-4 h-0.5 bg-[var(--sam-accent)] rounded-full" />}
-        </button>
-        
-        <button
-          onClick={() => { setActiveMobileTab('terminal'); setShowAiPanel(false); }}
-          className="relative flex-1 flex flex-col items-center justify-center gap-1.5 transition-all"
-          style={{
-            color: activeMobileTab === 'terminal' && !showAiPanel ? 'var(--sam-accent)' : 'var(--sam-text-dim)',
-          }}
-        >
-          <div className="relative">
-            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
-            {busy && <div className="absolute -top-1 -right-1 h-1.5 w-1.5 rounded-full bg-[var(--sam-accent)] animate-pulse" />}
-          </div>
-          <span className="text-[9px] font-black uppercase tracking-[0.2em]">Output</span>
-          {activeMobileTab === 'terminal' && !showAiPanel && <motion.div layoutId="mobileTabIdx" className="absolute bottom-0 left-4 right-4 h-0.5 bg-[var(--sam-accent)] rounded-full" />}
-        </button>
 
-        <button
-          onClick={() => { setActiveMobileTab('ai'); setShowAiPanel(true); }}
-          className="relative flex-1 flex flex-col items-center justify-center gap-1.5 transition-all"
-          style={{
-            color: activeMobileTab === 'ai' || showAiPanel ? 'var(--sam-accent)' : 'var(--sam-text-dim)',
-          }}
-        >
-          <Sparkles className="h-4 w-4" />
-          <span className="text-[10px] font-black uppercase tracking-widest">SAM AI</span>
-          {(activeMobileTab === 'ai' || (isMobile && showAiPanel)) && <motion.div layoutId="mobileTabIdx" className="absolute bottom-0 left-4 right-4 h-0.5 bg-[var(--sam-accent)] rounded-full" />}
-        </button>
-      </div>
 
       <div 
         ref={containerRef}
         className="flex flex-1 overflow-hidden transition-all duration-200 ease-out"
       >
-        <main className="relative z-10 flex flex-1 flex-col md:flex-row overflow-hidden p-0 pb-14 md:p-6 gap-0 transition-all duration-200 ease-out">
+        <main className="relative z-10 flex flex-1 flex-col md:flex-row overflow-hidden p-0 pb-32 md:p-6 gap-0 transition-all duration-200 ease-out">
           {/* EDITOR SECTION */}
           <section 
             className={`flex flex-col overflow-hidden ${(!isMobile || (activeMobileTab === 'editor' && !showAiPanel)) ? 'flex-1' : 'hidden'} md:flex`}
@@ -895,20 +856,21 @@ builtins.input = input_shim
                   id="editor-run-btn"
                   onClick={onRun}
                   disabled={busy}
-                  className={`sam-button-primary ${busy ? 'opacity-80 cursor-not-allowed' : ''}`}
+                  className={`sam-button-primary ${busy ? 'opacity-80 cursor-not-allowed' : ''} shrink-0`}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '8px 24px', borderRadius: 8,
-                    fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em',
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: isMobile ? '8px 16px' : '8px 24px', borderRadius: 8,
+                    fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em',
                     transition: 'all 0.2s',
                     fontFamily: 'var(--font-body)',
                     background: busy ? 'var(--sam-accent-dim)' : undefined,
+                    minHeight: isMobile ? 36 : 40
                   }}
                 >
                   {busy ? (
-                    <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.2)', borderTopColor: 'var(--sam-accent)', animation: 'spin 0.8s linear infinite' }} />
+                    <div style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.2)', borderTopColor: 'var(--sam-accent)', animation: 'spin 0.8s linear infinite' }} />
                   ) : (
-                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                    <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
                   )}
                   Run
                 </button>
@@ -1016,7 +978,40 @@ builtins.input = input_shim
       </div>
 
 
-      <footer className="fixed bottom-0 left-0 right-0 z-40">
+      <footer className="fixed bottom-0 left-0 right-0 z-[100] flex flex-col">
+        {/* Mobile Tab Navigator (Bottom Integrated) */}
+        <div className="flex xl:hidden h-14 shrink-0 bg-black/90 backdrop-blur-xl border-t border-[var(--sam-glass-border)] z-[70] shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+          <button
+            onClick={() => { setActiveMobileTab('editor'); setShowAiPanel(false); }}
+            className={`mobile-tab-btn relative flex-1 flex flex-col items-center justify-center gap-1 transition-all ${activeMobileTab === 'editor' && !showAiPanel ? 'text-[var(--sam-accent)]' : 'text-[var(--sam-text-dim)]'}`}
+          >
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+            <span className="text-[8px] font-black uppercase tracking-[0.2em]">Code</span>
+            {activeMobileTab === 'editor' && !showAiPanel && <motion.div layoutId="mobileTabIdx" className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[var(--sam-accent)]" />}
+          </button>
+          
+          <button
+            onClick={() => { setActiveMobileTab('terminal'); setShowAiPanel(false); }}
+            className={`mobile-tab-btn relative flex-1 flex flex-col items-center justify-center gap-1 transition-all ${activeMobileTab === 'terminal' && !showAiPanel ? 'text-[var(--sam-accent)]' : 'text-[var(--sam-text-dim)]'}`}
+          >
+            <div className="relative">
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
+              {busy && <div className="absolute -top-1 -right-1 h-1.5 w-1.5 rounded-full bg-[var(--sam-accent)] animate-pulse" />}
+            </div>
+            <span className="text-[8px] font-black uppercase tracking-[0.2em]">Output</span>
+            {activeMobileTab === 'terminal' && !showAiPanel && <motion.div layoutId="mobileTabIdx" className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[var(--sam-accent)]" />}
+          </button>
+
+          <button
+            onClick={() => { setActiveMobileTab('ai'); setShowAiPanel(true); }}
+            className={`mobile-tab-btn relative flex-1 flex flex-col items-center justify-center gap-1 transition-all ${activeMobileTab === 'ai' || showAiPanel ? 'text-[var(--sam-accent)]' : 'text-[var(--sam-text-dim)]'}`}
+          >
+            <Sparkles className="h-4 w-4" />
+            <span className="text-[8px] font-black uppercase tracking-widest">SAM AI</span>
+            {(activeMobileTab === 'ai' || (isMobile && showAiPanel)) && <motion.div layoutId="mobileTabIdx" className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[var(--sam-accent)]" />}
+          </button>
+        </div>
+
         <StatusBar 
           language={activeLangId.toUpperCase()}
           position={`Ln ${metrics?.lastLine || 1}, Col ${metrics?.lastCol || 1}`}
@@ -1041,7 +1036,7 @@ builtins.input = input_shim
             />
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-              className={`relative w-full max-w-sm rounded-[32px] border p-8 shadow-2xl backdrop-blur-2xl ${
+              className={`relative w-full max-w-sm rounded-[32px] border p-8 shadow-2xl backdrop-blur-2xl sam-modal-mobile-center ${
                 theme === 'dark' ? 'border-white/5 bg-black/95' : 'border-slate-200 bg-white/95'
               }`}
             >
