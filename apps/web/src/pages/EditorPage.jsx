@@ -581,12 +581,20 @@ builtins.input = input_shim
     };
 
     window.addEventListener("sam:socket:status", handleStatusUpdate);
+    
+    // 🔥 VIEWPORT & ORIENTATION SYNC: Force Monaco resize on orientation/tab changes
+    const handleViewportSync = () => {
+      window.dispatchEvent(new Event('resize'));
+    };
+    window.addEventListener("orientationchange", handleViewportSync);
+    
     return () => {
       if (stabilityTimer) clearTimeout(stabilityTimer);
       if (flickerTimer) clearTimeout(flickerTimer);
       window.removeEventListener("sam:socket:status", handleStatusUpdate);
+      window.removeEventListener("orientationchange", handleViewportSync);
     };
-  }, [token]);
+  }, [token, activeMobileTab]); // Sync on tab switch too
 
   // Resubscribe Guardian: Pick up lost streams after reconnection
   useEffect(() => {
@@ -725,10 +733,10 @@ builtins.input = input_shim
         <div className="flex items-center gap-2 md:gap-14 overflow-hidden">
           <div className="flex items-center gap-2 sm:gap-5 shrink-0">
             <div className="flex items-center gap-2 sm:gap-3 transition-all hover:scale-105 sam-nav-header-logo">
-              <div className="scale-[0.8] sm:scale-100 origin-left">
+              <div className="scale-[0.7] sm:scale-100 origin-left">
                 <SamNavLogo theme={theme} />
               </div>
-              <div className="flex flex-col leading-[0.9] mt-1 relative scale-[0.7] sm:scale-100 origin-left -ml-1 sm:ml-0">
+              <div className={`flex flex-col leading-[0.9] mt-1 relative scale-[0.75] sm:scale-100 origin-left -ml-1 sm:ml-0 ${isMobile ? 'hidden sm:flex' : 'flex'}`}>
                 <span className="font-black tracking-tight text-[16px] sm:text-[18px] uppercase italic" style={{ fontFamily: 'var(--font-display)', color: 'var(--sam-text)' }}>SAM</span>
                 <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.35em] opacity-40 ml-0.5" style={{ color: 'var(--sam-text)' }}>Compiler</span>
               </div>
@@ -947,9 +955,9 @@ builtins.input = input_shim
 
       <div 
         ref={containerRef}
-        className="flex flex-1 overflow-hidden transition-all duration-200 ease-out"
+        className="flex flex-1 overflow-hidden transition-all duration-200 ease-out h-[100dvh]"
       >
-        <main className="relative z-10 flex flex-1 flex-col md:flex-row overflow-hidden p-0 pb-32 md:p-6 gap-0 transition-all duration-200 ease-out">
+        <main className="relative z-10 flex flex-1 flex-col md:flex-row overflow-hidden p-0 md:p-6 md:pb-6 gap-0 transition-all duration-200 ease-out">
           {/* EDITOR SECTION */}
           <section 
             className={`flex flex-col overflow-hidden ${(!isMobile || (activeMobileTab === 'editor' && !showAiPanel)) ? 'flex-1' : 'hidden'} md:flex`}
@@ -988,11 +996,8 @@ builtins.input = input_shim
                   onClick={onRun}
                   disabled={busy}
                   whileTap={{ scale: 0.95 }}
-                  className={`sam-button-run transition-all duration-300 ${
-                    runStatus === 'SUCCESS' ? 'bg-emerald-500/20 text-emerald-500 border-emerald-500/30' :
-                    runStatus === 'RETRY' ? 'bg-rose-500/20 text-rose-500 border-rose-500/30' :
-                    busy ? 'bg-white/5 text-white/40' : 'sam-button-primary'
-                  } shrink-0 !py-1.5 !px-5 !rounded-xl flex items-center gap-2 overflow-hidden`}
+                  className={`${isMobile ? 'fixed bottom-24 right-5 z-[90] h-14 w-14 rounded-full shadow-2xl bg-white text-black' : 'sam-button-run'} transition-all duration-300 flex items-center justify-center`}
+                  style={isMobile ? { boxShadow: '0 10px 40px rgba(0,0,0,0.6)' } : {}}
                 >
                   <AnimatePresence mode="wait">
                     {runStatus === 'Ready' && (

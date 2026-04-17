@@ -13,6 +13,7 @@ export const SOCKET_STATES = {
 let socket = null;
 let currentStatus = SOCKET_STATES.IDLE;
 let wakingTimer = null;
+let hasConnectedOnce = false; // Prevents "False Reconnecting" UI loops
 
 function emitStatus(status, details = {}) {
   currentStatus = status;
@@ -29,6 +30,7 @@ export function getSocket(tokenArg) {
     return null;
   }
 
+  // Idempotent singleton check
   if (socket) {
     socket.auth = { token };
     return socket;
@@ -40,6 +42,7 @@ export function getSocket(tokenArg) {
   emitStatus(SOCKET_STATES.CONNECTING);
 
   // 3s Waking Engine: If connecting takes too long, it's likely a cold start
+  if (wakingTimer) clearTimeout(wakingTimer);
   wakingTimer = setTimeout(() => {
     if (currentStatus === SOCKET_STATES.CONNECTING || currentStatus === SOCKET_STATES.RECONNECTING) {
       emitStatus(SOCKET_STATES.WAKING);
@@ -59,6 +62,7 @@ export function getSocket(tokenArg) {
 
   socket.on("connect", () => {
     if (wakingTimer) clearTimeout(wakingTimer);
+    hasConnectedOnce = true; 
     emitStatus(SOCKET_STATES.CONNECTED, { transport: socket.io.engine.transport.name });
     
     if (heartbeatInterval) clearInterval(heartbeatInterval);
@@ -70,7 +74,14 @@ export function getSocket(tokenArg) {
   socket.on("connect_error", (err) => {
     if (!navigator.onLine) return;
     console.error("❌ [SAM Compiler] Socket Error:", err.message);
-    emitStatus(SOCKET_STATES.RECONNECTING, { error: err.message });
+    
+    // 🔥 FIX: Only report as RECONNECTING if we were previously stable
+    if (hasConnectedOnce) {
+      emitStatus(SOCKET_STATES.RECONNECTING, { error: err.message });
+    } else {
+      // Still in initial boot phase? Escalate to WAKING if it feels like a heavy cold-start
+      emitStatus(currentStatus === SOCKET_STATES.WAKING ? SOCKET_STATES.WAKING : SOCKET_STATES.CONNECTING);
+    }
   });
 
   socket.on("disconnect", (reason) => {
@@ -85,22 +96,28 @@ export function getSocket(tokenArg) {
       socket.connect();
     }
 
-    // Only broadcast as RECONNECTING if we expect to recover
-    const nextState = navigator.onLine ? SOCKET_STATES.RECONNECTING : SOCKET_STATES.FAILED;
+    // Only broadcast as RECONNECTING if we expect to recover and have had a success before
+    const nextState = (navigator.onLine && hasConnectedOnce) ? SOCKET_STATES.RECONNECTING : SOCKET_STATES.FAILED;
     emitStatus(nextState, { reason });
   });
 
-  window.addEventListener("online", () => {
+  // Browser Global Handlers (Singleton Bound)
+  const onOnline = () => {
     if (socket && !socket.connected) {
-      emitStatus(SOCKET_STATES.RECONNECTING);
+      if (hasConnectedOnce) emitStatus(SOCKET_STATES.RECONNECTING);
       socket.connect();
     }
-  });
+  };
 
-  window.addEventListener("offline", () => {
+  const onOffline = () => {
     emitStatus(SOCKET_STATES.FAILED, { reason: "Network offline" });
     if (socket) socket.disconnect();
-  });
+  };
+
+  window.removeEventListener("online", onOnline);
+  window.removeEventListener("offline", onOffline);
+  window.addEventListener("online", onOnline);
+  window.addEventListener("offline", onOffline);
 
   return socket;
 }
