@@ -192,7 +192,9 @@ builtins.input = input_shim
       xtermRef.current.write(err.message + "\r\n");
       setRunStatus("Failed");
     }
-  }, [pyodide])  const onRun = useCallback(async () => {
+  }, [pyodide]);
+
+  const onRun = useCallback(async () => {
     const activeConfig = languageConfigs[activeLangId];
     const code = buffers[activeLangId] ?? "";
     const language = activeConfig.lang;
@@ -332,7 +334,7 @@ builtins.input = input_shim
 
       if (socket) socket.on("exec:log", onLog);
 
-      await pollUntilDone(jobId, {
+      const finalState = await pollUntilDone(jobId, {
         onUpdate: (s) => {
           if (runRef.current.jobId !== jobId) return;
           const statusMap = {
@@ -345,6 +347,36 @@ builtins.input = input_shim
           setRunStatus(statusMap[s.status.toLowerCase()] || s.status.toUpperCase());
         }
       });
+
+      // 🛡️ FALLBACK: If socket was silent (no output received), render from poll result
+      if (!hasReceivedOutputRef.current && finalState && xtermRef.current) {
+        const stdout = finalState.stdout || "";
+        const stderr = finalState.stderr || "";
+        if (stdout.trim()) {
+          hasReceivedOutputRef.current = true;
+          xtermRef.current.write(stdout.replace(/\n/g, "\r\n"));
+        }
+        if (stderr.trim()) {
+          hasReceivedOutputRef.current = true;
+          xtermRef.current.write(`\x1b[31m${stderr.replace(/\n/g, "\r\n")}\x1b[0m`);
+          stdErrRef.current += stderr;
+        }
+        // If truly empty
+        if (!hasReceivedOutputRef.current && finalState.status === 'succeeded') {
+          xtermRef.current.write("\r\n\x1b[1;33m[SYSTEM] Program finished with no output.\x1b[0m\r\n");
+        }
+        // Write summary
+        const success = finalState.status === 'succeeded';
+        const reset = '\x1b[0m';
+        const dim = '\x1b[2m';
+        const summaryColor = success ? '\x1b[1;32m' : '\x1b[1;31m';
+        xtermRef.current.write(`\r\n${dim}\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500${reset}\r\n`);
+        xtermRef.current.write(`${summaryColor}SAM EXECUTION SUMMARY${reset}\r\n`);
+        xtermRef.current.write(`${dim}STATUS  :${reset} ${finalState.status?.toUpperCase()}\r\n`);
+        xtermRef.current.write(`${dim}\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500${reset}\r\n\r\n`);
+        setRunStatus(finalState.status === 'succeeded' ? 'Succeeded' : 'Failed');
+        setBusy(false);
+      }
 
       if (socket) {
         socket.off("exec:log", onLog);
@@ -363,11 +395,6 @@ builtins.input = input_shim
       setBusy(false);
     }
   }, [activeLangId, buffers, busy, token, isMobile, runPythonInBrowser]);
-Ref.current) xtermRef.current.write(`\x1b[1;31mError: ${cleanMsg}\x1b[0m\r\n`);
-    } finally {
-      setBusy(false);
-    }
-  }, [activeLangId, buffers, busy, runPythonInBrowser]);
 
   const onClear = () => {
     if (xtermRef.current) xtermRef.current.clear();
@@ -756,24 +783,34 @@ Ref.current) xtermRef.current.write(`\x1b[1;31mError: ${cleanMsg}\x1b[0m\r\n`);
       <div className="noise-overlay" />
 
       {/* MOBILE COMPACT HEADER */}
-      <header className="flex xl:hidden h-14 shrink-0 items-center justify-between border-b border-[var(--sam-glass-border)] bg-black/80 px-4 backdrop-blur-xl z-[80] safe-top">
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white text-black shadow-lg shadow-white/10">
-            <span className="text-[14px] font-[900] tracking-tighter">S</span>
+      <header
+        className="flex xl:hidden h-14 shrink-0 items-center justify-between border-b px-4 backdrop-blur-xl z-[80] safe-top"
+        style={{
+          background: theme === 'light' ? 'rgba(255,255,255,0.92)' : 'rgba(0,0,0,0.88)',
+          borderBottomColor: 'var(--sam-glass-border)',
+        }}
+      >
+        <div className="flex items-center gap-2.5">
+          <OfficialLogo theme={theme} size={28} />
+          <div className="flex flex-col leading-none">
+            <span className="font-black tracking-tight text-[15px] uppercase italic" style={{ fontFamily: 'var(--font-display)', color: 'var(--sam-text)' }}>SAM</span>
+            <span className="text-[8px] font-black uppercase tracking-[0.35em] opacity-40 -mt-0.5" style={{ color: 'var(--sam-text)' }}>Compiler</span>
           </div>
-          <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/90">SAM</span>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <ThemeToggle theme={theme} toggle={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')} />
            <button 
              onClick={() => setActiveModal('about')}
-             className="p-2 text-white/60 active:text-white transition-colors"
+             className="p-2 active:scale-95 transition-transform"
+             style={{ color: 'var(--sam-text-dim)' }}
            >
              <CircleHelp className="h-5 w-5" />
            </button>
            <button 
              onClick={() => setMobileMenuOpen(true)}
-             className="p-2 text-white/60 active:text-white transition-colors"
+             className="p-2 active:scale-95 transition-transform"
+             style={{ color: 'var(--sam-text-dim)' }}
            >
              <Menu className="h-5 w-5" />
            </button>
@@ -1046,14 +1083,13 @@ Ref.current) xtermRef.current.write(`\x1b[1;31mError: ${cleanMsg}\x1b[0m\r\n`);
                     {languageConfigs[activeLangId]?.name}
                   </span>
                 </div>
-                {/* DESKTOP RUN BUTTON — unchanged */}
                 {!isMobile && (
                   <motion.button
                     id="editor-run-btn"
                     onClick={onRun}
                     disabled={busy}
                     whileTap={{ scale: 0.95 }}
-                    className="sam-button-run transition-all duration-300 flex items-center justify-center"
+                    className="sam-button-run transition-all duration-300 flex items-center justify-center min-w-[80px]"
                   >
                     <AnimatePresence mode="wait">
                       {runStatus === 'Ready' && (
@@ -1068,7 +1104,7 @@ Ref.current) xtermRef.current.write(`\x1b[1;31mError: ${cleanMsg}\x1b[0m\r\n`);
                           <span className="font-black uppercase tracking-[0.15em] text-[9px]">{runStatus === 'Ready' || runStatus === 'Running' ? 'RUNNING' : runStatus}</span>
                         </motion.div>
                       )}
-                      {runStatus === 'SUCCESS' && (
+                      {(runStatus === 'Succeeded' || runStatus === 'SUCCESS') && (
                         <motion.div key="success" initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.5 }} className="flex items-center gap-2">
                           <Check width={12} height={12} strokeWidth={4} />
                           <span className="font-black uppercase tracking-widest text-[10px]">Success</span>
@@ -1080,8 +1116,9 @@ Ref.current) xtermRef.current.write(`\x1b[1;31mError: ${cleanMsg}\x1b[0m\r\n`);
                           <span className="font-black uppercase tracking-widest text-[10px]">Retry</span>
                         </motion.div>
                       )}
-                  </AnimatePresence>
-                </motion.button>
+                    </AnimatePresence>
+                  </motion.button>
+                )}
               </div>
               
               <div className="flex-1 overflow-hidden relative">
@@ -1318,23 +1355,6 @@ Ref.current) xtermRef.current.write(`\x1b[1;31mError: ${cleanMsg}\x1b[0m\r\n`);
         </main>
       </div>
 
-      {/* Floating Mobile Execution Button (Elite FAB) */}
-      {isMobile && (
-        <motion.button 
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={onRun}
-          className={`fixed bottom-24 right-6 z-[95] flex h-16 w-16 items-center justify-center rounded-[28px] text-white shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-white/10 overflow-hidden ${
-            busy ? 'bg-[var(--sam-amber)]' : 'bg-white'
-          }`}
-        >
-          {busy ? (
-            <Loader2 className="h-7 w-7 animate-spin text-black" />
-          ) : (
-            <Play className="h-7 w-7 fill-black text-black" />
-          )}
-        </motion.button>
-      )}
 
       <footer className="fixed bottom-0 left-0 right-0 z-[100] flex flex-col">
         {/* Mobile Tab Navigator (Bottom Integrated) */}

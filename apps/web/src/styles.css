@@ -157,16 +157,29 @@ html, body, div, header, footer, section, nav, button, span, a {
     opacity: 0; /* Ghost resizer for elite feel */
   }
 
+  /* Premium Pill FAB — Monotype Design */
+  #mobile-run-fab {
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 2px 10px rgba(0,0,0,0.3);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .light #mobile-run-fab {
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15), 0 2px 10px rgba(0,0,0,0.05);
+  }
+
   /* Compact Terminal for Mobile */
   .xterm-viewport { background-color: transparent !important; }
-  .xterm-screen { padding: 8px !important; }
+  .xterm-screen { padding: 12px !important; }
 
   /* Centered Modal Fix for Mobile */
   .sam-modal-mobile-center {
-    width: 92% !important;
+    width: 94% !important;
     margin: auto !important;
     max-height: 85vh !important;
     overflow-y: auto;
+    border-radius: 28px !important;
   }
 }
 
