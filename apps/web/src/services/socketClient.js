@@ -26,7 +26,7 @@ export function getSocket(tokenArg) {
   socket = io(endpoint, {
     transports: ["websocket"],
     auth: {
-      token: localStorage.getItem("token")
+      token
     },
     withCredentials: true,
     path: "/socket.io", 

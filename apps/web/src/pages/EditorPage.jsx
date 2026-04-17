@@ -423,9 +423,15 @@ builtins.input = input_shim
   // Resubscribe Guardian: Pick up lost streams after reconnection
   useEffect(() => {
     if (socketIsConnected && busy && runRef.current.jobId) {
-      const socket = getSocket(token);
-      console.log(`🛡️ [SAM] Connection recovered. Resubscribing to active job: ${runRef.current.jobId}`);
-      socket.emit("subscribe", { jobId: runRef.current.jobId });
+      try {
+        const socket = getSocket(token);
+        if (socket) {
+          console.log(`🛡️ [SAM] Connection recovered. Resubscribing to active job: ${runRef.current.jobId}`);
+          socket.emit("subscribe", { jobId: runRef.current.jobId });
+        }
+      } catch (err) {
+        console.warn("⚠️ [SAM] Resubscribe failed:", err);
+      }
     }
   }, [socketIsConnected, busy]);
 
@@ -490,23 +496,37 @@ builtins.input = input_shim
       if (runRef.current.jobId) getSocket().emit("exec:input", { jobId: runRef.current.jobId, input: data });
     });
 
-    const handleResize = () => fitAddon.fit();
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', safeFit);
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', safeFit);
       term.dispose();
       xtermRef.current = null;
     };
   }, [theme]);
 
+  // Safe Terminal Refit: Defense against dimension errors during layout shifts
+  const safeFit = useCallback(() => {
+    if (xtermRef.current && fitAddonRef.current) {
+      try {
+        // Only fit if terminal is attached to DOM and container is visible
+        const termElement = terminalRef.current;
+        if (termElement && termElement.offsetParent !== null) {
+          fitAddonRef.current.fit();
+        }
+      } catch (err) {
+        // Silent catch for transient dimension errors during layout transitions
+      }
+    }
+  }, []);
+
   // Consolidate layout fit on change
   useEffect(() => {
     const timer = setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
-      if (fitAddonRef.current) fitAddonRef.current.fit();
+      safeFit();
     }, 100);
     return () => clearTimeout(timer);
-  }, [editorWidth, aiWidth, showAiPanel]);
+  }, [editorWidth, aiWidth, showAiPanel, safeFit]);
 
   // Keyboard Shortcuts
   useEffect(() => {
