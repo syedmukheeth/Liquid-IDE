@@ -748,8 +748,9 @@ builtins.input = input_shim
     if (!terminalRef.current || xtermRef.current) return;
     const isDark = theme === "dark";
     const term = new XTerm({
+      allowTransparency: true,
       theme: {
-        background: isDark ? '#000000' : '#F1F5F9',
+        background: 'transparent',
         foreground: isDark ? '#FFFFFF' : '#0F172A',
         cursor: isDark ? '#FFFFFF' : '#0F172A',
         selectionBackground: isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(15, 23, 42, 0.15)',
@@ -1413,10 +1414,19 @@ builtins.input = input_shim
         className="relative z-[100] flex flex-col shrink-0"
         style={{
           boxShadow: theme === 'dark' 
-            ? '0 -8px 30px rgba(255, 0, 0, 0.15), inset 0 1px 0 rgba(255, 0, 0, 0.3)' 
-            : '0 -8px 30px rgba(0, 119, 181, 0.15), inset 0 1px 0 rgba(0, 119, 181, 0.3)',
+            ? '0 -8px 30px rgba(255, 0, 0, 0.15)' 
+            : '0 -8px 30px rgba(0, 119, 181, 0.15)',
         }}
       >
+        {/* Neon Gradient Line at the top of the footer */}
+        <div 
+          className="absolute top-0 left-0 right-0 h-[2px]" 
+          style={{ 
+            background: theme === 'dark' 
+              ? 'linear-gradient(90deg, transparent, rgba(255,0,0,1), transparent)' 
+              : 'linear-gradient(90deg, transparent, rgba(0,119,181,1), transparent)' 
+          }} 
+        />
         {/* Mobile Tab Navigator (Bottom Integrated) */}
         <div className="flex xl:hidden mobile-nav-bar shrink-0 border-t border-white/5 shadow-[0_-10px_50px_rgba(0,0,0,1)]">
           <motion.button

@@ -141,7 +141,6 @@ async function createRun(input) {
           run.exitCode = result.exitCode;
           run.status = result.status;
         } catch (pistonErr) {
-          const toolName = hostTool === 'javac' ? 'JDK' : hostTool === 'g++' ? 'G++' : hostTool === 'gcc' ? 'GCC' : 'Compiler';
           let errMsg = `❌ \x1b[1;31mError: Execution environment unavailable.\x1b[0m\n`;
           
           if (isVercel) {
