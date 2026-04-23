@@ -62,10 +62,7 @@ const StatusBar = ({
         ? 'bg-black/95 text-white/70 border-t border-white/5' 
         : 'bg-white/95 text-slate-600 border-t border-slate-100 shadow-[0_-4px_24px_-10px_rgba(0,0,0,0.08)]'
     }`}>
-      {/* Top Accent Bar (Elite Precision) */}
-      <div className={`absolute top-0 left-0 right-0 h-[1.5px] z-10 transition-opacity duration-1000 ${showBanner || !isOnline ? 'opacity-100' : 'opacity-0'}`}>
-        <div className={`w-full h-full ${theme === 'dark' ? 'bg-[#ff0000] shadow-[0_0_12px_rgba(255,0,0,0.8)]' : 'bg-[#0077b5] shadow-[0_0_8px_rgba(0,119,181,0.4)]'}`} />
-      </div>
+      {/* Top Accent Bar replaced by parent footer neon box-shadow */}
 
       <div className="flex items-center gap-3 sm:gap-5 flex-nowrap overflow-hidden">
         <span className={`flex items-center gap-2 relative group cursor-default transition-all duration-700 ${!showBanner && isOnline ? 'opacity-40 grayscale-[0.5] scale-95' : 'opacity-100'}`}>

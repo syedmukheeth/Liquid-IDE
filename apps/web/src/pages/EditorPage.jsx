@@ -1095,7 +1095,6 @@ builtins.input = input_shim
       <div 
         ref={containerRef}
         className="flex flex-1 overflow-hidden transition-all duration-200 ease-out"
-        style={{ height: isMobile ? 'calc(100dvh - 48px - 100px)' : 'calc(100vh - 56px)' }}
       >
         <main className="relative z-10 flex flex-1 flex-col md:flex-row overflow-hidden p-0 md:p-6 md:pb-6 gap-0 transition-all duration-200 ease-out">
           {/* EDITOR SECTION */}
@@ -1410,7 +1409,14 @@ builtins.input = input_shim
       </div>
 
 
-      <footer className="fixed bottom-0 left-0 right-0 z-[100] flex flex-col">
+      <footer 
+        className="relative z-[100] flex flex-col shrink-0"
+        style={{
+          boxShadow: theme === 'dark' 
+            ? '0 -8px 30px rgba(255, 0, 0, 0.15), inset 0 1px 0 rgba(255, 0, 0, 0.3)' 
+            : '0 -8px 30px rgba(0, 119, 181, 0.15), inset 0 1px 0 rgba(0, 119, 181, 0.3)',
+        }}
+      >
         {/* Mobile Tab Navigator (Bottom Integrated) */}
         <div className="flex xl:hidden mobile-nav-bar shrink-0 border-t border-white/5 shadow-[0_-10px_50px_rgba(0,0,0,1)]">
           <motion.button
