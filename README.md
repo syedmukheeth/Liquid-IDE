@@ -52,7 +52,8 @@ SAM is engineered to exceed the limitations of standard web-based compilers thro
 SAM's "Good" isn't just a UI—it's **Operational Integrity**:
 - **Resource Gating**: We enforce a 5MB output boundary to protect multi-tenant infrastructure.
 - **Latency Masking**: Optimistic UI updates combined with Yjs ensuring zero "perceived" lag.
-- **Fail-Secure Routing**: If a local Docker worker is saturated, SAM instantly reroutes to high-availability Judge0/Piston clusters.
+- **Cold-Start Resilience**: Graceful edge-handling for serverless sleep states, providing explicit queue feedback instead of silent timeouts.
+- **Fail-Secure Routing**: If a local Docker worker is saturated, SAM instantly reroutes to high-availability Judge0/Piston clusters using hardened **Base64-encoded payloads** to guarantee 100% accurate compilation diagnostics, even on malformed code.
 
 ---
 
@@ -122,6 +123,8 @@ graph TD
 
 Built for high-focus environments, SAM features an ultra-dark, borderless interface with subtle glassmorphism—designed to get out of your way and let the code breathe.
 
+- **Transparent Console**: `XTerm.js` integrated seamlessly with a transparent background, matching the parent glass surface perfectly.
+- **Neon Accent Indicators**: Dynamic CSS linear-gradient footers that respond to the application's theme (Dark/Light mode).
 - **Non-Blocking Execution**: Run heavy computations in the background while continuing to type.
 - **Micro-Animations**: 60FPS Framer-Motion transitions across panels.
 - **Global Sync**: Real-time cursor presence and typing with sub-10ms conflict resolution.
@@ -146,5 +149,5 @@ SAM is hardened against the standard vulnerabilities of online compilers:
     <img src="https://img.shields.io/badge/-SYED_MUKHEETH-black?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn">
   </a>
   <br><br>
-  <sub>v3.9.0-ULTRA | Obsidian Principal Edition</sub>
+  <sub>v4.0.0-ULTRA | Obsidian Principal Edition</sub>
 </div>
