@@ -251,25 +251,7 @@ function AiPanel({
   const isDark = theme === 'dark';
   const hasTriggeredInitial = useRef(false);
 
-  useEffect(() => {
-    if (initialPrompt && isOpen && !hasTriggeredInitial.current) {
-      sendMessage(initialPrompt);
-      hasTriggeredInitial.current = true;
-    }
-  }, [initialPrompt, isOpen, sendMessage]);
 
-  // Reset trigger when prompt changes
-  useEffect(() => {
-    if (initialPrompt) {
-       hasTriggeredInitial.current = false;
-    }
-  }, [initialPrompt]);
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages, loading]);
 
   const sendMessage = useCallback(async (prompt) => {
     if (!prompt?.trim() || loading) return;
@@ -367,6 +349,26 @@ function AiPanel({
     e?.preventDefault();
     sendMessage(input);
   }, [input, sendMessage]);
+
+  useEffect(() => {
+    if (initialPrompt && isOpen && !hasTriggeredInitial.current) {
+      sendMessage(initialPrompt);
+      hasTriggeredInitial.current = true;
+    }
+  }, [initialPrompt, isOpen, sendMessage]);
+
+  // Reset trigger when prompt changes
+  useEffect(() => {
+    if (initialPrompt) {
+       hasTriggeredInitial.current = false;
+    }
+  }, [initialPrompt]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages, loading]);
 
   const quickActions = [
     {

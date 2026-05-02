@@ -874,7 +874,14 @@ builtins.input = input_shim
     const handleKeyDown = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); onRun(); }
       if ((e.metaKey || e.ctrlKey) && e.key === "l") { e.preventDefault(); onClear(); }
-      if ((e.metaKey || e.ctrlKey) && e.key === "/") { e.preventDefault(); setShowAiPanel(prev => !prev); }
+      if ((e.metaKey || e.ctrlKey) && e.key === "/") {
+        e.preventDefault();
+        setShowAiPanel(prev => {
+          if (!prev) setEditorWidth(33.33);
+          else setEditorWidth(50);
+          return !prev;
+        });
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -1465,7 +1472,10 @@ builtins.input = input_shim
                       className="absolute bottom-6 right-6 z-30"
                     >
                       <button
-                        onClick={() => setShowAiPanel(true)}
+                        onClick={() => {
+                          setShowAiPanel(true);
+                          setEditorWidth(33.33);
+                        }}
                         className="flex items-center gap-2.5 rounded-2xl bg-white px-5 py-3.5 text-[11px] font-black uppercase tracking-widest text-black shadow-[0_8px_32px_rgba(255,255,255,0.3)] transition-all hover:scale-105 active:scale-95"
                       >
                         <Sparkles className="h-3.5 w-3.5" />
@@ -1603,7 +1613,10 @@ hello world
             }>
               <AiPanel 
                 isOpen={showAiPanel}
-                onClose={() => setShowAiPanel(false)}
+                onClose={() => {
+                  setShowAiPanel(false);
+                  setEditorWidth(50); // Reset to 50/50 when closed
+                }}
                 currentCode={buffers[activeLangId]}
                 language={activeLangId}
                 onApplyRefactor={(refactoredCode) => {
