@@ -119,7 +119,6 @@ export default function EditorPage() {
   const [pendingAiPrompt, setPendingAiPrompt] = useState(null);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeMobileTab, setActiveMobileTab] = useState('editor');
   const [stdin, setStdin] = useState("");
   const [showInputPanel, setShowInputPanel] = useState(true);
   
@@ -1396,7 +1395,9 @@ builtins.input = input_shim
                 <div style={{ fontSize: 10, fontWeight: 950, textTransform: 'uppercase', letterSpacing: '0.25em', color: runStatus === 'Failed' ? '#FF3B3B' : 'var(--sam-text-muted)', fontFamily: 'var(--font-body)' }}>{runStatus}</div>
               </div>
               
+              {/* Terminal Body */}
               <div className="flex-1 overflow-hidden relative" style={{ background: 'var(--sam-surface)' }}>
+                {/* 1. Engine Cold Start Overlay */}
                 <AnimatePresence>
                   {isColdStarting && (
                     <motion.div 
@@ -1415,9 +1416,10 @@ builtins.input = input_shim
                   )}
                 </AnimatePresence>
 
-                <div id="terminal-container" className="h-full w-full" />
+                {/* 2. Actual XTerm Instance Mount Point */}
+                <div ref={terminalRef} id="terminal-container" className="h-full w-full overflow-hidden" style={{ padding: '10px' }} />
 
-                {/* Contextual AI Error Trigger */}
+                {/* 3. Contextual AI Error Trigger */}
                 <AnimatePresence>
                   {pendingAiPrompt && !showAiPanel && (
                     <motion.div
@@ -1436,24 +1438,21 @@ builtins.input = input_shim
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </div>
 
-                {/* 🚀 MOBILE EXECUTING OVERLAY */}
-                {isMobile && busy && (
-                  <motion.div 
-                    initial={{ opacity: 0 }} 
-                    animate={{ opacity: 1 }} 
-                    className="absolute inset-0 z-50 flex items-center justify-center backdrop-blur-[2px] bg-black/5"
-                  >
-                    <div className="flex items-center gap-3 px-6 py-3 rounded-full border border-white/10 bg-black/80 shadow-2xl">
-                      <Loader2 className="h-4 w-4 text-white animate-spin" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white">Executing...</span>
-                    </div>
-                  </motion.div>
-                )}
-                <div ref={terminalRef} className="h-full w-full overflow-hidden" 
-                   style={{ padding: '10px' }} 
-                />
+                {/* 4. Mobile Execution Overlay */}
+                <AnimatePresence>
+                  {isMobile && busy && (
+                    <motion.div 
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                      className="absolute inset-0 z-50 flex items-center justify-center backdrop-blur-[2px] bg-black/5"
+                    >
+                      <div className="flex items-center gap-3 px-6 py-3 rounded-full border border-white/10 bg-black/80 shadow-2xl">
+                        <Loader2 className="h-4 w-4 text-white animate-spin" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white">Executing...</span>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
   
               <div className="flex h-8 md:h-10 shrink-0 items-center justify-between px-4 md:px-6" style={{ borderTop: '1px solid var(--sam-glass-border)', background: 'var(--sam-surface-low)' }}>
