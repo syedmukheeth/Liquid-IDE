@@ -59,7 +59,9 @@ function MessageBubble({ msg, theme, onApplyRefactor, isLast }) {
     setTimeout(() => setCopied(false), 2000);
   }, [msg.content]);
 
-  const MarkdownComponents = {
+  const remarkPlugins = React.useMemo(() => [remarkGfm], []);
+
+  const MarkdownComponents = React.useMemo(() => ({
     h1: ({ children }) => <h1 className={`text-xl font-black mb-4 tracking-tighter ${isDark ? 'text-white' : 'text-slate-900'}`}>{children}</h1>,
     h2: ({ children }) => <h2 className={`text-lg font-bold mb-3 ${isDark ? 'text-white/90' : 'text-slate-900'}`}>{children}</h2>,
     h3: ({ children }) => <h3 className={`text-base font-bold mb-2 ${isDark ? 'text-white/80' : 'text-slate-800'}`}>{children}</h3>,
@@ -142,7 +144,7 @@ function MessageBubble({ msg, theme, onApplyRefactor, isLast }) {
         {children} <ExternalLink size={10} />
       </a>
     ),
-  };
+  }), [isDark, onApplyRefactor]);
 
   return (
     <motion.div
@@ -171,7 +173,7 @@ function MessageBubble({ msg, theme, onApplyRefactor, isLast }) {
               <span>{msg.content}</span>
             </div>
           ) : (
-            <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents}>
+            <ReactMarkdown remarkPlugins={remarkPlugins} components={MarkdownComponents}>
               {msg.content}
             </ReactMarkdown>
           )}
@@ -191,8 +193,43 @@ function MessageBubble({ msg, theme, onApplyRefactor, isLast }) {
   );
 }
 
-// ── Main AiPanel ─────────────────────────────────────────────────────────────
-export default function AiPanel({
+class AiPanelErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("AiPanel Error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ color: 'red', padding: '20px', background: '#333', zIndex: 9999, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+          <h2>AiPanel Crashed!</h2>
+          <pre style={{ whiteSpace: 'pre-wrap' }}>{this.state.error?.toString()}</pre>
+          <pre style={{ whiteSpace: 'pre-wrap' }}>{this.state.error?.stack}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export default function AiPanelWrapper(props) {
+  return (
+    <AiPanelErrorBoundary>
+      <AiPanel {...props} />
+    </AiPanelErrorBoundary>
+  );
+}
+
+function AiPanel({
   isOpen,
   onClose,
   currentCode,
