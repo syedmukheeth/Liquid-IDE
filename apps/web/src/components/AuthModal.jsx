@@ -134,7 +134,10 @@ export default function AuthModal({ isOpen, onClose, isDarkMode, onLogin, theme 
               Continue with Google
             </button>
             <button
-              onClick={onClose}
+              onClick={() => {
+                localStorage.setItem('sam_is_guest', '1');
+                onClose();
+              }}
               style={{
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
                 padding: "16px 0", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)",

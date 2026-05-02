@@ -73,7 +73,15 @@ export default function EditorPage() {
   // --- 1. Framework Hooks (High Priority) ---
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, token, loginUser, logoutUser } = useAuth();
+  const [isGuest, setIsGuest] = useState(() => localStorage.getItem('sam_is_guest') === '1');
 
+  // Clear guest flag when a real user logs in
+  useEffect(() => {
+    if (user) {
+      localStorage.removeItem('sam_is_guest');
+      setIsGuest(false);
+    }
+  }, [user]);
   // --- 2. State Hooks ---
   const [activeLangId, setActiveLangId] = useState(() => {
     if (typeof localStorage !== 'undefined') {
@@ -1000,6 +1008,30 @@ builtins.input = input_shim
                   style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover' }}
                 />
               </div>
+            ) : isGuest ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '4px 12px',
+                  borderRadius: 20,
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  background: 'rgba(255,255,255,0.04)',
+                }}>
+                  <span style={{ fontSize: 9, fontWeight: 900, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)' }}>Guest</span>
+                </div>
+                <button
+                  id="signin-btn"
+                  onClick={() => setActiveModal('auth')}
+                  style={{
+                    fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: 'var(--sam-text-dim)', padding: '4px 8px', borderRadius: 8,
+                    transition: 'color 0.2s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--sam-text)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--sam-text-dim)'}
+                >Sign In</button>
+              </div>
             ) : (
               <button
                 id="signin-btn"
@@ -1008,14 +1040,7 @@ builtins.input = input_shim
               >Sign In</button>
             )}
             
-            {/* 🔥 INTERVIEW MODE: Engine Status Pill */}
-            <div className="flex items-center gap-2">
-              {!user && (
-                <div className="flex items-center px-3 py-1 rounded-full border border-white/5 bg-white/5">
-                  <span className="text-[8px] font-black tracking-[0.2em] text-white/30 uppercase">Guest</span>
-                </div>
-              )}
-              <div className={`sam-engine-indicator ${isEngineReady ? 'is-live' : 'is-preparing'}`}>
+            <div className={`sam-engine-indicator ${isEngineReady ? 'is-live' : 'is-preparing'}`}>
                 <div className="indicator-dot"></div>
                 <span className="indicator-text">
                   {engineMode === 'primary' ? 'ENGINE LIVE' : 
@@ -1023,7 +1048,6 @@ builtins.input = input_shim
                    'PREPARING ENGINE'}
                 </span>
               </div>
-            </div>
           </div>
 
           <div className="flex items-center gap-1.5 md:gap-3">
@@ -1126,7 +1150,7 @@ builtins.input = input_shim
                    })}
                 </div>
 
-                {!user && (
+                {!user && !isGuest && (
                    <div className="flex flex-col gap-2">
                      <button 
                       onClick={() => { setActiveModal('auth'); setMobileMenuOpen(false); }}
@@ -1135,12 +1159,24 @@ builtins.input = input_shim
                       Sign In to SAM
                     </button>
                     <button 
-                      onClick={() => setMobileMenuOpen(false)}
+                      onClick={() => {
+                        localStorage.setItem('sam_is_guest', '1');
+                        setIsGuest(true);
+                        setMobileMenuOpen(false);
+                      }}
                       className="w-full p-4 rounded-xl text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 border border-white/5 bg-white/5"
                     >
                       Continue as Guest
                     </button>
                    </div>
+                )}
+                {!user && isGuest && (
+                  <button 
+                    onClick={() => { setActiveModal('auth'); setMobileMenuOpen(false); }}
+                    className="w-full sam-button-primary p-4 rounded-xl text-xs font-black uppercase tracking-widest"
+                  >
+                    Sign In to SAM
+                  </button>
                 )}
 
                 {user && (
