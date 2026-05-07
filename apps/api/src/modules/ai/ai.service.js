@@ -5,11 +5,11 @@ const { logger } = require("../../config/logger");
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
 
-// SAM AI Configuration - Priority list for fallback resilience
+// SAM AI Configuration - Priority list for fallback resilience (Updated for May 2026)
 const MODELS = [
-  "gemini-2.0-flash-exp",
-  env.GEMINI_MODEL,
-  "gemini-1.5-pro"
+  "gemini-2.5-flash",
+  "gemini-2.5-pro",
+  "gemini-2.0-flash"
 ];
 
 const SAM_AI_PERSONA = `
