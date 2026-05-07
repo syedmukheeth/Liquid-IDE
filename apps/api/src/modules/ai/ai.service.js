@@ -8,7 +8,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "dummy-key");
 const MODELS = [
   process.env.GEMINI_MODEL || "gemini-1.5-flash",
   "gemini-1.5-pro",
-  "gemini-pro"
+  "gemini-1.5-flash-002"
 ];
 
 const SAM_AI_PERSONA = `
@@ -90,7 +90,12 @@ ${code}
       });
     } catch (err) {
       logger.warn({ model: modelName, error: err.message }, "AI model fallback triggered in generateRefactor");
-      if (modelName === MODELS[MODELS.length - 1]) throw err; // Re-throw if last resort fails
+      if (modelName === MODELS[MODELS.length - 1]) {
+        const isConfig = err.message.includes("404") || err.message.includes("403");
+        let userMessage = "AI Assistant is currently facing high demand. Please try again in a moment.";
+        if (isConfig) userMessage = "AI Assistant configuration error.";
+        throw new Error(`${userMessage} (${err.message})`);
+      }
     }
   }
 }
@@ -151,7 +156,13 @@ async function streamChat(context, onChunk) {
     } catch (err) {
       logger.warn({ model: modelName, error: err.message }, "AI model fallback triggered in streamChat");
       if (modelName === MODELS[MODELS.length - 1]) {
-        throw new Error(`AI Assistant is currently facing high demand. Please try again in a moment. (${err.message})`);
+        const isQuota = err.message.includes("429") || err.message.toLowerCase().includes("quota");
+        const isConfig = err.message.includes("404") || err.message.includes("403");
+        
+        let userMessage = "AI Assistant is currently facing high demand. Please try again in a moment.";
+        if (isConfig) userMessage = "AI Assistant configuration error. Please contact support.";
+        
+        throw new Error(`${userMessage} (${err.message})`);
       }
     }
   }
