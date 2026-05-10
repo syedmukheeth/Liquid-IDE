@@ -15,15 +15,11 @@ When suggesting code, always provide the FULL file content in a markdown code bl
 Be helpful, concise, and focused on helping the user learn and build.
 `;
 
-// Priority models for each provider
-// Priority models for each provider (Stable versions)
-const GEMINI_MODELS = ["gemini-1.5-flash", "gemini-1.5-pro"];
-const OPENAI_MODELS = ["gpt-4o-mini", "gpt-4-turbo"];
-
-// Log AI health on initialization
-const geminiKeysCount = (env.GEMINI_API_KEY || "").split(",").filter(Boolean).length;
-const openAIKeysCount = (env.OPENAI_API_KEYS || "").split(",").filter(Boolean).length;
-logger.info({ geminiKeys: geminiKeysCount, openAIKeys: openAIKeysCount }, "AI Engine initialized with multi-provider queue");
+// Client Caches (Singletons to minimize initialization overhead)
+const clientCache = {
+  gemini: new Map(),
+  openai: new Map()
+};
 
 /**
  * Robust retry wrapper for transient AI failures (503, 429)
@@ -52,7 +48,7 @@ async function withRetry(fn, maxRetries = 1) {
       if (!isRetryable || i === maxRetries) throw err;
       
       logger.warn({ attempt: i + 1, err: err.message }, "Transient AI failure, retrying once...");
-      await new Promise(r => setTimeout(r, 500)); // Fast retry
+      await new Promise(r => setTimeout(r, 400)); // Ultra-fast retry delay
     }
   }
   throw lastErr;
@@ -69,15 +65,11 @@ async function streamChat(context, onChunk) {
 
   const providers = [];
 
-  // PHASE 1: Try the fastest models for all keys first (Interleaved for high availability)
-  // This ensures we don't get stuck on one dead key trying multiple models.
-  
-  // Best OpenAI option for each key
+  // PHASE 1: Try the fastest models for all keys first (Interleaved)
   openAIKeys.forEach(key => providers.push({ type: "openai", key, model: OPENAI_MODELS[0] }));
-  // Best Gemini option for each key
   geminiKeys.forEach(key => providers.push({ type: "gemini", key, model: GEMINI_MODELS[0] }));
   
-  // PHASE 2: Fallback models for all keys
+  // PHASE 2: Fallback models
   if (OPENAI_MODELS[1]) {
     openAIKeys.forEach(key => providers.push({ type: "openai", key, model: OPENAI_MODELS[1] }));
   }
@@ -85,20 +77,17 @@ async function streamChat(context, onChunk) {
     geminiKeys.forEach(key => providers.push({ type: "gemini", key, model: GEMINI_MODELS[1] }));
   }
 
-  // Ensure we have at least one provider
   if (providers.length === 0) {
     logger.error("No AI Provider keys configured");
     return triggerOfflineFallback(onChunk, true);
   }
 
-  // LIMIT: Only try up to 5 providers per request to avoid extreme latency
-  const maxAttempts = Math.min(providers.length, 5);
+  // LIMIT: Only try up to 4 providers per request to keep latency low
+  const maxAttempts = Math.min(providers.length, 4);
 
   for (let i = 0; i < maxAttempts; i++) {
     const p = providers[i];
     try {
-      logger.info({ type: p.type, model: p.model, attempt: i + 1 }, "Attempting AI Generation");
-      
       if (p.type === "gemini") {
         await streamGemini(p, context, onChunk);
       } else {
@@ -113,14 +102,19 @@ async function streamChat(context, onChunk) {
       if (isLast) {
         return triggerOfflineFallback(onChunk, errorMsg.includes("404") || errorMsg.includes("403"));
       }
-      // Continue to next provider in the intelligent queue
     }
   }
 }
 
 async function streamGemini(p, context, onChunk) {
   const { code, language, messages } = context;
-  const genAI = new GoogleGenerativeAI(p.key);
+  
+  // Get or Create Cached Client
+  if (!clientCache.gemini.has(p.key)) {
+    clientCache.gemini.set(p.key, new GoogleGenerativeAI(p.key));
+  }
+  const genAI = clientCache.gemini.get(p.key);
+  
   const model = genAI.getGenerativeModel({ 
     model: p.model,
     systemInstruction: `${SAM_AI_PERSONA}\n\nLanguage: ${language}\nCurrent file content:\n\n${code}`
@@ -151,7 +145,16 @@ async function streamGemini(p, context, onChunk) {
 
 async function streamOpenAI(p, context, onChunk) {
   const { code, language, messages } = context;
-  const openai = new OpenAI({ apiKey: p.key });
+  
+  // Get or Create Cached Client with Keep-Alive
+  if (!clientCache.openai.has(p.key)) {
+    clientCache.openai.set(p.key, new OpenAI({ 
+      apiKey: p.key,
+      maxRetries: 0,
+      timeout: 20000 
+    }));
+  }
+  const openai = clientCache.openai.get(p.key);
 
   const systemMsg = {
     role: "system",
@@ -190,7 +193,7 @@ async function triggerOfflineFallback(onChunk, isConfigError) {
   const chunks = offlineMsg.split(" ");
   for (let i = 0; i < chunks.length; i++) {
      onChunk(chunks[i] + " ");
-     await new Promise(r => setTimeout(r, 40));
+     await new Promise(r => setTimeout(r, 20)); // High-speed fallback
   }
 }
 
