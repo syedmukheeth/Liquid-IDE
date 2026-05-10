@@ -1681,6 +1681,20 @@ builtins.input = input_shim
                   onApplyRefactor={(refactoredCode) => {
                     setBuffers(prev => ({ ...prev, [activeLangId]: refactoredCode }));
                     window.dispatchEvent(new CustomEvent('sam-editor-reset', { detail: { template: refactoredCode } }));
+                    if (isMobile) {
+                      setActiveMobileTab('editor');
+                      toast.success("Refactor Applied!", {
+                        style: {
+                          background: theme === 'dark' ? '#0A0A0A' : '#FFFFFF',
+                          color: theme === 'dark' ? '#FFFFFF' : '#000000',
+                          border: '1px solid var(--sam-glass-border)',
+                          fontSize: '9px',
+                          fontWeight: '900',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.1em'
+                        }
+                      });
+                    }
                   }}
                   theme={theme}
                   isMobile={isMobile}
