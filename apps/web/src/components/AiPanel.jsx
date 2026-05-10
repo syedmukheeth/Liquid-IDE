@@ -490,12 +490,6 @@ function AiPanel({
         </form>
       </div>
 
-      {/* Footer */}
-      <div className={`flex h-8 shrink-0 items-center justify-center border-t ${isDark ? 'border-white/5' : 'border-slate-100'}`} style={{ background: 'var(--sam-surface-low)' }}>
-        <span style={{ fontSize: 8, fontBold: 900, textTransform: 'uppercase', letterSpacing: '0.25em', color: 'var(--sam-text)', opacity: 0.3, fontWeight: 900 }}>
-          Powered by Gemini · SAM AI
-        </span>
-      </div>
     </div>
   );
 }
