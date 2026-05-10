@@ -47,7 +47,7 @@ export function getSocket(tokenArg) {
       console.warn("⚠️ [SAM] Connection taking longer than expected. Engine might be waking up (Cold Start).");
       emitStatus(SOCKET_STATES.WAKING);
     }
-  }, 5000); // Increased to 5s for better cold-start detection
+  }, 12000); // Increased to 12s for better cold-start detection
 
   socket = io(endpoint, {
     auth: { token },

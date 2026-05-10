@@ -886,6 +886,10 @@ builtins.input = input_shim
     const delay = isMobile ? 300 : 100; // 🕒 LONGER DELAY for mobile tab transitions
     const timer = setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
+      // ⚡ EXPLICIT MONACO LAYOUT: Force editor to re-calculate dimensions
+      if (window.samEditor && (!isMobile || activeMobileTab === 'editor')) {
+        window.samEditor.layout();
+      }
       safeFit();
     }, delay);
     return () => clearTimeout(timer);
@@ -1207,7 +1211,7 @@ builtins.input = input_shim
                 color: showAiPanel ? 'var(--sam-accent)' : 'var(--sam-text-dim)',
               }}
             >
-              <Sparkles className={`h-4 w-4 ${showAiPanel ? 'animate-pulse' : ''}`} />
+              <Sparkles className={`h-4 w-4 pointer-events-none ${showAiPanel ? 'animate-pulse' : ''}`} />
               <span className="hidden sm:inline text-[10px] font-black uppercase tracking-widest">SAM AI</span>
             </button>
 
@@ -1505,7 +1509,7 @@ builtins.input = input_shim
                         }}
                         className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-blue-500/30 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-all shadow-[0_0_15px_rgba(59,130,246,0.1)] ml-2"
                       >
-                        <Sparkles className="h-3 w-3 animate-pulse" />
+                        <Sparkles className="h-3 w-3 animate-pulse pointer-events-none" />
                         <span className="text-[9px] font-black uppercase tracking-widest">Explain Error</span>
                       </motion.button>
                     )}
