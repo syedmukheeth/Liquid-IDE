@@ -16,6 +16,21 @@ async function main() {
   
   initSocket(server);
 
+  // ⚡ RESILIENCE ENGINE: Initialize AI Background Worker
+  const { initAiWorker } = require("./modules/ai/ai.worker");
+  initAiWorker();
+
+  // 💓 HEARTBEAT: Prevent Render/Railway from sleeping (Self-Warming)
+  setInterval(() => {
+    // Ping self to stay warm
+    const selfUrl = `http://localhost:${env.PORT}/api/health`; 
+    http.get(selfUrl, (res) => {
+      logger.info({ status: res.statusCode }, "Heartbeat pulse sent to self to prevent cold start");
+    }).on("error", (err) => {
+      // Ignored - as long as it triggers some activity
+    });
+  }, 10 * 60 * 1000); // Pulse every 10 minutes
+
   server.listen(env.PORT, () => {
     logger.info(`SAM Compiler API listening on port ${env.PORT}`);
     console.log(`🚀 API Server ready on http://localhost:${env.PORT}`);

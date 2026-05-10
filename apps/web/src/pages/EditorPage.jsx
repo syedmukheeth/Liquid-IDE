@@ -138,6 +138,9 @@ export default function EditorPage() {
     } catch (e) { return { fontSize: 14, tabSize: 2 }; }
   });
 
+  const [isAiThinking, setIsAiThinking] = useState(false);
+  const [aiJobId, setAiJobId] = useState(null);
+
   const onSettingsUpdate = useCallback((newSettings) => {
     setSettings(newSettings);
     localStorage.setItem("sam_settings", JSON.stringify(newSettings));
@@ -153,6 +156,75 @@ export default function EditorPage() {
   const isMounted = useRef(true);
 
   // --- 4. Logic & Memoization ---
+
+  // AI PERSISTENCE ENGINE: Listen for background results
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    const handleAiResult = (data) => {
+      const { result, error, jobId } = data;
+      
+      if (error) {
+        toast.error(`SAM AI: ${error}`, { duration: 5000 });
+        setIsAiThinking(false);
+        return;
+      }
+
+      if (result) {
+        setIsAiThinking(false);
+        toast.success("SAM AI: Code optimization complete!", { 
+          icon: '🚀',
+          duration: 6000 
+        });
+
+        // Trigger the apply logic
+        setBuffers(prev => ({ ...prev, [activeLangId]: result }));
+        window.dispatchEvent(new CustomEvent('sam-editor-reset', { detail: { template: result } }));
+      }
+    };
+
+    socket.on("ai:refactor:result", handleAiResult);
+    return () => socket.off("ai:refactor:result", handleAiResult);
+  }, [activeLangId]);
+
+  const handleAiOptimize = useCallback(async () => {
+    if (busy || isAiThinking) return;
+    
+    const socket = getSocket();
+    const code = buffers[activeLangId];
+    
+    setIsAiThinking(true);
+    toast.loading("SAM is analyzing your code...", { id: "ai-optimizing" });
+
+    try {
+      const response = await fetch(`${ENDPOINTS.API_BASE_URL}/ai/refactor`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code,
+          language: activeLangId,
+          socketId: socket?.id,
+          query: "Optimize this code for performance and readability."
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.async) {
+        toast.success("Task queued! SAM will update you shortly.", { id: "ai-optimizing" });
+      } else if (data.refactor) {
+        // Fallback synchronous result
+        setBuffers(prev => ({ ...prev, [activeLangId]: data.refactor }));
+        window.dispatchEvent(new CustomEvent('sam-editor-reset', { detail: { template: data.refactor } }));
+        setIsAiThinking(false);
+        toast.success("Optimization applied!", { id: "ai-optimizing" });
+      }
+    } catch (err) {
+      setIsAiThinking(false);
+      toast.error("AI service currently busy. Please try again.", { id: "ai-optimizing" });
+    }
+  }, [activeLangId, buffers, busy, isAiThinking]);
 
   const writeTypewriter = useCallback(async (term, text, speed = 5) => {
     if (!term) return;
@@ -1228,6 +1300,22 @@ builtins.input = input_shim
               <span className="hidden sm:inline text-[10px] font-black uppercase tracking-widest">SAM AI</span>
             </button>
 
+            {/* AI OPTIMIZE TRIGGER */}
+            <button 
+              onClick={handleAiOptimize}
+              disabled={isAiThinking}
+              className={`flex h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-auto md:px-4 items-center justify-center gap-2 rounded-xl border transition-all duration-300 shrink-0 ${isAiThinking ? 'animate-pulse cursor-wait' : ''}`}
+              style={{ 
+                background: isAiThinking ? 'var(--sam-accent-muted)' : 'var(--sam-surface-low)',
+                borderColor: isAiThinking ? 'var(--sam-accent)' : 'var(--sam-glass-border)',
+                color: isAiThinking ? 'var(--sam-accent)' : 'var(--sam-text-dim)',
+              }}
+              title="Optimize Code with SAM AI"
+            >
+              {isAiThinking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+              <span className="hidden sm:inline text-[10px] font-black uppercase tracking-widest">Optimize</span>
+            </button>
+
             {/* Desktop-only secondary actions */}
             <div className="hidden lg:flex items-center gap-2">
               <button 
@@ -1754,6 +1842,7 @@ builtins.input = input_shim
           onShowAbout={() => setActiveModal('about')}
           theme={theme}
           busy={busy}
+          isAiThinking={isAiThinking}
         />
       </footer>
 
