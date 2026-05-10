@@ -234,6 +234,8 @@ const CodeEditor = ({
           renderLineHighlight: "none",
           renderIndentGuides: true,
           guides: { indentation: true },
+          accessibilitySupport: "off",
+          contextmenu: false,
           backgroundColor: "#00000000"
         }}
         loading={<div className="flex h-full items-center justify-center text-blue-500/20 font-black uppercase tracking-widest animate-pulse">Initializing Collaborative Layer</div>}
