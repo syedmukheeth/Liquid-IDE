@@ -17,7 +17,7 @@
     <img src="https://img.shields.io/badge/Architecture-Distributed-white?style=for-the-badge&labelColor=black" alt="Distributed">
     <img src="https://img.shields.io/badge/Security-Hardened-white?style=for-the-badge&labelColor=black" alt="Hardened">
     <img src="https://img.shields.io/badge/Sync-CRDT_Yjs-white?style=for-the-badge&labelColor=black" alt="Yjs">
-    <img src="https://img.shields.io/badge/AI-Gemini_1.5_Flash-white?style=for-the-badge&labelColor=black" alt="Gemini AI">
+    <img src="https://img.shields.io/badge/AI-Multi--Provider_Failover-white?style=for-the-badge&labelColor=black" alt="High Availability AI">
   </p>
 
   <br>
@@ -44,7 +44,7 @@ SAM is engineered to exceed the limitations of standard web-based compilers thro
 | 🔄 **State Sync** | **CRDT (Yjs)**: Conflict-free binary state sync with sub-10ms resolution. | **Naive JSON**: Prone to race conditions and "Code Soup". |
 | 🛡️ **Isolation** | **Dockerized Sandboxing**: Cgroup-restricted ephemeral containers. | **Process-based**: Vulnerable to system-level resource exhaustion. |
 | 📡 **Connectivity** | **Fail-Secure Topology**: Multi-layered WebSocket heartbeats with BullMQ persistence. | **Brittle Channels**: Disconnects result in total state loss. |
-| 🧠 **Intelligence** | **Gemini 1.5 Flash**: Principal-grade context-aware diagnostics & refactoring. | **Basic Wrappers**: Generic completions without project context. |
+| 🧠 **Intelligence** | **High-Availability Engine**: Multi-provider failover (OpenAI + Gemini) with automated fallback queue. | **Single-Point Failure**: Simple wrappers that crash if a single API key or model is deprecated. |
 | 🎨 **UX/UI** | **Digital Obsidian**: 60FPS glassmorphism with optimized mobile reflex. | **Bootstrap/Generic**: Cluttered interfaces with high perceived lag. |
 
 ---
@@ -108,6 +108,7 @@ graph TD
   <br><br>
   
   <h3>Intelligence & Infrastructure</h3>
+  <img src="https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white" alt="OpenAI">
   <img src="https://img.shields.io/badge/Google_Gemini-8E75C2?style=for-the-badge&logo=googlegemini&logoColor=white" alt="Gemini">
   <img src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Vercel">
   <img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white" alt="GitHub Actions">
@@ -154,6 +155,7 @@ Copy the example environment files and populate them with your secrets.
 | `MONGO_URI` | MongoDB Connection String | `mongodb://root:rootpassword@localhost:27017` |
 | `REDIS_URL` | Redis Connection String | `redis://localhost:6379` |
 | `GEMINI_API_KEY` | Google Gemini API Key | `REQUIRED` |
+| `OPENAI_API_KEYS` | Comma-separated list of OpenAI Keys | `OPTIONAL (Fallback)` |
 | `JWT_SECRET` | Secret for Authentication | `at_least_32_chars` |
 
 **For Worker (`apps/worker/.env`):**
@@ -185,7 +187,7 @@ SAM features an ultra-dark, borderless interface with subtle glassmorphism—des
 
 - **Responsive Reflex Architecture**: Dynamically stacks from a 3-column diagnostic IDE (Desktop) to a vertical fluid stream (Mobile).
 - **60FPS Micro-Animations**: Powered by Framer Motion, providing tactile feedback for every interaction.
-- **Intelligent Diagnostics**: Built-in SAM AI (Gemini 1.5 Flash) provides instant refactoring suggestions and bug fixes.
+- **Intelligent Diagnostics**: Built-in **SAM Sentinel Engine** (OpenAI + Gemini) provides instant, redundant refactoring suggestions that never go offline.
 - **Sticky Execution**: A globally accessible "Run Code" FAB on mobile, ensuring triggers are always within thumb's reach.
 
 ---
