@@ -23,7 +23,7 @@ import { Link, useSearchParams } from "react-router-dom";
 
 import { 
   Sparkles, Keyboard, Clock, Menu, X, Play, Check, RotateCcw, 
-  CircleHelp, Loader2, Code2, Terminal as TerminalIcon 
+  CircleHelp, Loader2 
 } from "lucide-react";
 import toast, { Toaster } from 'react-hot-toast';
 import { motion, AnimatePresence } from "framer-motion";
@@ -100,14 +100,14 @@ export default function EditorPage() {
     } catch (e) {}
     return Object.fromEntries(Object.entries(languageConfigs).map(([id, cfg]) => [id, cfg.template]));
   });
-  const [isColdStarting, setIsColdStarting] = useState(false);
+  const [isColdStarting] = useState(false);
   const [runStatus, setRunStatus] = useState("Ready");
   const [theme, setTheme] = useState(() => localStorage.getItem('sam-theme') || 'dark');
   const [busy, setBusy] = useState(false);
   const [activeModal, setActiveModal] = useState(null); 
   const [showAiPanel, setShowAiPanel] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [isWorkerOnline, setIsWorkerOnline] = useState(false);
+
   const [isEngineReady, setIsEngineReady] = useState(false);
   const [engineMode, setEngineMode] = useState("preparing");
   const [failSafeActive, setFailSafeActive] = useState(false);
@@ -124,6 +124,7 @@ export default function EditorPage() {
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
   const [pyodide, setPyodide] = useState(null);
+
   const [isPyodideLoading, setIsPyodideLoading] = useState(false);
   const [pendingAiPrompt, setPendingAiPrompt] = useState(null);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
@@ -138,7 +139,6 @@ export default function EditorPage() {
     } catch (e) { return { fontSize: 14, tabSize: 2 }; }
   });
 
-  const [busy, setBusy] = useState(false);
 
   const onSettingsUpdate = useCallback((newSettings) => {
     setSettings(newSettings);
@@ -156,13 +156,7 @@ export default function EditorPage() {
 
   // --- 4. Logic & Memoization ---
 
-  const writeTypewriter = useCallback(async (term, text, speed = 5) => {
-    if (!term) return;
-    for (const char of text) {
-      term.write(char);
-      if (speed > 0) await new Promise(resolve => setTimeout(resolve, speed));
-    }
-  }, []);
+
 
   // --- Helpers & Logic ---
 
@@ -191,12 +185,8 @@ export default function EditorPage() {
   // 🛰️ DIAGNOSTIC ENGINE: Render line with high-fidelity colorization
   const renderDiagnosticLine = useCallback((line, hasError) => {
     if (!line) return "";
-    const reset = "\x1b[0m";
     const dim = "\x1b[2m";
-    const bold = "\x1b[1m";
-    const red = "\x1b[31m";
     const white = "\x1b[37m";
-    const boldRed = "\x1b[1;31m";
     
     // GCC/Clang Error Format: file:line:col: error: message
     const gccRegex = /^([^:\n]+):(\d+):(?:(\d+):)?\s+(error|warning|fatal error):\s+(.*)/i;

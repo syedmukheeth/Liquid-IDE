@@ -24,7 +24,7 @@ async function main() {
     const selfUrl = `http://localhost:${env.PORT}/api/health`; 
     http.get(selfUrl, (res) => {
       logger.info({ status: res.statusCode }, "Heartbeat pulse sent to self to prevent cold start");
-    }).on("error", (err) => {
+    }).on("error", () => {
       // Ignored - as long as it triggers some activity
     });
   }, 10 * 60 * 1000); // Pulse every 10 minutes

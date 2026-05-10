@@ -23,7 +23,7 @@ if ('serviceWorker' in navigator) {
         window.caches.delete(name);
       }
     });
-    sessionStorage.clear();
+    window.sessionStorage.clear();
     // Only reload once if we found stuff to clear
     if (localStorage.getItem("sam_reset_v6")) {
       // already reset
@@ -35,9 +35,9 @@ if ('serviceWorker' in navigator) {
 
 // 🛡️ SECURITY: Wipe all old caches to prevent Workbox/PWA fetch interception
 if ('caches' in window) {
-  caches.keys().then((names) => {
+  window.caches.keys().then((names) => {
     for (let name of names) {
-      caches.delete(name);
+      window.caches.delete(name);
       console.log(`🗑️ [SAM Compiler] Cache cleared: ${name}`);
     }
   });

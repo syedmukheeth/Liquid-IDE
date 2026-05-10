@@ -1,5 +1,5 @@
 const { Router } = require("express");
-const { generateRefactor, streamChat } = require("./ai.service");
+const { streamChat } = require("./ai.service");
 const { logger } = require("../../config/logger");
 
 const aiRouter = Router();

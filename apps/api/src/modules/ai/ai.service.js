@@ -115,7 +115,6 @@ async function streamChat(context, onChunk) {
     } catch (err) {
       logger.warn({ model: modelName, error: err.message }, "AI model fallback triggered in streamChat");
       if (modelName === MODELS[MODELS.length - 1]) {
-        const isQuota = err.message.includes("429") || err.message.toLowerCase().includes("quota");
         const isConfig = err.message.includes("404") || err.message.includes("403");
         
         let userMessage = "AI Assistant is currently facing high demand. Please try again in a moment.";

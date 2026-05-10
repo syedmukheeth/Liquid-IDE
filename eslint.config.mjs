@@ -25,6 +25,8 @@ export default [
         setInterval: "readonly",
         clearInterval: "readonly",
         localStorage: "readonly",
+        sessionStorage: "readonly",
+        caches: "readonly",
         navigator: "readonly",
         console: "readonly",
         confirm: "readonly",
@@ -32,7 +34,10 @@ export default [
         URLSearchParams: "readonly",
         URL: "readonly",
         CustomEvent: "readonly",
-        Event: "readonly"
+        Event: "readonly",
+        TextDecoder: "readonly",
+        requestAnimationFrame: "readonly",
+        ResizeObserver: "readonly"
       }
     },
     rules: {
