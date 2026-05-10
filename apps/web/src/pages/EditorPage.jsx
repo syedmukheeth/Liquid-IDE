@@ -857,13 +857,26 @@ builtins.input = input_shim
       if (runRef.current.jobId) getSocket().emit("exec:input", { jobId: runRef.current.jobId, input: data });
     });
 
+    // ⚡ ELITE RESIZE WATCHER: Ensure terminal reflows perfectly when panels shift
+    const resizeObserver = new ResizeObserver(() => {
+      if (term && fitAddon) {
+        try {
+          if (terminalRef.current && terminalRef.current.offsetParent !== null) {
+            fitAddon.fit();
+          }
+        } catch (e) {}
+      }
+    });
+    if (terminalRef.current) resizeObserver.observe(terminalRef.current);
+
     window.addEventListener('resize', safeFit);
     return () => {
       window.removeEventListener('resize', safeFit);
+      resizeObserver.disconnect();
       term.dispose();
       xtermRef.current = null;
     };
-  }, [theme]);
+  }, [theme, safeFit]);
 
   // Safe Terminal Refit: Defense against dimension errors during layout shifts
   const safeFit = useCallback(() => {
@@ -1615,7 +1628,9 @@ builtins.input = input_shim
                 </AnimatePresence>
 
                 {/* 2. Actual XTerm Instance Mount Point */}
-                <div ref={terminalRef} id="terminal-container" className="h-full w-full overflow-hidden" style={{ padding: '10px' }} />
+                <div className="h-full w-full p-3 overflow-hidden">
+                  <div ref={terminalRef} id="terminal-container" className="h-full w-full" />
+                </div>
 
 
                 {/* 4. Mobile Execution Overlay */}
