@@ -959,7 +959,7 @@ builtins.input = input_shim
           <OfficialLogo theme={theme} size={28} />
           <div className="flex flex-col leading-none">
             <span className="font-black tracking-tight text-[15px] uppercase italic" style={{ fontFamily: 'var(--font-display)', color: 'var(--sam-text)' }}>SAM</span>
-            <span className="text-[8px] font-black uppercase tracking-[0.35em] opacity-40 -mt-0.5" style={{ color: 'var(--sam-text)' }}>Compiler</span>
+            <span className="text-[8px] font-black uppercase tracking-[0.35em] opacity-60 -mt-0.5" style={{ color: 'var(--sam-text)' }}>Compiler</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -1091,7 +1091,7 @@ builtins.input = input_shim
               </div>
               <div className={`flex flex-col leading-[0.9] mt-1 relative scale-[0.75] sm:scale-100 origin-left -ml-1 sm:ml-0 ${isMobile ? 'hidden sm:flex' : 'flex'}`}>
                 <span className="font-black tracking-tight text-[16px] sm:text-[18px] uppercase italic" style={{ fontFamily: 'var(--font-display)', color: 'var(--sam-text)' }}>SAM</span>
-                <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.35em] opacity-40 ml-0.5" style={{ color: 'var(--sam-text)' }}>Compiler</span>
+                <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.35em] opacity-60 ml-0.5" style={{ color: 'var(--sam-text)' }}>Compiler</span>
               </div>
             </div>
           </div>
@@ -1228,7 +1228,7 @@ builtins.input = input_shim
               style={{ 
                 background: showAiPanel ? 'var(--sam-accent-muted)' : 'var(--sam-surface-low)',
                 borderColor: showAiPanel ? 'var(--sam-accent)' : 'var(--sam-glass-border)',
-                color: showAiPanel ? 'var(--sam-accent)' : 'var(--sam-text-dim)',
+                color: showAiPanel ? 'var(--sam-accent)' : 'var(--sam-text-muted)',
               }}
             >
               <Sparkles className={`h-4 w-4 pointer-events-none ${showAiPanel ? 'animate-pulse' : ''}`} />

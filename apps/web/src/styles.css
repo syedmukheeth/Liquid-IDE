@@ -34,7 +34,7 @@
 
   --sam-text:          #FFFFFF;
   --sam-text-muted:    #A3A3A3;
-  --sam-text-dim:      rgba(255,255,255,0.4);
+  --sam-text-dim:      rgba(255,255,255,0.6);
 
   /* === Elevation & Bloom === */
   --sam-glow-bloom:    0 2px 10px rgba(0,0,0,0.1), 0 10px 40px rgba(0,0,0,0.4);
@@ -92,7 +92,7 @@
 
   --sam-text:          #000000; 
   --sam-text-muted:    #404040;
-  --sam-text-dim:      #737373;
+  --sam-text-dim:      #555555;
   --sam-text-muted-alt: rgba(0,0,0,0.4);
 
   --sam-glow-bloom:    0 1px 4px rgba(0,0,0,0.02), 0 8px 32px rgba(0,0,0,0.06); 
@@ -486,8 +486,8 @@ body {
 }
 
 .sam-engine-indicator.is-preparing {
-  border-color: rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--sam-glass-border);
+  background: var(--sam-surface-high);
 }
 
 .indicator-dot {
@@ -508,7 +508,7 @@ body {
 }
 
 .is-preparing .indicator-dot {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--sam-text-muted);
   animation: sam-pulse 2s infinite;
 }
 
@@ -523,7 +523,19 @@ body {
 
 .is-live .indicator-text { color: var(--sam-green); opacity: 0.9; }
 .is-fallback .indicator-text { color: var(--sam-amber); opacity: 0.9; }
-.is-preparing .indicator-text { color: rgba(255, 255, 255, 0.4); }
+.is-preparing .indicator-text { color: var(--sam-text-muted); }
+
+/* Light Mode Overrides for Indicators */
+.light .sam-engine-indicator.is-preparing {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+.light .is-preparing .indicator-text {
+  color: #555555;
+}
+.light .is-preparing .indicator-dot {
+  background: #999999;
+}
 
 /* === Terminal Active Glow & Obsidian Polish === */
 .sam-terminal-container {

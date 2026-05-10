@@ -16,8 +16,9 @@ Be helpful, concise, and focused on helping the user learn and build.
 `;
 
 // Priority models for each provider
-const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash"];
-const OPENAI_MODELS = ["gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"];
+// Priority models for each provider (Stable versions)
+const GEMINI_MODELS = ["gemini-1.5-flash", "gemini-1.5-pro"];
+const OPENAI_MODELS = ["gpt-4o-mini", "gpt-4-turbo"];
 
 // Log AI health on initialization
 const geminiKeysCount = (env.GEMINI_API_KEY || "").split(",").filter(Boolean).length;
@@ -26,10 +27,11 @@ logger.info({ geminiKeys: geminiKeysCount, openAIKeys: openAIKeysCount }, "AI En
 
 /**
  * Robust retry wrapper for transient AI failures (503, 429)
+ * Reduced retries for faster failover to the next key in the pool.
  */
-async function withRetry(fn, maxRetries = 2) {
+async function withRetry(fn, maxRetries = 1) {
   let lastErr;
-  for (let i = 0; i < maxRetries; i++) {
+  for (let i = 0; i <= maxRetries; i++) {
     try {
       return await fn();
     } catch (err) {
@@ -47,50 +49,56 @@ async function withRetry(fn, maxRetries = 2) {
         msg.includes("deadline exceeded") ||
         msg.includes("internal error");
       
-      if (!isRetryable) throw err;
+      if (!isRetryable || i === maxRetries) throw err;
       
-      logger.warn({ attempt: i + 1, err: err.message }, "Transient AI failure, retrying...");
-      await new Promise(r => setTimeout(r, 1000 * (i + 1))); 
+      logger.warn({ attempt: i + 1, err: err.message }, "Transient AI failure, retrying once...");
+      await new Promise(r => setTimeout(r, 500)); // Fast retry
     }
   }
   throw lastErr;
 }
 
 /**
- * Provider-agnostic stream generator
+ * Provider-agnostic stream generator with Intelligent Rotation
  */
 async function streamChat(context, onChunk) {
   const { code, language, messages } = context;
   
-  // Construct the Key Pool
   const geminiKeys = (env.GEMINI_API_KEY || "").split(",").map(k => k.trim()).filter(Boolean);
   const openAIKeys = (env.OPENAI_API_KEYS || "").split(",").map(k => k.trim()).filter(Boolean);
 
   const providers = [];
 
-  // 1. Primary: OpenAI Keys (User provided 3)
-  openAIKeys.forEach(key => {
-    OPENAI_MODELS.forEach(model => {
-      providers.push({ type: "openai", key, model });
-    });
-  });
-
-  // 2. Secondary: Gemini Keys
-  geminiKeys.forEach(key => {
-    GEMINI_MODELS.forEach(model => {
-      providers.push({ type: "gemini", key, model });
-    });
-  });
+  // PHASE 1: Try the fastest models for all keys first (Interleaved for high availability)
+  // This ensures we don't get stuck on one dead key trying multiple models.
+  
+  // Best OpenAI option for each key
+  openAIKeys.forEach(key => providers.push({ type: "openai", key, model: OPENAI_MODELS[0] }));
+  // Best Gemini option for each key
+  geminiKeys.forEach(key => providers.push({ type: "gemini", key, model: GEMINI_MODELS[0] }));
+  
+  // PHASE 2: Fallback models for all keys
+  if (OPENAI_MODELS[1]) {
+    openAIKeys.forEach(key => providers.push({ type: "openai", key, model: OPENAI_MODELS[1] }));
+  }
+  if (GEMINI_MODELS[1]) {
+    geminiKeys.forEach(key => providers.push({ type: "gemini", key, model: GEMINI_MODELS[1] }));
+  }
 
   // Ensure we have at least one provider
   if (providers.length === 0) {
-    logger.error("No AI Provider keys configured (GEMINI_API_KEY or OPENAI_API_KEYS)");
+    logger.error("No AI Provider keys configured");
     return triggerOfflineFallback(onChunk, true);
   }
 
-  for (let i = 0; i < providers.length; i++) {
+  // LIMIT: Only try up to 5 providers per request to avoid extreme latency
+  const maxAttempts = Math.min(providers.length, 5);
+
+  for (let i = 0; i < maxAttempts; i++) {
     const p = providers[i];
     try {
+      logger.info({ type: p.type, model: p.model, attempt: i + 1 }, "Attempting AI Generation");
+      
       if (p.type === "gemini") {
         await streamGemini(p, context, onChunk);
       } else {
@@ -98,12 +106,14 @@ async function streamChat(context, onChunk) {
       }
       return; // SUCCESS!
     } catch (err) {
-      const isLast = i === providers.length - 1;
-      logger.warn({ provider: p.type, model: p.model, error: err.message }, `AI Provider failure (Attempt ${i+1}/${providers.length})`);
+      const isLast = i === maxAttempts - 1;
+      const errorMsg = err.message || "Unknown error";
+      logger.warn({ provider: p.type, model: p.model, error: errorMsg }, `AI Provider failure (Attempt ${i+1}/${maxAttempts})`);
       
       if (isLast) {
-        return triggerOfflineFallback(onChunk, err.message.includes("404") || err.message.includes("403"));
+        return triggerOfflineFallback(onChunk, errorMsg.includes("404") || errorMsg.includes("403"));
       }
+      // Continue to next provider in the intelligent queue
     }
   }
 }

@@ -133,7 +133,7 @@ const StatusBar = ({
 
         {/* Branding - Hidden on Small Mobile (< 480px) */}
         <div className="hidden sm:flex items-center gap-3 flex-nowrap">
-          <span className={`font-black tracking-[0.3em] hidden lg:block ${theme === 'dark' ? 'text-white/20' : 'text-slate-400'}`}>SAM © 2026</span>
+          <span className={`font-black tracking-[0.3em] hidden lg:block ${theme === 'dark' ? 'text-white/40' : 'text-slate-500'}`}>SAM © 2026</span>
           <span className={`opacity-10 hidden lg:inline ${theme === 'dark' ? 'text-white/40' : 'text-slate-300'}`}>|</span>
           
           <div 
@@ -141,7 +141,7 @@ const StatusBar = ({
              className="group flex items-center gap-3 cursor-pointer select-none"
           >
             <span className={`text-[8.5px] font-black uppercase tracking-[0.3em] transition-opacity hidden lg:inline ${
-              theme === 'dark' ? 'text-white/30 group-hover:text-white/60' : 'text-slate-400 group-hover:text-slate-800'
+              theme === 'dark' ? 'text-white/50 group-hover:text-white/80' : 'text-slate-500 group-hover:text-slate-900'
             }`}>
               BUILT BY
             </span>
