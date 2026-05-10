@@ -18,7 +18,8 @@ const EnvSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().trim().optional(),
   CALLBACK_URL_BASE: z.string().trim().default("https://sam-compiler.onrender.com/api/auth"),
   GEMINI_API_KEY: z.string().trim().min(1),
-  GEMINI_MODEL: z.string().trim().default("gemini-1.5-flash")
+  OPENAI_API_KEYS: z.string().trim().optional(), // Comma-separated list for rotation
+  GEMINI_MODEL: z.string().trim().default("gemini-2.5-flash")
 });
 
 
@@ -43,7 +44,8 @@ if (!result.success) {
       GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
       GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
       GEMINI_API_KEY: process.env.GEMINI_API_KEY,
-      GEMINI_MODEL: process.env.GEMINI_MODEL || "gemini-1.5-flash"
+      OPENAI_API_KEYS: process.env.OPENAI_API_KEYS,
+      GEMINI_MODEL: process.env.GEMINI_MODEL || "gemini-2.5-flash"
     };
   } else {
     // If local, we still want to throw to let the dev know
