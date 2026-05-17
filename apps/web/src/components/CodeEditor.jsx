@@ -48,6 +48,7 @@ const CodeEditor = ({
   const bindingRef = useRef(null);
   const providerRef = useRef(null);
   const ydocRef = useRef(null);
+  const ytextRef = useRef(null); // live ref to current Yjs text node
   const hasInitializedRef = useRef(false);
   const cleanupRef = useRef(null); // holds the current session cleanup fn
 
@@ -95,6 +96,7 @@ const CodeEditor = ({
 
     const ytext = ydoc.getText(currentLanguage);
     ydocRef.current = ydoc;
+    ytextRef.current = ytext; // keep live ref for external consumers (reset button, etc.)
     providerRef.current = provider;
 
     const binding = new MonacoBinding(
@@ -236,11 +238,21 @@ const CodeEditor = ({
     }
   }, [markers]);
 
-  // ─── AI template reset event ─────────────────────────────────────────────────
+  // ─── Reset event (AI panel + Reset button) ──────────────────────────────────
+  // Uses the Yjs API (transact delete + insert) instead of editor.setValue().
+  // editor.setValue() bypasses the MonacoBinding and creates a divergent Monaco
+  // model state — peers see the old content and the user sees the new content,
+  // with no Yjs operation to reconcile them. Yjs transact is the correct way.
   useEffect(() => {
     const handleResetEvent = (e) => {
-      if (editorRef.current) {
-        editorRef.current.setValue(e.detail.template);
+      const template = e.detail?.template ?? "";
+      if (!template) return;
+      if (ydocRef.current && ytextRef.current) {
+        // ✅ Yjs-safe reset: propagates to ALL peers in the room
+        ydocRef.current.transact(() => {
+          ytextRef.current.delete(0, ytextRef.current.length);
+          ytextRef.current.insert(0, template);
+        });
         toast.success("Applied to editor ✨", {
           style: { background: "var(--sam-surface)", color: "var(--sam-text)", border: "1px solid var(--sam-glass-border)", fontSize: "11px", fontWeight: 900 },
           icon: "✨"
