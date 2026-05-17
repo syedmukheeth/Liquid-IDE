@@ -25,8 +25,11 @@ function emitStatus(status, details = {}) {
 export function getSocket(tokenArg) {
   const token = tokenArg || localStorage.getItem("token");
 
-  if (!token) {
+  let hasLoggedGuestMode = false;
+
+  if (!token && !window.__sam_hasLoggedGuestMode) {
     console.info("ℹ️ [SAM Compiler] No auth token found. Initializing in Guest mode.");
+    window.__sam_hasLoggedGuestMode = true;
   }
 
   // Idempotent singleton check

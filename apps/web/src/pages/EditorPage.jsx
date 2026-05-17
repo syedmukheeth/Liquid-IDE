@@ -254,7 +254,12 @@ builtins.input = input_shim
 
   const onRun = useCallback(async () => {
     if (busy) return;
-    const code = buffers[activeLangId];
+    const code = window.samEditor ? window.samEditor.getValue() : buffers[activeLangId];
+    const yjsContent = buffers[activeLangId];
+    console.assert(
+      code === yjsContent,
+      `DESYNC: Monaco and Yjs are out of sync!\nMonaco: ${code.substring(0, 20)}...\nYjs/Buffer: ${yjsContent?.substring(0, 20)}...`
+    );
     const language = languageConfigs[activeLangId].lang;
     
     // 🛡️ REBOOT DIAGNOSTICS: Clear previous state
@@ -635,11 +640,7 @@ builtins.input = input_shim
     }
   }, [searchParams, setSearchParams]);
 
-  useEffect(() => {
-    // Proactive Socket Initialization (Zero-Lag Handshake)
-    // Note: The listener in the second useEffect handles the actual status state management
-    getSocket(token);
-  }, [token]);
+  // Socket Initialization is handled in the status monitoring effect below to prevent duplicate mounts
 
   // Health check for worker availability (Backend sanity) & ADAPTIVE HEARTBEAT
   useEffect(() => {
@@ -736,7 +737,8 @@ builtins.input = input_shim
 
   // Socket status monitoring with Stability Timer
   useEffect(() => {
-    getSocket(token);
+    fetch(`${ENDPOINTS.WS_ENDPOINT}/api/runs/health/queue`).catch(() => {}); // Explicit ping to wake Render early
+    const socket = getSocket(token);
     
     let stabilityTimer = null;
     let flickerTimer = null;
