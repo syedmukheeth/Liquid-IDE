@@ -419,6 +419,9 @@ builtins.input = input_shim
         console.log("📡 [SAM] Standard Path: Submitting via HTTP...");
         const result = await submitRun({ language, code, stdin });
         jobId = result.jobId;
+        if (socket) {
+          socket.emit("subscribe", { jobId });
+        }
       }
 
       runRef.current.jobId = jobId;
@@ -786,8 +789,9 @@ builtins.input = input_shim
   }, [token, activeMobileTab]); // Sync on tab switch too
 
   // Resubscribe Guardian: Pick up lost streams after reconnection
+  const prevSocketStatusRef = useRef(socketStatus);
   useEffect(() => {
-    if (socketStatus === "connected" && busy && runRef.current.jobId) {
+    if (socketStatus === "connected" && prevSocketStatusRef.current !== "connected" && busy && runRef.current.jobId) {
       try {
         const socket = getSocket(token);
         if (socket) {
@@ -798,6 +802,7 @@ builtins.input = input_shim
         console.warn("⚠️ [SAM] Resubscribe failed:", err);
       }
     }
+    prevSocketStatusRef.current = socketStatus;
   }, [socketStatus, busy]);
 
   // Pyodide (Python-in-browser) engine
