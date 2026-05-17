@@ -41,9 +41,9 @@ SAM is engineered to exceed the limitations of standard web-based compilers thro
 | Dimension | ⚡ SAM Compiler (Elite) | 🐌 Industry Average (Generic) |
 |---|---|---|
 | 🏗️ **Architecture** | **Decoupled Control Plane**: Segregated API & Hardened Worker nodes. | **Monolithic**: Code runs on the API process (ACE risks). |
-| 🔄 **State Sync** | **CRDT (Yjs)**: Conflict-free binary state sync with sub-10ms resolution. | **Naive JSON**: Prone to race conditions and "Code Soup". |
+| 🔄 **State Sync** | **CRDT (Yjs) + Server-Side Healing**: Conflict-free binary state sync with automated DB corruption purging. | **Naive JSON**: Prone to permanent race conditions and "Code Soup". |
 | 🛡️ **Isolation** | **Dockerized Sandboxing**: Cgroup-restricted ephemeral containers. | **Process-based**: Vulnerable to system-level resource exhaustion. |
-| 📡 **Connectivity** | **Fail-Secure Topology**: Multi-layered WebSocket heartbeats with BullMQ persistence. | **Brittle Channels**: Disconnects result in total state loss. |
+| 📡 **Connectivity** | **Fail-Secure Topology**: Multi-layered WebSocket heartbeats with proactive cold-start keepalives. | **Brittle Channels**: Disconnects result in total state loss. |
 | 🧠 **Intelligence** | **High-Availability Engine**: Multi-provider failover (OpenAI + Gemini) with automated fallback queue. | **Single-Point Failure**: Simple wrappers that crash if a single API key or model is deprecated. |
 | 🎨 **UX/UI** | **Digital Obsidian**: 60FPS glassmorphism with optimized mobile reflex. | **Bootstrap/Generic**: Cluttered interfaces with high perceived lag. |
 
@@ -80,8 +80,8 @@ graph TD
 
 ### 🛰️ KEY ARCHITECTURAL TENETS
 - **Asynchronous Execution Pipeline**: Utilizing BullMQ and Redis to handle high-concurrency compilation without blocking the main event loop.
-- **Isomorphic Shared Logic**: Shared TypeScript types and utilities between Frontend and Backend to ensure 100% type safety.
-- **Heartbeat Resilience**: Custom server-side heartbeat mechanism to prevent cloud provider cold starts and maintain persistent WebSocket connections.
+- **Strict Source of Truth Engine**: Compilations pull straight from the Monaco model's RAM state, bypassing React rendering cycle lag completely.
+- **Heartbeat Resilience**: Custom server-side dead-man's switches combined with frontend proactive 0-lag cold-start pings to ensure 100% execution uptime.
 
 ---
 

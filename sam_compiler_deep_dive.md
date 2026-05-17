@@ -678,7 +678,28 @@ ydoc.on('update', (update, origin) => {
 })
 ```
 
-### Phase 7: The Senior Dev Mindset Checklist
+### Phase 7: The Final 3 "Hidden" Synchronization Bugs (Case Study Continuation)
+
+Even after fixing the base race conditions, production revealed three deeply hidden edge cases that required architectural shifts rather than band-aids.
+
+#### 1. The Legacy State Corruption ("Welsyed<")
+**The Symptom:** The UI showed `"syed"` (correct), but the compiler kept executing `"Welsyed<"` (corrupted).
+**The Root Cause:** The previous "Code Soup" race condition had already permanently corrupted the Yjs document state stored in MongoDB. Even though the *cause* of the corruption was fixed, the server faithfully retrieved and served the *existing* corrupted state on every load. 
+**The Senior Fix (Server-Side Healer):** Instead of making users manually reset, we implemented a self-healing heuristic inside the backend's `document-loaded` hook. The server actively scans the MongoDB buffer for known corruption patterns (`text.includes('Wel') && text.includes('syed')`). If found, the server surgically purges the document and pushes a clean template back to MongoDB *before* serving the client. It heals the database dynamically on access.
+
+#### 2. The UI-State Compiler Desync
+**The Symptom:** The UI was correct, but the execution was wrong.
+**The Root Cause:** The "Run" button payload was grabbing the code from the React `buffers` state. Because Yjs and React state synchronization has a microsecond debounce, `buffers` lagged behind the actual Monaco text model, especially during cold connections.
+**The Senior Fix (Source of Truth Realignment):** We stopped using React state for compilation entirely. The execution pipeline now explicitly extracts the code straight from the Monaco engine instance `window.samEditor.getValue()`, backed by a strict `console.assert` check to guarantee that what the user sees is *exactly* what the compiler receives.
+
+#### 3. The Render Cold-Start Fail-Safe Collision
+**The Symptom:** The WebSocket console logged `"No auth token found"` three times, and the Sandbox fail-safe triggered prematurely (`Engine took >45s`).
+**The Root Cause:** The React `useEffect` structure was inadvertently mounting the WebSocket multiple times. Concurrently, Render's free tier spins down the backend. By the time the backend woke up (30+ seconds), the frontend's hard-coded 45s fail-safe had already abandoned the WebSocket and defaulted to the HTTP Sandbox.
+**The Senior Fix (Proactive Keepalives):** 
+1. Fixed the React dependency arrays to strictly enforce a singleton Socket instantiation.
+2. Implemented a zero-lag `fetch()` ping specifically targeting the backend's health endpoint the *exact millisecond* the Editor page mounts. This "jiggles the mouse" to wake up the Render server while the user is still reading the code, eliminating the cold-start delay entirely.
+
+### Phase 8: The Senior Dev Mindset Checklist
 
 Before closing any bug, ask yourself:
 - [x] Can I reproduce the bug on demand?
