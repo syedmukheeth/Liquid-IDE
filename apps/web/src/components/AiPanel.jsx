@@ -2,24 +2,25 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Send, Sparkles, X, Zap, RefreshCw, Copy, Check, 
-  Terminal, ExternalLink, BookOpen, Wrench, AlertCircle
+  ExternalLink, BookOpen, Wrench, AlertCircle
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import ENDPOINTS from "../services/endpoints";
 import analytics from "../services/metrics";
 
-// ── Typing Indicator (ChatGPT-style bouncing dots) ──────────────────────────
-function TypingIndicator({ theme }) {
-  const isDark = theme === 'dark';
+// ── Typing Indicator ─────────────────────────────────────────────────────────
+function TypingIndicator({ isDark }) {
   return (
     <div className={`flex items-center gap-1 px-4 py-3 rounded-2xl rounded-tl-none w-fit border ${
-      isDark ? 'bg-sam-text/5 border-sam-glass-border' : 'bg-sam-text border-slate-100'
+      isDark
+        ? 'bg-white/5 border-white/10'
+        : 'bg-slate-100 border-slate-200'
     }`}>
       {[0, 1, 2].map(i => (
         <motion.div
           key={i}
-          className={`h-2 w-2 rounded-full ${isDark ? 'bg-sam-text/40' : 'bg-slate-400'}`}
+          className={`h-2 w-2 rounded-full ${isDark ? 'bg-white/40' : 'bg-slate-400'}`}
           animate={{ y: [0, -6, 0] }}
           transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15, ease: "easeInOut" }}
         />
@@ -28,29 +29,83 @@ function TypingIndicator({ theme }) {
   );
 }
 
-// ── Quick Action Button ──────────────────────────────────────────────────────
-function QuickAction({ icon, label, onClick, theme, accent }) {
-  const isDark = theme === 'dark';
+// ── Quick Action Button ───────────────────────────────────────────────────────
+function QuickAction({ icon, label, onClick, isDark }) {
   return (
     <motion.button
       onClick={onClick}
       whileTap={{ scale: 0.95 }}
       className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-all ${
         isDark
-          ? 'border-sam-glass-border bg-sam-text/5 text-white/50 hover:bg-sam-text/10 hover:text-sam-text hover:border-white/20'
-          : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-sam-text hover:text-slate-900 hover:border-slate-300 shadow-sm'
+          ? 'border-white/10 bg-white/5 text-white/50 hover:bg-white/10 hover:text-white hover:border-white/20'
+          : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-900 hover:border-slate-300 shadow-sm'
       }`}
     >
-      {React.cloneElement(icon, { size: 12, className: isDark ? 'text-sam-text-dim' : 'text-slate-600' })}
+      {React.cloneElement(icon, { size: 12, className: isDark ? 'text-white/40' : 'text-slate-500' })}
       {label}
     </motion.button>
   );
 }
 
-// ── Message Bubble ───────────────────────────────────────────────────────────
-function MessageBubble({ msg, theme, onApplyRefactor, isLast }) {
+// ── Code Block ───────────────────────────────────────────────────────────────
+function CodeBlock({ language: lang, codeStr, isDark, onApply }) {
   const [copied, setCopied] = useState(false);
-  const isDark = theme === 'dark';
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(codeStr);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="group relative my-4">
+      {/* Language badge */}
+      <div className={`absolute -top-3 left-3 px-2 py-0.5 text-[9px] font-black uppercase tracking-tighter rounded-md z-10 ${
+        isDark ? 'bg-white text-black' : 'bg-slate-800 text-white'
+      }`}>
+        {lang}
+      </div>
+
+      {/* Code box */}
+      <div className={`rounded-2xl border overflow-hidden shadow-lg ${
+        isDark
+          ? 'bg-black/40 border-white/10'
+          : 'bg-slate-900 border-slate-700'
+      }`}>
+        <pre className="p-4 pt-6 font-mono text-[12px] leading-relaxed whitespace-pre-wrap break-words text-slate-100 overflow-x-auto">
+          <code>{codeStr}</code>
+        </pre>
+
+        {/* Action bar */}
+        <div className={`flex items-center justify-end gap-2 border-t p-2 ${
+          isDark ? 'border-white/10 bg-white/[0.02]' : 'border-slate-700/50 bg-black/20'
+        }`}>
+          <button
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all active:scale-95 bg-white/10 text-slate-300 hover:bg-white/20 hover:text-white"
+          >
+            {copied ? <Check size={11} /> : <Copy size={11} />}
+            {copied ? 'Copied' : 'Copy'}
+          </button>
+          <button
+            onClick={() => onApply?.(codeStr)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black tracking-wider uppercase transition-all active:scale-95 shadow ${
+              isDark
+                ? 'bg-white text-black hover:bg-white/90'
+                : 'bg-white text-black hover:bg-slate-100'
+            }`}
+          >
+            <Zap size={11} fill="currentColor" /> Apply
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Message Bubble ────────────────────────────────────────────────────────────
+function MessageBubble({ msg, isDark, onApplyRefactor }) {
+  const [copied, setCopied] = useState(false);
   const isUser = msg.role === "user";
 
   const handleCopy = useCallback(() => {
@@ -62,21 +117,39 @@ function MessageBubble({ msg, theme, onApplyRefactor, isLast }) {
   const remarkPlugins = React.useMemo(() => [remarkGfm], []);
 
   const MarkdownComponents = React.useMemo(() => ({
-    h1: ({ children }) => <h1 className={`text-xl font-black mb-4 tracking-tighter ${isDark ? 'text-sam-text' : 'text-slate-900'}`}>{children}</h1>,
-    h2: ({ children }) => <h2 className={`text-lg font-bold mb-3 ${isDark ? 'text-sam-text' : 'text-slate-900'}`}>{children}</h2>,
-    h3: ({ children }) => <h3 className={`text-base font-bold mb-2 ${isDark ? 'text-white/80' : 'text-slate-800'}`}>{children}</h3>,
-    p: ({ children }) => <p className={`mb-3 last:mb-0 leading-relaxed break-words ${isDark ? 'text-white/85' : 'text-slate-800'}`}>{children}</p>,
+    h1: ({ children }) => (
+      <h1 className={`text-xl font-black mb-4 tracking-tighter ${isDark ? 'text-white' : 'text-slate-900'}`}>
+        {children}
+      </h1>
+    ),
+    h2: ({ children }) => (
+      <h2 className={`text-lg font-bold mb-3 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+        {children}
+      </h2>
+    ),
+    h3: ({ children }) => (
+      <h3 className={`text-base font-bold mb-2 ${isDark ? 'text-white/80' : 'text-slate-800'}`}>
+        {children}
+      </h3>
+    ),
+    p: ({ children }) => (
+      <p className={`mb-3 last:mb-0 leading-relaxed break-words ${isDark ? 'text-white/85' : 'text-slate-700'}`}>
+        {children}
+      </p>
+    ),
     ul: ({ children }) => <ul className="mb-4 space-y-1.5 list-none">{children}</ul>,
     ol: ({ children }) => <ol className="mb-4 space-y-1.5 list-decimal pl-4">{children}</ol>,
     li: ({ children }) => (
       <li className="flex gap-2.5 items-start">
-        <span className={`mt-2 h-1.5 w-1.5 flex-none rounded-full ${isDark ? 'bg-sam-text/30' : 'bg-slate-400'}`} />
-        <span className={`leading-relaxed ${isDark ? 'text-white/85' : 'text-slate-800'}`}>{children}</span>
+        <span className={`mt-2 h-1.5 w-1.5 flex-none rounded-full ${isDark ? 'bg-white/30' : 'bg-slate-400'}`} />
+        <span className={`leading-relaxed ${isDark ? 'text-white/85' : 'text-slate-700'}`}>{children}</span>
       </li>
     ),
-    strong: ({ children }) => <strong className={`font-bold ${isDark ? 'text-sam-text' : 'text-slate-900'}`}>{children}</strong>,
+    strong: ({ children }) => (
+      <strong className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{children}</strong>
+    ),
     blockquote: ({ children }) => (
-      <blockquote className={`border-l-2 pl-3 my-3 italic ${isDark ? 'border-white/20 text-sam-text-dim' : 'border-slate-300 text-slate-500'}`}>
+      <blockquote className={`border-l-2 pl-3 my-3 italic ${isDark ? 'border-white/20 text-white/50' : 'border-slate-300 text-slate-500'}`}>
         {children}
       </blockquote>
     ),
@@ -89,57 +162,32 @@ function MessageBubble({ msg, theme, onApplyRefactor, isLast }) {
 
       if (!inline && match) {
         return (
-          <div className="group relative my-4">
-            <div className={`absolute -top-3 left-3 px-2 py-0.5 text-[9px] font-black uppercase tracking-tighter rounded-md z-10 ${
-              isDark ? 'bg-sam-text text-sam-bg' : 'bg-sam-bg text-sam-text'
-            }`}>
-              {match[1]}
-            </div>
-            <div className={`rounded-2xl border overflow-hidden shadow-xl min-w-0 ${
-              isDark ? 'bg-sam-bg/60 border-sam-glass-border' : 'bg-slate-50 border-slate-200'
-            }`}>
-              <pre className={`p-4 font-mono text-[12px] leading-relaxed whitespace-pre-wrap break-words ${
-                isDark ? 'text-white/80' : 'text-slate-700'
-              }`} style={{ overflowWrap: 'break-word', wordBreak: 'break-word' }}>
-                <code className={className} {...props}>{children}</code>
-              </pre>
-              <div className={`flex items-center justify-end gap-2 border-t p-2 ${
-                isDark ? 'border-sam-glass-border bg-sam-text/[0.02]' : 'border-slate-200 bg-slate-100/50'
-              }`}>
-                <button
-                  onClick={() => navigator.clipboard.writeText(codeStr)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all active:scale-95 ${
-                    isDark ? 'bg-sam-text/5 text-white/50 hover:bg-sam-text/10 hover:text-sam-text' : 'bg-slate-200 text-slate-500 hover:bg-slate-300 hover:text-slate-900'
-                  }`}
-                >
-                  <Copy size={11} /> Copy
-                </button>
-                <button
-                  onClick={() => {
-                    if (typeof onApplyRefactor === 'function') {
-                      onApplyRefactor(codeStr);
-                    }
-                  }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black tracking-wider uppercase transition-all active:scale-95 ${
-                    isDark ? 'bg-sam-text text-sam-bg hover:opacity-90' : 'bg-sam-bg text-sam-text hover:opacity-90'
-                  }`}
-                >
-                  <Zap size={11} fill="currentColor" /> Apply
-                </button>
-              </div>
-            </div>
-          </div>
+          <CodeBlock
+            language={match[1]}
+            codeStr={codeStr}
+            isDark={isDark}
+            onApply={onApplyRefactor}
+          />
         );
       }
+      // Inline code — consistent dark pill regardless of mode for readability
       return (
-        <code className={`px-1.5 py-0.5 rounded-md font-mono text-[11px] ${
-          isDark ? 'bg-sam-text/10 text-sam-text' : 'bg-slate-200 text-slate-900'
-        }`} {...props}>{children}</code>
+        <code
+          className={`px-1.5 py-0.5 rounded-md font-mono text-[11px] ${
+            isDark
+              ? 'bg-white/10 text-green-300'
+              : 'bg-slate-800 text-green-300'
+          }`}
+          {...props}
+        >
+          {children}
+        </code>
       );
     },
     a: ({ href, children }) => (
       <a href={href} target="_blank" rel="noopener noreferrer"
-        className={`inline-flex items-center gap-1 font-bold underline ${isDark ? 'text-sam-text' : 'text-slate-900'}`}>
+        className={`inline-flex items-center gap-1 font-bold underline ${isDark ? 'text-blue-300' : 'text-blue-600'}`}
+      >
         {children} <ExternalLink size={10} />
       </a>
     ),
@@ -152,19 +200,32 @@ function MessageBubble({ msg, theme, onApplyRefactor, isLast }) {
       transition={{ duration: 0.2 }}
       className={`group flex w-full min-w-0 flex-col ${isUser ? 'items-end' : 'items-start'}`}
     >
+      {/* SAM AI label */}
       {!isUser && (
-        <div className={`mb-1.5 flex items-center gap-1.5 ml-1`}>
-          <div className={`flex h-4 w-4 items-center justify-center rounded-md ${isDark ? 'bg-sam-text text-sam-bg shadow-[0_0_10px_rgba(255,255,255,0.3)]' : 'bg-sam-bg text-sam-text'}`}>
+        <div className="mb-1.5 flex items-center gap-1.5 ml-1">
+          <div className={`flex h-4 w-4 items-center justify-center rounded-md ${
+            isDark
+              ? 'bg-white text-black shadow-[0_0_10px_rgba(255,255,255,0.3)]'
+              : 'bg-slate-900 text-white'
+          }`}>
             <Sparkles size={9} />
           </div>
-          <span className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-sam-text-muted' : 'text-slate-500'}`}>Sam AI</span>
+          <span className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-white/40' : 'text-slate-400'}`}>
+            Sam AI
+          </span>
         </div>
       )}
+
+      {/* Bubble */}
       <div className="relative w-full min-w-0">
         <div className={`w-full rounded-2xl px-5 py-4 text-[13px] leading-[1.7] border select-text overflow-hidden break-words transition-all ${
           isUser
-            ? (isDark ? 'bg-sam-text/10 text-sam-text border-sam-glass-border rounded-tr-none' : 'bg-slate-100 text-slate-900 border-slate-200 rounded-tr-none')
-            : (isDark ? 'bg-sam-text/[0.07] text-white/95 border-sam-glass-border rounded-tl-none backdrop-blur-sm' : 'bg-sam-text text-slate-800 border-slate-200 rounded-tl-none shadow-sm')
+            ? isDark
+              ? 'bg-white/10 text-white border-white/10 rounded-tr-none'
+              : 'bg-slate-100 text-slate-900 border-slate-200 rounded-tr-none'
+            : isDark
+              ? 'bg-white/[0.07] text-white/95 border-white/10 rounded-tl-none backdrop-blur-sm'
+              : 'bg-white text-slate-800 border-slate-200 rounded-tl-none shadow-sm'
         }`}>
           {msg.isError ? (
             <div className="flex items-start gap-2 text-rose-400">
@@ -173,17 +234,20 @@ function MessageBubble({ msg, theme, onApplyRefactor, isLast }) {
             </div>
           ) : (
             <div className="markdown-container">
-               <ReactMarkdown remarkPlugins={remarkPlugins} components={MarkdownComponents}>
+              <ReactMarkdown remarkPlugins={remarkPlugins} components={MarkdownComponents}>
                 {msg.content}
               </ReactMarkdown>
             </div>
           )}
         </div>
-        {/* Copy button on hover */}
+
+        {/* Copy on hover */}
         <button
           onClick={handleCopy}
-          className={`absolute -bottom-2 ${isUser ? 'left-2' : 'right-2'} opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold shadow-md ${
-            isDark ? 'bg-sam-text/10 text-sam-text-dim hover:text-sam-text border border-sam-glass-border' : 'bg-sam-text text-slate-500 hover:text-slate-900 border border-slate-200'
+          className={`absolute -bottom-2 ${isUser ? 'left-2' : 'right-2'} opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold shadow-md border ${
+            isDark
+              ? 'bg-white/10 text-white/40 hover:text-white border-white/10'
+              : 'bg-white text-slate-400 hover:text-slate-900 border-slate-200'
           }`}
         >
           {copied ? <Check size={9} /> : <Copy size={9} />}
@@ -194,20 +258,14 @@ function MessageBubble({ msg, theme, onApplyRefactor, isLast }) {
   );
 }
 
+// ── Error Boundary ────────────────────────────────────────────────────────────
 class AiPanelErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
     this.state = { hasError: false, error: null };
   }
-
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error, errorInfo) {
-    console.error("AiPanel Error:", error, errorInfo);
-  }
-
+  static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  componentDidCatch(error, errorInfo) { console.error("AiPanel Error:", error, errorInfo); }
   render() {
     if (this.state.hasError) {
       return (
@@ -230,6 +288,7 @@ export default function AiPanelWrapper(props) {
   );
 }
 
+// ── Main AiPanel ──────────────────────────────────────────────────────────────
 function AiPanel({
   isOpen,
   onClose,
@@ -238,7 +297,6 @@ function AiPanel({
   onApplyRefactor,
   theme,
   isMobile,
-  activeMobileTab,
   initialPrompt = null
 }) {
   const [messages, setMessages] = useState([
@@ -264,9 +322,8 @@ function AiPanel({
     setMessages(prev => [...prev, { role: "model", content: "", _id: placeholderId }]);
 
     try {
-      // 🚀 LATENCY OPTIMIZATION: Prune history to last 10 messages to keep prompt context lean
       const historyToSend = [...messages, userMsg].slice(-10);
-      
+
       const response = await fetch(`${ENDPOINTS.API_BASE_URL}/ai/chat`, {
         method: "POST",
         headers: {
@@ -332,7 +389,11 @@ function AiPanel({
       setMessages(prev => {
         const next = [...prev];
         const idx = next.findIndex(m => m._id === placeholderId);
-        const errMsg = { role: "model", content: `AI service is temporarily unavailable. Please try again.\n\n_Error: ${err.message}_`, isError: true };
+        const errMsg = {
+          role: "model",
+          content: `AI service is temporarily unavailable. Please try again.\n\n_Error: ${err.message}_`,
+          isError: true
+        };
         if (idx !== -1) next[idx] = errMsg;
         else next.push(errMsg);
         return next;
@@ -356,9 +417,7 @@ function AiPanel({
   }, [initialPrompt, isOpen, sendMessage]);
 
   useEffect(() => {
-    if (initialPrompt) {
-       hasTriggeredInitial.current = false;
-    }
+    if (initialPrompt) hasTriggeredInitial.current = false;
   }, [initialPrompt]);
 
   useEffect(() => {
@@ -384,66 +443,93 @@ function AiPanel({
       prompt: `Optimize this ${language} code for maximum performance and production-grade quality. Explain the improvements.`
     },
   ];
+
   return (
-    <div className={`sam-glass flex flex-1 flex-col h-full overflow-hidden ${isMobile ? 'rounded-none border-0' : 'rounded-2xl border'}`} style={{ border: isMobile ? 'none' : '1px solid var(--sam-glass-border)', background: 'var(--sam-surface)' }}>
-      {/* Header */}
+    <div
+      className={`sam-glass flex flex-1 flex-col h-full overflow-hidden ${isMobile ? 'rounded-none border-0' : 'rounded-2xl border'}`}
+      style={{
+        border: isMobile ? 'none' : '1px solid var(--sam-glass-border)',
+        background: isDark ? 'var(--sam-surface)' : '#f8fafc'
+      }}
+    >
+      {/* ── Header ── */}
       <div className={`flex h-11 shrink-0 items-center justify-between px-4 border-b ${
-        isDark ? 'border-sam-glass-border bg-sam-bg/20' : 'border-slate-100 bg-slate-50'
+        isDark ? 'border-white/10 bg-black/20' : 'border-slate-200 bg-white'
       }`}>
         <div className="flex items-center gap-2.5">
-          <div className={`flex h-6 w-6 items-center justify-center rounded-lg ${isDark ? 'bg-sam-text text-sam-bg' : 'bg-sam-bg text-sam-text'}`}>
+          <div className={`flex h-6 w-6 items-center justify-center rounded-lg shadow ${
+            isDark ? 'bg-white text-black' : 'bg-slate-900 text-white'
+          }`}>
             <Sparkles className="h-3.5 w-3.5" />
           </div>
-          <span style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--sam-text)', fontFamily: 'var(--font-mono)' }}>
+          <span style={{
+            fontSize: 10, fontWeight: 900, textTransform: 'uppercase',
+            letterSpacing: '0.2em', fontFamily: 'var(--font-mono)',
+            color: isDark ? 'var(--sam-text)' : '#0f172a'
+          }}>
             SAM AI
           </span>
           <motion.div
             animate={{ opacity: [0.4, 1, 0.4] }}
             transition={{ duration: 2, repeat: Infinity }}
-            className={`h-1.5 w-1.5 rounded-full ${isDark ? 'bg-green-400' : 'bg-green-500'}`}
-            style={{ boxShadow: isDark ? '0 0 8px rgba(74, 222, 128, 0.5)' : 'none' }}
+            className="h-1.5 w-1.5 rounded-full bg-green-500"
+            style={{ boxShadow: '0 0 8px rgba(34, 197, 94, 0.6)' }}
           />
         </div>
         <button
           onClick={onClose}
-          className={`rounded-lg p-1.5 transition-all ${isDark ? 'text-white/30 hover:text-sam-text hover:bg-sam-text/5' : 'text-slate-400 hover:text-slate-900 hover:bg-slate-100'}`}
+          className={`rounded-lg p-1.5 transition-all ${
+            isDark
+              ? 'text-white/30 hover:text-white hover:bg-white/5'
+              : 'text-slate-400 hover:text-slate-900 hover:bg-slate-100'
+          }`}
         >
           <X className="h-4 w-4" />
         </button>
       </div>
 
-      {/* Chat Messages */}
-      <div ref={scrollRef} className={`flex-1 overflow-y-auto overflow-x-hidden ${isMobile ? 'p-3 space-y-4' : 'p-5 space-y-5'} custom-scrollbar min-w-0`}>
+      {/* ── Chat Messages ── */}
+      <div
+        ref={scrollRef}
+        className={`flex-1 overflow-y-auto overflow-x-hidden ${isMobile ? 'p-3 space-y-4' : 'p-5 space-y-5'} custom-scrollbar min-w-0`}
+        style={{ background: isDark ? 'transparent' : '#f1f5f9' }}
+      >
         <AnimatePresence initial={false}>
           {messages.map((msg, i) => (
             <MessageBubble
               key={msg._id || i}
               msg={msg}
-              theme={theme}
+              isDark={isDark}
               onApplyRefactor={onApplyRefactor}
-              isLast={i === messages.length - 1}
             />
           ))}
         </AnimatePresence>
+
         {loading && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-start"
           >
-            <div className={`mb-1.5 flex items-center gap-1.5 ml-1`}>
-              <div className={`flex h-4 w-4 items-center justify-center rounded-md ${isDark ? 'bg-sam-text text-sam-bg shadow-[0_0_10px_rgba(255,255,255,0.3)]' : 'bg-sam-bg text-sam-text'}`}>
+            <div className="mb-1.5 flex items-center gap-1.5 ml-1">
+              <div className={`flex h-4 w-4 items-center justify-center rounded-md ${
+                isDark ? 'bg-white text-black shadow-[0_0_10px_rgba(255,255,255,0.3)]' : 'bg-slate-900 text-white'
+              }`}>
                 <Sparkles size={9} />
               </div>
-              <span className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-sam-text-muted' : 'text-slate-500'}`}>Sam AI</span>
+              <span className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-white/40' : 'text-slate-400'}`}>
+                Sam AI
+              </span>
             </div>
-            <TypingIndicator theme={theme} />
+            <TypingIndicator isDark={isDark} />
           </motion.div>
         )}
       </div>
 
-      {/* Quick Actions + Input */}
-      <div className={`border-t p-3 space-y-3 ${isDark ? 'border-sam-glass-border bg-sam-bg/20' : 'border-slate-100 bg-slate-50/50'}`}>
+      {/* ── Quick Actions + Input ── */}
+      <div className={`border-t p-3 space-y-3 ${
+        isDark ? 'border-white/10 bg-black/20' : 'border-slate-200 bg-white'
+      }`}>
         <div className="flex flex-wrap gap-2">
           {quickActions.map(qa => (
             <QuickAction
@@ -451,7 +537,7 @@ function AiPanel({
               icon={qa.icon}
               label={qa.label}
               onClick={() => sendMessage(qa.prompt)}
-              theme={theme}
+              isDark={isDark}
             />
           ))}
         </div>
@@ -463,10 +549,10 @@ function AiPanel({
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask Sam AI anything about your code..."
             rows={3}
-            className={`w-full resize-none rounded-xl border p-3 pr-12 text-sm transition-all focus:outline-none shadow-inner ${
+            className={`w-full resize-none rounded-xl border p-3 pr-12 text-sm transition-all focus:outline-none focus:ring-1 ${
               isDark
-                ? 'border-sam-glass-border bg-sam-bg/40 text-sam-text placeholder:text-sam-text-muted focus:border-white/30'
-                : 'border-slate-200 bg-sam-text text-slate-900 placeholder:text-slate-300 focus:border-slate-400'
+                ? 'border-white/10 bg-black/30 text-white placeholder:text-white/25 focus:border-white/30 focus:ring-white/10'
+                : 'border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:ring-slate-200'
             }`}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -479,7 +565,9 @@ function AiPanel({
             type="submit"
             disabled={!input.trim() || loading}
             className={`absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-lg transition-all active:scale-90 disabled:opacity-20 shadow-lg ${
-              isDark ? 'bg-sam-text text-sam-bg hover:bg-sam-text/90' : 'bg-sam-bg text-sam-text hover:opacity-90'
+              isDark
+                ? 'bg-white text-black hover:bg-white/90'
+                : 'bg-slate-900 text-white hover:bg-slate-700'
             }`}
           >
             {loading
@@ -489,7 +577,6 @@ function AiPanel({
           </button>
         </form>
       </div>
-
     </div>
   );
 }
