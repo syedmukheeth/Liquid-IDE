@@ -92,13 +92,29 @@ export default function EditorPage() {
   });
 
   const [buffers, setBuffers] = useState(() => {
+    const defaults = Object.fromEntries(
+      Object.entries(languageConfigs).map(([id, cfg]) => [id, cfg.template])
+    );
     try {
       if (typeof localStorage !== 'undefined') {
         const saved = localStorage.getItem("sam_code_buffers");
-        if (saved) return JSON.parse(saved);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          // 🧹 SANITIZE: Detect and clear Code Soup from localStorage.
+          // If a buffer contains duplicate template phrases from a past race condition,
+          // reset it to the canonical template rather than poisoning new Yjs rooms.
+          const SOUP_MARKER = "Welcome to SAM Compiler!";
+          const sanitized = {};
+          for (const [id, cfg] of Object.entries(languageConfigs)) {
+            const buf = parsed[id] ?? cfg.template;
+            const occurrences = (buf.match(new RegExp(SOUP_MARKER, "g")) || []).length;
+            sanitized[id] = occurrences > 1 ? cfg.template : buf;
+          }
+          return sanitized;
+        }
       }
     } catch (e) {}
-    return Object.fromEntries(Object.entries(languageConfigs).map(([id, cfg]) => [id, cfg.template]));
+    return defaults;
   });
   const [isColdStarting] = useState(false);
   const [runStatus, setRunStatus] = useState("Ready");
@@ -1441,6 +1457,7 @@ builtins.input = input_shim
                    key={sessionId}
                    language={activeLangId}
                    value={buffers[activeLangId]}
+                   defaultTemplate={languageConfigs[activeLangId]?.template ?? ""}
                    onChange={onCodeChange}
                    sessionId={sessionId}
                    userName={user?.name}

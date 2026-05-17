@@ -35,6 +35,7 @@ const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"
 const CodeEditor = ({
   language,
   value,
+  defaultTemplate = "",  // canonical template for this language — used to seed new empty rooms
   onChange,
   onCursorChange,
   sessionId = "default",
@@ -51,9 +52,11 @@ const CodeEditor = ({
   const hasInitializedRef = useRef(false);
   const cleanupRef = useRef(null); // holds the current session cleanup fn
 
-  // Keep seed value in a ref to avoid re-triggering effects
+  // Keep seed values in refs to avoid re-triggering effects
   const seedValueRef = useRef(value);
+  const defaultTemplateRef = useRef(defaultTemplate);
   useEffect(() => { seedValueRef.current = value; }, [value]);
+  useEffect(() => { defaultTemplateRef.current = defaultTemplate; }, [defaultTemplate]);
 
   // Track sessionId + language in refs so the mount callback always sees latest values
   const sessionIdRef = useRef(sessionId);
@@ -111,16 +114,24 @@ const CodeEditor = ({
     });
 
     // 🔑 SEED GUARD: Only insert content if the shared room is genuinely empty after sync.
-    // This ensures User B never overwrites User A's real code with a local template.
+    // Uses defaultTemplate (not localStorage) to ensure clean canonical content.
+    // A 150ms debounce lets concurrent joiners' seeds propagate first — whichever
+    // client's seed arrives on the server first wins; the rest skip because ytext.length > 0.
     const handleSync = (isSynced) => {
       if (!isSynced) return;
       if (!hasInitializedRef.current) {
         hasInitializedRef.current = true;
         if (ytext.length === 0) {
-          const seed = seedValueRef.current;
-          if (seed && seed.trim() !== "") {
-            ydoc.transact(() => { ytext.insert(0, seed); });
-          }
+          // Debounce: wait 150ms before seeding so concurrent peers' seeds can arrive.
+          // After the delay, re-check length — if another client seeded first, skip.
+          setTimeout(() => {
+            if (ytext.length === 0) {
+              const seed = defaultTemplateRef.current || seedValueRef.current;
+              if (seed && seed.trim() !== "") {
+                ydoc.transact(() => { ytext.insert(0, seed); });
+              }
+            }
+          }, 150);
         }
       }
     };
