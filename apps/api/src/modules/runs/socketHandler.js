@@ -177,13 +177,28 @@ function initSocket(server) {
         }
       } else {
         // NEW ROOM: No persisted state found in MongoDB.
-        // The frontend client is responsible for seeding empty rooms from their
-        // local buffer (see CodeEditor.jsx sync handler). This prevents a race
-        // condition where both the backend and the first user attempt to insert
-        // the default template simultaneously, causing duplicate content ("Code Soup").
-        // The '::' separator is the canonical format: "<sessionRaw>::<langId>"
+        // The SERVER seeds the room exactly once — it has ground truth on whether this
+        // room is brand new. Client-side seeding caused a race condition: the client's
+        // 150ms debounce elapsed before the server state arrived on Render's free tier
+        // (~200-500ms latency), so BOTH the server state and the client seed arrived,
+        // causing duplicate template insertion (Code Soup on reload).
         const langId = sessionId.split('::').pop();
-        logger.info({ sessionId, langId }, "New Yjs room created. Awaiting client-side seed.");
+        const templates = {
+          cpp: '#include <iostream>\n\nint main() {\n    std::cout << "Welcome to SAM Compiler!" << std::endl;\n    return 0;\n}\n',
+          c: '#include <stdio.h>\n\nint main() {\n    printf("Welcome to SAM Compiler!\\n");\n    return 0;\n}\n',
+          python: 'print("Welcome to SAM Compiler!")\n',
+          nodejs: 'console.log("Welcome to SAM Compiler!");\n',
+          java: 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Welcome to SAM Compiler!");\n    }\n}\n'
+        };
+        if (templates[langId]) {
+          const ytext = doc.getText(langId);
+          if (ytext.length === 0) {
+            ytext.insert(0, templates[langId]);
+            logger.info({ sessionId, langId }, "Server seeded new Yjs room with default template.");
+          }
+        } else {
+          logger.info({ sessionId, langId }, "New Yjs room created (no template for langId).");
+        }
       }
     } catch (err) {
       logger.error({ err, doc: doc.name }, "Failed to load/initialize Yjs state from MongoDB");

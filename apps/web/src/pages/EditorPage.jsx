@@ -1457,7 +1457,6 @@ builtins.input = input_shim
                    key={sessionId}
                    language={activeLangId}
                    value={buffers[activeLangId]}
-                   defaultTemplate={languageConfigs[activeLangId]?.template ?? ""}
                    onChange={onCodeChange}
                    sessionId={sessionId}
                    userName={user?.name}
